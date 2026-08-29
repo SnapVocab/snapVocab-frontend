@@ -1,0 +1,165 @@
+/* Import Tailwind base styles */
+@import 'tailwindcss';
+@import 'uniwind';
+
+/*
+ * Design tokens — source of truth: docs/design.md
+ * Keep in sync with src/components/ui/colors.js.
+ * Do not add or change a value here without updating docs/design.md first.
+ */
+@theme {
+  /* Font families — design.md §04 */
+  --font-family-sans: 'Inter', ui-sans-serif, system-ui, sans-serif;
+  --font-family-display: 'Nunito', 'Inter', ui-sans-serif, system-ui, sans-serif;
+
+  /* Base colors */
+  --color-white: #ffffff;
+  --color-black: #000000;
+
+  /* Neutral palette — design.md §3.5 (50 = lightest, 900 = darkest) */
+  --color-neutral-50: #EEEFF3;
+  --color-neutral-100: #D4D5DF;
+  --color-neutral-200: #B6B7C7;
+  --color-neutral-300: #9597AD;
+  --color-neutral-400: #757793;
+  --color-neutral-500: #565879;
+  --color-neutral-600: #3D3F5E;
+  --color-neutral-700: #2A2C47;
+  --color-neutral-800: #171A2F;
+  --color-neutral-900: #0D0E1A;
+
+  /* Primary — #58CC02. CTA, progress, correct answer. design.md §3.2 */
+  --color-primary-50: #F0FCE4;
+  --color-primary-100: #DEF7C4;
+  --color-primary-200: #C2EE96;
+  --color-primary-300: #A0E063;
+  --color-primary-400: #7DD634;
+  --color-primary-500: #58CC02;
+  --color-primary-600: #4CAD02;
+  --color-primary-700: #3C8C00;
+  --color-primary-800: #2F6E00;
+  --color-primary-900: #1F4A00;
+
+  /* Reward — #FFC42E. XP / Coin / Chest / Badge / Mastered ONLY. design.md §3.3 */
+  --color-reward-50: #FFF9E6;
+  --color-reward-100: #FFEFB8;
+  --color-reward-200: #FFE594;
+  --color-reward-300: #FFDA6B;
+  --color-reward-400: #FFCF4A;
+  --color-reward-500: #FFC42E;
+  --color-reward-600: #E5A800;
+  --color-reward-700: #B37F00;
+  --color-reward-800: #805B00;
+  --color-reward-900: #4D3700;
+
+  /* Mascot — #FF8A00. Snapy, streak, SCAN tag. Never a CTA. design.md §3.4 */
+  --color-mascot-50: #FFF8EF;
+  --color-mascot-100: #FFF3E0;
+  --color-mascot-200: #FFDDB3;
+  --color-mascot-300: #FFC685;
+  --color-mascot-400: #FFB65C;
+  --color-mascot-500: #FF8A00;
+  --color-mascot-600: #E57C00;
+  --color-mascot-700: #B35F00;
+  --color-mascot-800: #A75C21;
+  --color-mascot-900: #663700;
+  --color-mascot-cream: #FFF3E0;
+  --color-mascot-brown: #A75C21;
+  --color-mascot-navy: #1E2A44;
+  --color-mascot-blue: #4DA3FF;
+  --color-mascot-violet: #8B6CFF;
+  --color-mascot-bg: #FFF8EF;
+  --color-mascot-rim: #FFB65C;
+
+  /* Info — #1CB0F6. Links, DICT tag, hints, secondary actions. design.md §3.1 */
+  --color-info-50: #E8F7FE;
+  --color-info-100: #C7ECFC;
+  --color-info-200: #9BDDFA;
+  --color-info-300: #5CC4F8;
+  --color-info-400: #3ABAF7;
+  --color-info-500: #1CB0F6;
+  --color-info-600: #0B8FCE;
+  --color-info-700: #0B6E9C;
+  --color-info-800: #084F70;
+  --color-info-900: #053347;
+
+  /* Success palette */
+  --color-success-50: #F0FDF4;
+  --color-success-100: #DCFCE7;
+  --color-success-200: #BBF7D0;
+  --color-success-300: #86EFAC;
+  --color-success-400: #4ADE80;
+  --color-success-500: #22C55E;
+  --color-success-600: #16A34A;
+  --color-success-700: #15803D;
+  --color-success-800: #166534;
+  --color-success-900: #14532D;
+
+  /* Warning palette */
+  --color-warning-50: #FFFBEB;
+  --color-warning-100: #FEF3C7;
+  --color-warning-200: #FDE68A;
+  --color-warning-300: #FCD34D;
+  --color-warning-400: #FBBF24;
+  --color-warning-500: #F59E0B;
+  --color-warning-600: #D97706;
+  --color-warning-700: #B45309;
+  --color-warning-800: #92400E;
+  --color-warning-900: #78350F;
+
+  /* Danger palette */
+  --color-danger-50: #FEF2F2;
+  --color-danger-100: #FEE2E2;
+  --color-danger-200: #FECACA;
+  --color-danger-300: #FCA5A5;
+  --color-danger-400: #F87171;
+  --color-danger-500: #EF4444;
+  --color-danger-600: #DC2626;
+  --color-danger-700: #B91C1C;
+  --color-danger-800: #991B1B;
+  --color-danger-900: #7F1D1D;
+
+  /* Semantic colors — design.md §3.6 (light) */
+  --color-background: #ffffff;
+  --color-foreground: #171A2F;
+
+  --color-card: #ffffff;
+  --color-card-foreground: #171A2F;
+
+  --color-muted: #EEEFF3;
+  --color-muted-foreground: #3D3F5E;
+
+  --color-border: #D4D5DF;
+  --color-input: #D4D5DF;
+  --color-ring: #58CC02;
+
+  --color-destructive: #EF4444;
+  --color-destructive-foreground: #ffffff;
+}
+
+/* Dark mode — design.md §14 */
+@media (prefers-color-scheme: dark) {
+  @theme {
+    --color-background: #0D0E1A;
+    --color-foreground: #EEEFF3;
+
+    --color-card: #171A2F;
+    --color-card-foreground: #EEEFF3;
+
+    --color-muted: #2A2C47;
+    --color-muted-foreground: #9597AD;
+
+    --color-border: #3D3F5E;
+    --color-input: #3D3F5E;
+    --color-ring: #7DD634;
+
+    --color-destructive: #F87171;
+  }
+}
+
+/* Custom utilities (if needed) */
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+}
