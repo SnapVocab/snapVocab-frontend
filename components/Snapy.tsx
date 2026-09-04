@@ -8,6 +8,8 @@ const POSES = {
   curious: require('@/assets/images/snapy-curious.png'),
   snap: require('@/assets/images/snapy-snap.png'),
   reading: require('@/assets/images/snapy-reading.png'),
+  idle: require('@/assets/images/snapy-welcome.png'),
+  sad: require('@/assets/images/snapy-curious.png'),
 } as const;
 
 export type SnapyPose = keyof typeof POSES;

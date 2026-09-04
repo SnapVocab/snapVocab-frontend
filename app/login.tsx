@@ -23,27 +23,15 @@ export default function Login() {
         ? "Email không đúng định dạng"
         : null;
   const passwordError = touched.password && !password ? "Vui lòng nhập mật khẩu" : null;
-  const canSubmit = EMAIL_RE.test(email.trim()) && password.length > 0 && !loading;
+  const canSubmit = !loading; // Tạm thời luôn cho phép submit
 
   async function handleSubmit() {
-    setTouched({ email: true, password: true });
-    if (!canSubmit) return;
-    setFormError(null);
     setLoading(true);
-
-    await new Promise((r) => setTimeout(r, 900));
+    // Tạm thời bỏ qua validate và fake API delay nhỏ
+    await new Promise((r) => setTimeout(r, 300));
     setLoading(false);
-
-    const value = email.trim().toLowerCase();
-    if (value.startsWith("unverified")) {
-      router.push({ pathname: "/verify", params: { email: value, mode: "signup" } });
-      return;
-    }
-    if (value.startsWith("locked")) {
-      setFormError("Tài khoản đã bị khóa");
-      return;
-    }
-    setFormError("Thông tin đăng nhập không đúng");
+    
+    router.replace("/(tabs)"); // Chuyển thẳng vào màn chính
   }
 
   const field =
