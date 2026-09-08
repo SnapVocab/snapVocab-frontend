@@ -17,7 +17,7 @@ export default function VerifyOTP() {
   const [attempts, setAttempts] = useState(0);
 
   useEffect(() => {
-    let timer: NodeJS.Timeout;
+    let timer: ReturnType<typeof setInterval>;
     if (countdown > 0) {
       timer = setInterval(() => {
         setCountdown((c) => c - 1);
@@ -114,17 +114,17 @@ export default function VerifyOTP() {
           <Pressable 
             disabled={!canSubmit} 
             onPress={handleSubmit} 
-            className="btn-3d btn-primary mt-2"
+            className="h-14 w-full rounded-xl bg-primary-500 items-center justify-center active:scale-[0.98] active:bg-primary-600 disabled:opacity-50 mt-2"
           >
-            {loading ? <ActivityIndicator color="white" size="small" /> : <Text className="text-white font-bold text-[15px] uppercase">Xác nhận</Text>}
+            {loading ? <ActivityIndicator color="white" size="small" /> : <Text className="text-white font-extrabold font-nunito text-[15px] uppercase tracking-wide">Xác nhận</Text>}
           </Pressable>
           
           <Pressable 
             disabled={countdown > 0} 
             onPress={handleResend}
-            className={cn("btn-3d flex-row gap-2 mt-2", countdown > 0 ? "bg-neutral-100" : "btn-ghost")}
+            className={cn("h-14 w-full rounded-xl items-center justify-center active:scale-[0.98] mt-2", countdown > 0 ? "bg-neutral-100" : "bg-white border border-neutral-200 active:bg-neutral-50")}
           >
-            <Text className={cn("font-bold text-[15px] uppercase", countdown > 0 ? "text-neutral-400" : "text-info-600")}>
+            <Text className={cn("font-extrabold font-nunito text-[15px] uppercase tracking-wide", countdown > 0 ? "text-neutral-400" : "text-info-600")}>
               {countdown > 0 ? `Gửi lại mã (${countdown}s)` : "Gửi lại mã OTP"}
             </Text>
           </Pressable>

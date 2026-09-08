@@ -203,8 +203,8 @@ export default function NotificationsScreen() {
       ) : (
         /* 3. EMPTY STATE */
         <View className="flex-1 items-center justify-center p-6 bg-[#F7F8FA]">
-          <View className="w-24 h-24 bg-neutral-100 rounded-full items-center justify-center mb-6">
-            <Snapy pose="curious" className="w-16 h-16 opacity-50" />
+          <View className="items-center justify-center mb-6">
+            <Snapy pose="notification" animation="float" className="w-36 h-36" />
           </View>
           <Text className="font-extrabold text-[20px] text-mascot-navy font-nunito mb-2 text-center">
             Chưa có thông báo nào

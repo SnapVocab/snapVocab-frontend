@@ -196,7 +196,7 @@ export default function SRSReviewScreen() {
     return (
       <SafeAreaView className="flex-1 bg-[#F7F8FA]" edges={['top']}>
         <View className="flex-1 items-center justify-center p-6">
-          <Snapy pose="happy" className="w-40 h-40 mb-6" />
+          <Snapy pose="tu_hao" animation="bounce" className="w-40 h-40 mb-6" />
           <Text className="font-extrabold text-[22px] text-mascot-navy font-nunito text-center mb-2">Bạn đã ôn xong hôm nay! 🎉</Text>
           <Text className="font-medium text-[15px] text-neutral-500 font-inter text-center mb-8">Không có từ nào đến hạn. Hãy quay lại sau nhé!</Text>
           <Pressable 
@@ -221,7 +221,7 @@ export default function SRSReviewScreen() {
           
           <View className="relative items-center mb-6 pt-4">
             <View className="absolute inset-0 bg-warning-200 blur-3xl opacity-50 rounded-full" />
-            <Snapy pose="happy" className="w-32 h-32 mb-4 z-10" />
+            <Snapy pose="an_mung" animation="celebrate" className="w-36 h-36 mb-4 z-10" />
             <Text className="font-extrabold text-[28px] text-mascot-navy font-nunito text-center leading-tight">
               Bạn đã ôn xong! 🎉
             </Text>

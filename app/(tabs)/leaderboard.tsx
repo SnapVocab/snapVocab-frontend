@@ -71,7 +71,7 @@ export default function LeaderboardScreen() {
         </View>
 
         <View className="flex-1 items-center justify-center p-6">
-          <Snapy pose="curious" className="w-48 h-48 mb-6" />
+          <Snapy pose="suy_nghi" animation="bounce" className="w-48 h-48 mb-6" />
           <Text className="font-extrabold text-[20px] text-mascot-navy font-nunito text-center mb-2">
             Chưa có bảng xếp hạng
           </Text>

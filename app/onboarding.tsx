@@ -99,7 +99,11 @@ function QuestionStep({
     <>
       <ProgressHeader step={step} onBack={onBack} />
       <View className="mt-6 flex-row items-end gap-3">
-        <Snapy pose="curious" animation="idle" className="h-24 w-24 shrink-0" />
+        <Snapy 
+          pose={step === 1 ? "to_mo" : step === 2 ? "suy_nghi" : "tap_trung"} 
+          animation="idle" 
+          className="h-24 w-24 shrink-0" 
+        />
         <View className="flex-1 pb-2">
           <SpeechBubble>{question}</SpeechBubble>
         </View>
@@ -112,7 +116,10 @@ function QuestionStep({
             <Pressable
               key={o.id}
               onPress={() => onSelect(o.id)}
-              className={cn("card-option", selected ? "border-info-500 bg-info-50" : "")}
+              className={cn(
+                "flex-row items-center gap-3.5 w-full p-4 rounded-2xl bg-white border border-neutral-200/70 active:scale-[0.99] active:bg-neutral-50", 
+                selected ? "border-info-500 bg-info-50/60" : ""
+              )}
             >
               {o.bars ? <LevelBars level={o.bars} /> : o.icon ? <View>{o.icon}</View> : null}
               <Text className="font-bold text-mascot-navy text-[15px]">{o.label}</Text>
@@ -122,8 +129,8 @@ function QuestionStep({
       </View>
 
       <View className="mt-auto pt-8">
-        <Pressable disabled={!value} onPress={onNext} className="btn-3d btn-primary">
-          <Text className="text-white font-bold text-[15px] uppercase">Tiếp tục</Text>
+        <Pressable disabled={!value} onPress={onNext} className="h-14 w-full rounded-xl bg-primary-500 items-center justify-center active:scale-[0.98] active:bg-primary-600 disabled:opacity-50">
+          <Text className="text-white font-extrabold font-nunito text-[15px] uppercase tracking-wide">Tiếp tục</Text>
         </Pressable>
       </View>
     </>
@@ -157,11 +164,11 @@ function PermissionStep({
         <Text className="mt-6 max-w-xs text-xl text-center leading-snug font-extrabold text-mascot-navy">{text}</Text>
       </View>
       <View className="mt-auto flex-col gap-3 pt-8">
-        <Pressable onPress={onNext} className="btn-3d btn-primary">
-          <Text className="text-white font-bold text-[15px] uppercase">{primaryLabel}</Text>
+        <Pressable onPress={onNext} className="h-14 w-full rounded-xl bg-primary-500 items-center justify-center active:scale-[0.98] active:bg-primary-600">
+          <Text className="text-white font-extrabold font-nunito text-[15px] uppercase tracking-wide">{primaryLabel}</Text>
         </Pressable>
-        <Pressable onPress={onNext} className="btn-3d btn-ghost">
-          <Text className="text-info-600 font-bold text-[15px] uppercase">{secondaryLabel}</Text>
+        <Pressable onPress={onNext} className="h-14 w-full rounded-xl bg-white border border-neutral-200 items-center justify-center active:scale-[0.98] active:bg-neutral-50">
+          <Text className="text-info-600 font-extrabold font-nunito text-[15px] uppercase tracking-wide">{secondaryLabel}</Text>
         </Pressable>
       </View>
     </>
@@ -184,20 +191,20 @@ export default function Onboarding() {
       <View className="mx-auto flex-1 w-full max-w-md flex-col px-6 pb-10">
         {screen === 0 && (
           <View className="flex-1 flex-col items-center justify-center">
-            <Snapy pose="welcome" animation="wave" className="h-64 w-64" />
-            <Text className="mt-4 text-4xl text-center font-extrabold tracking-tight text-primary-500 lowercase">
+            <Snapy pose="main" animation="bounce" className="h-64 w-64" />
+            <Text className="mt-4 text-4xl text-center font-extrabold tracking-tight text-primary-500 lowercase font-nunito">
               snapvocab
             </Text>
-            <Text className="mt-3 max-w-xs text-[17px] text-center leading-snug font-bold text-neutral-400">
+            <Text className="mt-3 max-w-xs text-[17px] text-center leading-snug font-bold text-neutral-400 font-inter">
               Học từ vựng thông qua hình ảnh. Hoàn toàn miễn phí.
             </Text>
             <View className="mt-10 w-full flex-col gap-3">
-              <Pressable onPress={next} className="btn-3d btn-primary">
-                <Text className="text-white font-bold text-[15px] uppercase">Bắt đầu</Text>
+              <Pressable onPress={next} className="h-14 w-full rounded-xl bg-primary-500 items-center justify-center active:scale-[0.98] active:bg-primary-600">
+                <Text className="text-white font-extrabold font-nunito text-[15px] uppercase tracking-wide">Bắt đầu</Text>
               </Pressable>
               <Link href="/login" asChild>
-                <Pressable className="btn-3d btn-ghost">
-                  <Text className="text-info-600 font-bold text-[15px] uppercase">Tôi đã có tài khoản</Text>
+                <Pressable className="h-14 w-full rounded-xl bg-white border border-neutral-200 items-center justify-center active:scale-[0.98] active:bg-neutral-50">
+                  <Text className="text-info-600 font-extrabold font-nunito text-[15px] uppercase tracking-wide">Tôi đã có tài khoản</Text>
                 </Pressable>
               </Link>
             </View>
@@ -215,15 +222,15 @@ export default function Onboarding() {
               </Pressable>
             </View>
             <View className="flex-1 flex-col items-center justify-center gap-4">
-              <Snapy pose="happy" animation="bounce_in" className="h-52 w-52" />
+              <Snapy pose="nhay_mat" animation="wave" className="h-56 w-56" />
               <View className="w-full">
                 <SpeechBubble>
                   Chỉ vài câu hỏi nhanh trước khi chúng ta bắt đầu nhé!
                 </SpeechBubble>
               </View>
             </View>
-            <Pressable onPress={next} className="btn-3d btn-primary mt-auto">
-              <Text className="text-white font-bold text-[15px] uppercase">Tiếp tục</Text>
+            <Pressable onPress={next} className="h-14 w-full rounded-xl bg-primary-500 items-center justify-center active:scale-[0.98] active:bg-primary-600 mt-auto">
+              <Text className="text-white font-extrabold font-nunito text-[15px] uppercase tracking-wide">Tiếp tục</Text>
             </Pressable>
           </>
         )}

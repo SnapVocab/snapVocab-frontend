@@ -224,7 +224,7 @@ export default function WalletScreen() {
         {WALLET_DATA.isEmpty ? (
           /* EMPTY STATE */
           <View className="bg-white rounded-3xl p-8 border border-neutral-100 items-center justify-center">
-            <Snapy pose="reading" className="w-24 h-24 mb-4 opacity-70" />
+            <Snapy pose="suy_nghi" animation="idle" className="w-24 h-24 mb-4 opacity-80" />
             <Text className="font-extrabold text-[18px] text-mascot-navy font-nunito mb-2">
               Chưa có giao dịch nào
             </Text>

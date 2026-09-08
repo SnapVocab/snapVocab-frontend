@@ -8,19 +8,22 @@ export default function TabsLayout() {
       screenOptions={{
         headerShown: false,
         tabBarActiveTintColor: '#58CC02', // primary-500
-        tabBarInactiveTintColor: '#9597AD', // neutral-300
+        tabBarInactiveTintColor: '#757793', // neutral-400
         tabBarStyle: {
           backgroundColor: '#FFFFFF',
-          borderTopColor: '#D4D5DF', // neutral-100
+          borderTopColor: '#E5E7EB', // neutral-200/70
           borderTopWidth: 1,
           height: Platform.OS === 'ios' ? 88 : 64,
           paddingBottom: Platform.OS === 'ios' ? 28 : 8,
           paddingTop: 8,
+          elevation: 0,
+          shadowOpacity: 0,
         },
         tabBarLabelStyle: {
           fontFamily: 'Inter',
-          fontSize: 12,
-          fontWeight: '600',
+          fontSize: 11,
+          fontWeight: '700',
+          marginTop: 2,
         },
       }}
     >
@@ -28,14 +31,18 @@ export default function TabsLayout() {
         name="index"
         options={{
           title: 'Trang chủ',
-          tabBarIcon: ({ color }) => <HomeIcon color={color} size={24} />,
+          tabBarIcon: ({ color, focused }) => (
+            <HomeIcon color={color} size={22} strokeWidth={focused ? 2.5 : 2} />
+          ),
         }}
       />
       <Tabs.Screen
         name="learn"
         options={{
           title: 'Học',
-          tabBarIcon: ({ color }) => <BookOpenIcon color={color} size={24} />,
+          tabBarIcon: ({ color, focused }) => (
+            <BookOpenIcon color={color} size={22} strokeWidth={focused ? 2.5 : 2} />
+          ),
         }}
       />
       <Tabs.Screen
@@ -44,31 +51,37 @@ export default function TabsLayout() {
           title: 'Chụp ảnh',
           tabBarIcon: ({ focused }) => (
             <View
-              className={`w-12 h-12 rounded-full items-center justify-center -mt-4 shadow-sm ${
-                focused ? 'bg-primary-500 shadow-primary-500/30' : 'bg-neutral-800 shadow-black/20'
+              className={`rounded-full items-center justify-center -mt-5 border-2 border-white ${
+                focused ? 'bg-mascot-600 scale-105' : 'bg-mascot-500'
               }`}
               style={{
-                elevation: 4,
+                width: 52,
+                height: 52,
+                borderRadius: 26,
               }}
             >
-              <CameraIcon color="white" size={24} />
+              <CameraIcon color="white" size={24} strokeWidth={2.5} />
             </View>
           ),
-          tabBarLabel: () => null, // Ẩn chữ để icon lồi lên
+          tabBarLabel: () => null, // Ẩn label để tôn vinh nút Scan trung tâm
         }}
       />
       <Tabs.Screen
         name="shop"
         options={{
           title: 'Cửa hàng',
-          tabBarIcon: ({ color }) => <StoreIcon color={color} size={24} />,
+          tabBarIcon: ({ color, focused }) => (
+            <StoreIcon color={color} size={22} strokeWidth={focused ? 2.5 : 2} />
+          ),
         }}
       />
       <Tabs.Screen
         name="profile"
         options={{
           title: 'Hồ sơ',
-          tabBarIcon: ({ color }) => <UserIcon color={color} size={24} />,
+          tabBarIcon: ({ color, focused }) => (
+            <UserIcon color={color} size={22} strokeWidth={focused ? 2.5 : 2} />
+          ),
         }}
       />
       
@@ -82,3 +95,4 @@ export default function TabsLayout() {
     </Tabs>
   );
 }
+

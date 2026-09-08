@@ -3,28 +3,36 @@ import { View, Text, ScrollView, RefreshControl, Pressable, Image } from 'react-
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { 
   BellIcon, 
-  FlameIcon, 
-  CoinsIcon, 
-  TrophyIcon, 
   CheckCircle2Icon, 
-  BookOpenIcon, 
   WifiOffIcon,
   CircleIcon,
-  SearchIcon
+  SearchIcon,
+  ArrowRightIcon,
+  SparklesIcon,
+  ClockIcon,
+  AlertCircleIcon,
+  RotateCcwIcon,
+  ChevronRightIcon
 } from 'lucide-react-native';
+import { 
+  StreakFlame3D, 
+  Coin3D, 
+  AchievementTrophy3D, 
+  XPOrb3D,
+  RewardChest3D
+} from '@/components/snapvocab';
 import { cn } from '@/lib/utils';
 import { Snapy } from '@/components/Snapy';
 import { useRouter } from 'expo-router';
 
 // ==========================================
 // THIẾT LẬP TRẠNG THÁI KIỂM THỬ (MOCK STATE)
-// Hãy đổi giá trị này để xem các trạng thái UX khác nhau.
 // Các giá trị: 'default' | 'newUser' | 'streakBroken' | 'chestReady' | 'offline' | 'error'
 // ==========================================
 type MockState = 'default' | 'newUser' | 'streakBroken' | 'chestReady' | 'offline' | 'error';
 const TEST_STATE: MockState = 'default';
 
-// DỮ LIỆU MẪU
+// DỮ LIỆU MẪU ĐẦY ĐỦ CHO MH-MAIN-01
 const MOCK_DATA = {
   user: {
     name: 'Learner',
@@ -38,12 +46,14 @@ const MOCK_DATA = {
     accuracy: 87,
   },
   srsDue: 12,
+  resetCountdown: '04:25:12',
   missions: [
-    { id: '1', title: 'Học 10 từ mới', progress: 10, total: 10, reward: 30, completed: true },
-    { id: '2', title: 'Ôn tập 5 từ', progress: 5, total: 5, reward: 20, completed: true, isCoin: true },
-    { id: '3', title: 'Quét 3 từ vựng', progress: 1, total: 3, reward: 30, completed: false }
+    { id: '1', title: 'Học 10 từ mới', progress: 10, total: 10, reward: 30, completed: true, isCoin: false },
+    { id: '2', title: 'Ôn tập 5 từ đến hạn', progress: 5, total: 5, reward: 20, completed: true, isCoin: true },
+    { id: '3', title: 'Quét 3 từ vựng bằng Camera', progress: 1, total: 3, reward: 30, completed: false, isCoin: false }
   ],
   continueLearning: {
+    deckId: 'business-english',
     deckName: 'Business English',
     lesson: 4,
     progress: 18,
@@ -52,7 +62,8 @@ const MOCK_DATA = {
   leaderboardMe: {
     rank: 12,
     xp: 1240,
-    diffToNext: 80
+    diffToNext: 80,
+    league: 'Kim Cương'
   },
   recentWords: [
     { word: 'abandon', translation: 'từ bỏ' },
@@ -67,272 +78,497 @@ export default function HomeDashboard() {
   const [refreshing, setRefreshing] = useState(false);
   const [loading, setLoading] = useState(true);
   const [localData, setLocalData] = useState(MOCK_DATA);
-  
-  // Xử lý lỗi Fast Refresh giữ lại state cũ không có leaderboardMe
-  const data = localData.leaderboardMe ? localData : MOCK_DATA;
+  const [blockErrorRetrying, setBlockErrorRetrying] = useState(false);
+
+  const data = localData;
   const setData = setLocalData;
 
   const onRefresh = React.useCallback(() => {
     setRefreshing(true);
     setTimeout(() => {
-      setData({ ...MOCK_DATA, srsDue: Math.floor(Math.random() * 20) });
+      setData(prev => ({
+        ...prev,
+        srsDue: Math.floor(Math.random() * 20),
+        user: { ...prev.user, xp: prev.user.xp + 10 }
+      }));
       setRefreshing(false);
-    }, 1200);
-  }, []);
-
-  useEffect(() => {
-    // Initial mock load
-    setTimeout(() => {
-      setLoading(false);
     }, 1000);
   }, []);
 
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setLoading(false);
+    }, 800);
+    return () => clearTimeout(timer);
+  }, []);
+
+  // Xác định lời chào theo thời gian thực
+  const getGreeting = () => {
+    const hour = new Date().getHours();
+    if (hour < 12) return 'Chào buổi sáng';
+    if (hour < 18) return 'Chào buổi chiều';
+    return 'Chào buổi tối';
+  };
+
+  // Xác định biểu cảm và thông điệp của Snapy
+  const getMascotProps = () => {
+    if (TEST_STATE === 'streakBroken') {
+      return { 
+        pose: 'suy_nghi' as const, 
+        animation: 'idle' as const,
+        msg: 'Không sao cả, hãy cùng bắt đầu chuỗi ngày mới ngay hôm nay nhé!' 
+      };
+    }
+    if (TEST_STATE === 'chestReady') {
+      return { 
+        pose: 'nhay_len' as const, 
+        animation: 'bounce' as const,
+        msg: 'Rương phần thưởng hàng ngày đã sẵn sàng mở, nhận ngay thôi!' 
+      };
+    }
+    if (TEST_STATE === 'newUser') {
+      return { 
+        pose: 'main' as const, 
+        animation: 'wave' as const,
+        msg: 'Xin chào! Mình là Snapy, hãy cùng bắt đầu bài học từ vựng đầu tiên nhé!' 
+      };
+    }
+    if (data.srsDue === 0) {
+      return { 
+        pose: 'tu_hao' as const, 
+        animation: 'celebrate' as const,
+        msg: 'Xuất sắc! Bạn đã hoàn thành toàn bộ bài ôn tập Spaced Repetition hôm nay.' 
+      };
+    }
+    return { 
+      pose: 'tap_trung' as const, 
+      animation: 'idle' as const,
+      msg: `${data.srsDue} từ vựng Spaced Repetition đang chờ bạn củng cố trí nhớ!` 
+    };
+  };
+
+  const mascot = getMascotProps();
+
+  // Skeleton Loading State
   if (loading) {
     return (
-      <SafeAreaView className="flex-1 bg-background">
-        <View className="px-4 py-8 flex-col gap-6">
+      <SafeAreaView className="flex-1 bg-white" edges={['top']}>
+        <View className="px-5 py-6 flex-col gap-5">
           <View className="flex-row justify-between items-center">
-            <View className="w-32 h-6 bg-neutral-100 rounded animate-pulse" />
-            <View className="w-10 h-10 bg-neutral-100 rounded-full animate-pulse" />
+            <View className="w-40 h-8 bg-neutral-100 rounded-xl animate-pulse" />
+            <View className="flex-row gap-2">
+              <View className="w-16 h-10 bg-neutral-100 rounded-full animate-pulse" />
+              <View className="w-10 h-10 bg-neutral-100 rounded-full animate-pulse" />
+            </View>
           </View>
-          <View className="w-full h-40 bg-neutral-100 rounded-2xl animate-pulse" />
+          <View className="w-full h-16 bg-neutral-100 rounded-2xl animate-pulse" />
           <View className="w-full h-48 bg-neutral-100 rounded-2xl animate-pulse" />
-          <View className="w-full h-32 bg-neutral-100 rounded-2xl animate-pulse" />
+          <View className="w-full h-40 bg-neutral-100 rounded-2xl animate-pulse" />
         </View>
       </SafeAreaView>
     );
   }
 
-  // Logic hiển thị Snapy dựa trên State
-  const getMascotProps = () => {
-    if (TEST_STATE === 'streakBroken') {
-      return { pose: 'sad' as any, anim: 'ear_droop' as any, msg: "Không sao, bắt đầu chuỗi mới hôm nay nhé!" };
-    }
-    if (TEST_STATE === 'chestReady') {
-      return { pose: 'celebrate' as any, anim: 'jump_celebrate' as any, msg: "Tuyệt vời! Bạn đã mở khóa Rương Hàng Ngày!" };
-    }
-    if (TEST_STATE === 'newUser') {
-      return { pose: 'welcome' as any, anim: 'wave' as any, msg: "Bắt đầu chuyến phiêu lưu từ vựng của bạn nào!" };
-    }
-    if (data.srsDue === 0) {
-      return { pose: 'proud' as any, anim: 'idle' as any, msg: "Tuyệt đỉnh! Bạn đã ôn bài rất chăm chỉ." };
-    }
-    return { pose: 'reading' as any, anim: 'idle' as any, msg: `${data.srsDue} từ vựng đang chờ bạn chinh phục!` };
-  };
-
-  const mascot = getMascotProps();
-
   return (
-    <SafeAreaView className="flex-1 bg-[#FAFAFA]" edges={['top']}>
+    <SafeAreaView className="flex-1 bg-white" edges={['top']}>
+      {/* Offline Banner nếu mất kết nối */}
       {TEST_STATE === 'offline' && (
-        <View className="bg-neutral-600 flex-row items-center justify-center py-1.5 gap-2 z-20">
-          <WifiOffIcon size={14} className="text-white" />
-          <Text className="text-white text-[12px] font-bold font-inter">Đang offline - Hiển thị dữ liệu gần nhất</Text>
-        </View>
-      )}
-
-      {TEST_STATE === 'error' && (
-        <View className="bg-danger-50 flex-row items-center justify-center py-1.5 gap-2 z-20">
-          <Text className="text-danger-600 text-[12px] font-bold font-inter">Lỗi kết nối. Không thể tải tất cả thông tin.</Text>
+        <View className="bg-neutral-800 flex-row items-center justify-center py-2.5 px-4 gap-2 z-20">
+          <WifiOffIcon size={16} className="text-white" />
+          <Text className="text-white text-[14px] font-bold font-inter">
+            Đang offline - Hiển thị bản lưu gần nhất
+          </Text>
         </View>
       )}
 
       <ScrollView
-        contentContainerStyle={{ paddingBottom: 40 }}
+        contentContainerStyle={{ paddingBottom: 48 }}
         showsVerticalScrollIndicator={false}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#58CC02" />}
       >
         {/* ==========================================
-            SECTION 01: HEADER
+            KHỐI 1: HEADER & USER CONTEXT
+            Đặc tả: Avatar, Lời chào, Streak pill, Chuông thông báo
             ========================================== */}
-        <View className="flex-row items-center justify-between px-4 py-3 z-10">
-          <View>
-            <Text className="text-[14px] font-bold text-neutral-400 font-inter">Chào buổi sáng, {data.user.name}!</Text>
-            <Text className="text-[16px] font-extrabold text-mascot-navy font-inter mt-0.5">Sẵn sàng học chưa?</Text>
+        <View className="flex-row items-center justify-between px-5 pt-4 pb-2">
+          <View className="flex-1 pr-3">
+            <Text className="text-[14px] font-bold text-neutral-400 font-inter uppercase tracking-wider">
+              {TEST_STATE === 'newUser' ? 'Chào mừng bạn' : getGreeting()}
+            </Text>
+            <Text className="text-[22px] font-extrabold text-mascot-navy font-nunito mt-0.5" numberOfLines={1}>
+              {data.user.name}
+            </Text>
           </View>
-          <View className="flex-row items-center gap-3">
-            <View className={cn("flex-row items-center gap-1", TEST_STATE === 'streakBroken' ? "opacity-50" : "")}>
-              <FlameIcon size={20} fill={TEST_STATE === 'streakBroken' ? "#9597AD" : "#FF8A00"} className={TEST_STATE === 'streakBroken' ? "text-neutral-300" : "text-mascot-500"} />
-              <Text className={cn("text-[17px] font-extrabold font-nunito tabular-nums", TEST_STATE === 'streakBroken' ? "text-neutral-500" : "text-mascot-500")}>
+          
+          <View className="flex-row items-center gap-2.5">
+            {/* Streak Status Pill (Tương tác sang thống kê Streak) */}
+            <Pressable 
+              onPress={() => router.push('/(tabs)/stats' as any)}
+              className={cn(
+                "flex-row items-center gap-1.5 px-3 py-1.5 rounded-full bg-white border-2 border-neutral-200/80 active:scale-95",
+                TEST_STATE === 'streakBroken' ? "opacity-60 border-dashed" : ""
+              )}
+            >
+              <StreakFlame3D size="xs" state={TEST_STATE === 'streakBroken' ? 'broken' : 'active'} animation="pulse" />
+              <Text className={cn(
+                "text-[15px] font-extrabold font-nunito tabular-nums", 
+                TEST_STATE === 'streakBroken' ? "text-neutral-500" : "text-mascot-500"
+              )}>
                 {TEST_STATE === 'newUser' || TEST_STATE === 'streakBroken' ? 0 : data.user.streak}
               </Text>
-            </View>
-            <Pressable onPress={() => router.push('/profile/notifications' as any)} className="relative p-1.5 bg-neutral-100 rounded-full active:bg-neutral-200">
-              <BellIcon size={20} className="text-mascot-navy" />
-              <View className="absolute top-1.5 right-1.5 w-2 h-2 bg-danger-500 rounded-full border border-white" />
             </Pressable>
-            <Image 
-              source={{ uri: data.user.avatar }} 
-              className="w-9 h-9 rounded-full border-2 border-neutral-100"
-            />
+
+            {/* Notification Bell */}
+            <Pressable 
+              onPress={() => router.push('/profile/notifications' as any)} 
+              className="relative p-2.5 bg-white rounded-full border-2 border-neutral-200/80 active:scale-95"
+            >
+              <BellIcon size={20} className="text-mascot-navy" />
+              <View className="absolute top-2 right-2 w-2.5 h-2.5 bg-danger-500 rounded-full border-2 border-white" />
+            </Pressable>
+
+            {/* User Avatar (Tương tác sang Profile cá nhân) */}
+            <Pressable 
+              onPress={() => router.push('/(tabs)/profile' as any)}
+              className="active:scale-95"
+            >
+              <Image 
+                source={{ uri: data.user.avatar }} 
+                className="w-11 h-11 rounded-full border-2 border-neutral-200"
+              />
+            </Pressable>
           </View>
         </View>
 
         {/* ==========================================
-            SECTION 01.5: DICTIONARY SEARCH ENTRY
+            KHỐI 2: LEVEL & TIẾN ĐỘ XP & SỐ DƯ COIN
+            Đặc tả MH-MAIN-01: Level hiện tại, XP, Progress bar, Coin balance -> CTA: MH-STATS-02
             ========================================== */}
-        <View className="px-4 py-2 mb-2 z-10">
+        <View className="px-5 mt-2 mb-4">
           <Pressable 
-            onPress={() => router.push('/dictionary')}
-            className="flex-row items-center h-[52px] px-4 rounded-[16px] bg-white border border-neutral-100 shadow-sm shadow-black/5 active:bg-neutral-50 active:scale-[0.98] "
+            onPress={() => router.push('/(tabs)/stats' as any)}
+            className="bg-neutral-50/80 rounded-2xl p-4 border border-neutral-200/90 active:scale-[0.99]"
           >
-            <SearchIcon size={20} className="text-neutral-400 mr-3" />
-            <Text className="flex-1 font-inter text-[15px] text-neutral-400">
-              Tìm kiếm từ vựng tiếng Anh...
+            <View className="flex-row items-center justify-between mb-2">
+              <View className="flex-row items-center gap-2">
+                <View className="bg-primary-50 px-2.5 py-0.5 rounded-lg border border-primary-200">
+                  <Text className="text-[14px] font-extrabold text-primary-800 font-nunito">
+                    CẤP {data.user.level}
+                  </Text>
+                </View>
+                <Text className="text-[14px] font-bold text-neutral-500 font-inter">
+                  {data.user.xp} / {data.user.xpMax} XP
+                </Text>
+              </View>
+
+              {/* Số dư Coin */}
+              <View className="flex-row items-center gap-1.5 bg-white px-2.5 py-1 rounded-xl border border-neutral-200">
+                <Coin3D size="xs" />
+                <Text className="text-[14px] font-extrabold text-neutral-800 font-nunito tabular-nums">
+                  {data.user.coins}
+                </Text>
+              </View>
+            </View>
+
+            {/* XP Progress Track Bar */}
+            <View className="h-3 bg-neutral-200/70 rounded-full overflow-hidden">
+              <View 
+                className="h-full bg-reward-500 rounded-full"
+                style={{ width: `${Math.min(100, (data.user.xp / data.user.xpMax) * 100)}%` }}
+              />
+            </View>
+          </Pressable>
+        </View>
+
+        {/* ==========================================
+            KHỐI 3: BỘ 3 CHỈ SỐ HỌC TẬP (PROGRESS METRICS)
+            Đặc tả MH-MAIN-01: Streak (số ngày), Words (số Note), Accuracy (%) -> CTA: MH-STATS-01
+            ========================================== */}
+        <View className="px-5 mb-5">
+          <Pressable 
+            onPress={() => router.push('/(tabs)/stats' as any)}
+            className="flex-row items-center justify-between bg-white rounded-2xl p-3.5 border border-neutral-200/90 active:scale-[0.99]"
+          >
+            {/* Metric 1: Chuỗi ngày học */}
+            <View className="flex-1 items-center border-r border-neutral-100">
+              <Text className="text-[20px] font-extrabold text-mascot-navy font-nunito tabular-nums">
+                {TEST_STATE === 'newUser' || TEST_STATE === 'streakBroken' ? 0 : data.user.streak}
+              </Text>
+              <Text className="text-[14px] font-semibold text-neutral-500 font-inter mt-0.5">
+                Ngày liên tục
+              </Text>
+            </View>
+
+            {/* Metric 2: Từ vựng đã tích luỹ */}
+            <View className="flex-1 items-center border-r border-neutral-100">
+              <Text className="text-[20px] font-extrabold text-mascot-navy font-nunito tabular-nums">
+                {TEST_STATE === 'newUser' ? 0 : data.user.words}
+              </Text>
+              <Text className="text-[14px] font-semibold text-neutral-500 font-inter mt-0.5">
+                Từ đã thuộc
+              </Text>
+            </View>
+
+            {/* Metric 3: Độ chính xác ôn tập */}
+            <View className="flex-1 items-center">
+              <Text className="text-[20px] font-extrabold text-primary-600 font-nunito tabular-nums">
+                {TEST_STATE === 'newUser' ? '0%' : `${data.user.accuracy}%`}
+              </Text>
+              <Text className="text-[14px] font-semibold text-neutral-500 font-inter mt-0.5">
+                Độ chính xác
+              </Text>
+            </View>
+          </Pressable>
+        </View>
+
+        {/* ==========================================
+            SECTION: TRA TỪ NHANH (Integrated Search)
+            ========================================== */}
+        <View className="px-5 mb-5">
+          <Pressable 
+            onPress={() => router.push('/dictionary' as any)}
+            className="flex-row items-center h-12 px-4 rounded-xl bg-white border border-neutral-200/90 active:bg-neutral-50 active:scale-[0.99]"
+          >
+            <SearchIcon size={18} className="text-neutral-400 mr-3" />
+            <Text className="flex-1 font-inter text-[14px] text-neutral-400">
+              Tra từ vựng tiếng Anh...
             </Text>
           </Pressable>
         </View>
 
         {/* ==========================================
-            SNAPY MASCOT
+            KHỐI 4: SRS DUE HERO CARD (Focal Review)
+            Đặc tả MH-MAIN-01: Thẻ ôn tập đến hạn, Snapy tương tác, CTA "Ôn ngay" (3D Tactile)
             ========================================== */}
-        <View className="px-4 py-2 mt-2 mb-4 flex-row items-end gap-3">
-          <Snapy pose={mascot.pose} animation={mascot.anim} className="h-20 w-20 shrink-0" />
-          <View className="flex-1 pb-3">
-            <View className="bg-mascot-50 px-3 py-2.5 rounded-2xl rounded-bl-none border border-mascot-200 shadow-sm shadow-mascot-500/10">
-              <Text className="text-[14px] font-bold text-mascot-900 font-inter leading-tight">{mascot.msg}</Text>
-            </View>
-          </View>
-        </View>
-
-        {/* ==========================================
-            SECTION 02: SRS DUE (PRIMARY ACTION) - Level 1 Surface
-            ========================================== */}
-        <View className="px-4 mb-6">
-          <View className="bg-white rounded-[24px] p-5 border-2 border-neutral-100 border-b-[4px] shadow-sm shadow-black/5">
-            <Text className="font-extrabold text-[13px] text-primary-600 uppercase tracking-widest font-nunito mb-2">ÔN TẬP HÔM NAY</Text>
-            
-            {TEST_STATE === 'newUser' || data.srsDue === 0 ? (
-              <View>
-                <Text className="font-extrabold text-[22px] text-mascot-navy font-nunito mb-1">Hoàn thành xuất sắc!</Text>
-                <Text className="font-medium text-[15px] text-neutral-500 font-inter mb-5">Bạn không còn từ nào cần ôn tập hôm nay.</Text>
-                <Pressable className="h-12 bg-white rounded-xl border-2 border-border border-b-[4px] active:bg-neutral-50 active:translate-y-[2px] active:border-b-2  flex-row items-center justify-center">
-                  <Text className="text-info-600 font-bold text-[15px] uppercase font-nunito tracking-[0.04em]">HỌC TỪ MỚI</Text>
-                </Pressable>
-              </View>
-            ) : (
-              <View>
-                <Text className="font-extrabold text-[24px] text-mascot-navy font-nunito mb-1 tabular-nums">{data.srsDue} từ vựng</Text>
-                <Text className="font-medium text-[15px] text-neutral-500 font-inter mb-5">đã sẵn sàng để ôn tập.</Text>
-                <Pressable className="h-14 bg-primary-500 rounded-2xl border-b-[4px] border-primary-700 active:bg-primary-600 active:translate-y-[2px] active:border-b-[2px]  flex-row items-center justify-center">
-                  <Text className="text-white font-extrabold text-[16px] uppercase font-nunito tracking-[0.04em]">ÔN NGAY</Text>
-                </Pressable>
-              </View>
-            )}
-          </View>
-        </View>
-
-        {/* ==========================================
-            SECTION 03: DAILY MISSIONS - Level 1 Surface
-            ========================================== */}
-        <View className="px-4 mb-6">
-          <View className="bg-white rounded-[20px] p-5 border-2 border-neutral-100 border-b-[3px] shadow-sm shadow-black/5">
-            <Pressable 
-              onPress={() => router.push('/(tabs)/missions' as any)}
-              className="flex-row justify-between items-center mb-5"
-            >
-              <Text className="font-extrabold text-[14px] text-mascot-navy uppercase font-nunito tracking-widest">NHIỆM VỤ HÀNG NGÀY</Text>
-              <View className="flex-row items-center gap-2">
-                <Text className="font-extrabold text-[14px] text-neutral-400 font-nunito tabular-nums">
-                  {TEST_STATE === 'chestReady' ? '3/3' : '2/3'}
+        <View className="px-5 mb-6">
+          <View className="relative bg-mascot-navy rounded-2xl p-6 pt-5 overflow-visible border-b-4 border-[#121A2B]">
+            {/* Header Hero */}
+            <View className="flex-row justify-between items-start">
+              <View className="flex-1 pr-2">
+                <Text className="font-extrabold text-[14px] text-reward-500 uppercase tracking-wider font-nunito mb-1.5">
+                  ÔN TẬP ĐỊNH KỲ · SRS
                 </Text>
-                <Text className="font-bold text-info-600 text-[12px] font-inter uppercase tracking-wider hidden">XEM TẤT CẢ</Text>
+                
+                {TEST_STATE === 'newUser' || data.srsDue === 0 ? (
+                  <View>
+                    <Text className="font-extrabold text-[22px] text-white font-nunito leading-tight mb-1">
+                      Hoàn thành hôm nay
+                    </Text>
+                    <Text className="font-medium text-[14px] text-neutral-300 font-inter mb-4">
+                      Bạn không còn từ vựng nào cần ôn tập.
+                    </Text>
+                  </View>
+                ) : (
+                  <View>
+                    <Text className="font-extrabold text-[26px] text-white font-nunito leading-tight mb-1 tabular-nums">
+                      {data.srsDue} TỪ VỰNG
+                    </Text>
+                    <Text className="font-medium text-[14px] text-neutral-300 font-inter mb-4">
+                      đã đến hạn ôn tập để ghi nhớ dài hạn.
+                    </Text>
+                  </View>
+                )}
               </View>
-            </Pressable>
-            
-            {TEST_STATE === 'chestReady' ? (
-               <View className="items-center py-2 pb-4">
-                 <Text className="font-extrabold text-[22px] text-mascot-navy font-nunito mb-2">🎁 Rương đã sẵn sàng!</Text>
-                 <Text className="font-medium text-[14px] text-neutral-500 font-inter text-center mb-6 px-4">Bạn đã hoàn thành mọi nhiệm vụ hôm nay.</Text>
-                 <Pressable className="w-full h-14 bg-reward-500 rounded-2xl border-b-[4px] border-reward-600 active:bg-reward-600 active:translate-y-[2px] active:border-b-[2px]  flex-row items-center justify-center">
-                   <Text className="text-neutral-800 font-extrabold text-[16px] uppercase font-nunito tracking-[0.04em]">MỞ RƯƠNG</Text>
-                 </Pressable>
-               </View>
+
+              {/* Snapy Nhân vật Neo thị giác */}
+              <View className="items-center -mt-2 -mr-2">
+                <Snapy pose={mascot.pose} animation={mascot.animation} className="w-24 h-24 shrink-0" />
+              </View>
+            </View>
+
+            {/* Hộp thoại thông điệp của Snapy */}
+            <View className="bg-white/10 px-3.5 py-2.5 rounded-xl mb-4 border border-white/10">
+              <Text className="text-[14px] font-semibold text-neutral-200 font-inter">
+                Snapy: "{mascot.msg}"
+              </Text>
+            </View>
+
+            {/* Primary Action Button dạng 3D Tactile theo §05.4 */}
+            {TEST_STATE === 'newUser' || data.srsDue === 0 ? (
+              <Pressable 
+                onPress={() => router.push('/topics' as any)}
+                className="h-14 bg-white rounded-xl flex-row items-center justify-center gap-2 border-b-4 border-neutral-300 active:border-b-0 active:translate-y-1"
+              >
+                <Text className="text-mascot-navy font-extrabold text-[15px] font-nunito tracking-wider uppercase">
+                  HỌC TỪ MỚI
+                </Text>
+                <ArrowRightIcon size={18} className="text-mascot-navy" />
+              </Pressable>
             ) : (
-               <View className="gap-4">
-                 {data.missions.map(m => (
-                   <View key={m.id} className="flex-row items-center justify-between">
-                     <View className="flex-row items-center gap-3 flex-1 pr-4">
-                       {m.completed ? (
-                         <CheckCircle2Icon size={24} fill="#58CC02" className="text-white" />
-                       ) : (
-                         <CircleIcon size={24} className="text-neutral-300" />
-                       )}
-                       <View className="flex-1">
-                         <Text className={cn("font-bold text-[14px] font-inter mb-1.5", m.completed ? "text-neutral-400 line-through" : "text-mascot-navy")}>
-                           {m.title}
-                         </Text>
-                         {!m.completed && (
-                           <View className="h-2 bg-neutral-100 rounded-full overflow-hidden">
-                             <View 
-                               className="h-full bg-info-500 rounded-full" 
-                               style={{ width: `${(m.progress / m.total) * 100}%` }}
-                             />
-                           </View>
-                         )}
-                       </View>
-                     </View>
-                     <View className="flex-row items-center gap-1 bg-neutral-50 px-2 py-1 rounded-lg">
-                       {m.isCoin ? (
-                         <CoinsIcon size={14} fill="#FFC42E" className="text-reward-600" />
-                       ) : (
-                         <Text className="font-bold text-reward-500 text-[12px] font-nunito">XP</Text>
-                       )}
-                       <Text className="font-extrabold tabular-nums text-[13px] text-neutral-500 font-nunito">+{m.reward}</Text>
-                     </View>
-                   </View>
-                 ))}
-               </View>
-            )}
-            
-            {TEST_STATE !== 'chestReady' && (
-              <Pressable onPress={() => router.push('/(tabs)/missions' as any)} className="mt-5 items-center">
-                <Text className="font-bold text-info-600 text-[14px] font-inter uppercase tracking-wider">XEM TẤT CẢ →</Text>
+              <Pressable 
+                onPress={() => router.push('/study/flashcard' as any)}
+                className="h-14 bg-primary-500 rounded-xl flex-row items-center justify-center gap-2 border-b-4 border-primary-700 active:border-b-0 active:translate-y-1"
+              >
+                <Text className="text-white font-extrabold text-[15px] font-nunito tracking-wider uppercase">
+                  ÔN NGAY
+                </Text>
+                <ArrowRightIcon size={18} className="text-white" />
               </Pressable>
             )}
           </View>
         </View>
 
         {/* ==========================================
-            SECTION 04: CONTINUE LEARNING - Level 1 Surface
+            KHỐI 5: DAILY MISSIONS & RƯƠNG PHẦN THƯỞNG
+            Đặc tả MH-MAIN-01: 5 nhiệm vụ (+1 bonus), Progress bar, Reward, Claim, Countdown
             ========================================== */}
-        <View className="px-4 mb-6">
-          <View className="bg-white rounded-[20px] p-5 border-2 border-neutral-100 border-b-[3px] shadow-sm shadow-black/5">
+        <View className="px-5 mb-6">
+          <View className="bg-white rounded-2xl p-5 border border-neutral-200/90 border-b-2">
+            <View className="flex-row justify-between items-center mb-4">
+              <View className="flex-row items-center gap-2">
+                <SparklesIcon size={18} className="text-mascot-500" />
+                <Text className="font-extrabold text-[14px] text-mascot-navy uppercase font-nunito tracking-wider">
+                  NHIỆM VỤ HÀNG NGÀY
+                </Text>
+              </View>
+              
+              {/* Countdown làm mới ngày mới */}
+              <View className="flex-row items-center gap-1.5 bg-neutral-50 px-2.5 py-1 rounded-lg border border-neutral-200">
+                <ClockIcon size={14} className="text-neutral-500" />
+                <Text className="font-bold text-[14px] text-neutral-600 font-nunito tabular-nums">
+                  {data.resetCountdown}
+                </Text>
+              </View>
+            </View>
+
+            {/* Trạng thái mở Rương hoàn thành nhiệm vụ */}
+            {TEST_STATE === 'chestReady' ? (
+              <View className="items-center py-4">
+                <RewardChest3D size="md" state="ready" animation="bounce" />
+                <Text className="font-extrabold text-[18px] text-mascot-navy font-nunito mt-3 mb-1">
+                  Rương phần thưởng đã sẵn sàng!
+                </Text>
+                <Text className="font-medium text-[14px] text-neutral-500 font-inter text-center mb-4">
+                  Bạn đã hoàn thành toàn bộ mục tiêu hôm nay.
+                </Text>
+                <Pressable className="w-full h-12 bg-reward-500 rounded-xl items-center justify-center border-b-4 border-reward-700 active:border-b-0 active:translate-y-1">
+                  <Text className="text-neutral-900 font-extrabold text-[15px] font-nunito uppercase tracking-wider">
+                    NHẬN RƯƠNG THƯỞNG
+                  </Text>
+                </Pressable>
+              </View>
+            ) : (
+              <View className="divide-y divide-neutral-100">
+                {data.missions.map(m => (
+                  <View key={m.id} className="py-3.5 flex-row items-center justify-between first:pt-0 last:pb-0">
+                    <View className="flex-row items-center gap-3 flex-1 pr-3">
+                      {m.completed ? (
+                        <CheckCircle2Icon size={22} fill="#58CC02" className="text-white" />
+                      ) : (
+                        <CircleIcon size={22} className="text-neutral-300" />
+                      )}
+                      
+                      <View className="flex-1">
+                        <Text className={cn("font-bold text-[14px] font-inter mb-1.5", m.completed ? "text-neutral-400 line-through" : "text-mascot-navy")}>
+                          {m.title}
+                        </Text>
+                        {!m.completed && (
+                          <View className="h-2 bg-neutral-100 rounded-full overflow-hidden">
+                            <View 
+                              className="h-full bg-primary-500 rounded-full" 
+                              style={{ width: `${(m.progress / m.total) * 100}%` }}
+                            />
+                          </View>
+                        )}
+                      </View>
+                    </View>
+
+                    {/* Huy hiệu phần thưởng */}
+                    <View className="flex-row items-center gap-1.5 bg-neutral-50 px-2.5 py-1 rounded-lg border border-neutral-100">
+                      {m.isCoin ? (
+                        <Coin3D size="xs" />
+                      ) : (
+                        <XPOrb3D size="xs" />
+                      )}
+                      <Text className="font-extrabold tabular-nums text-[14px] text-neutral-700 font-nunito">
+                        +{m.reward}
+                      </Text>
+                    </View>
+                  </View>
+                ))}
+              </View>
+            )}
+
+            {/* Link xem tất cả nhiệm vụ — Tuân thủ §01.6: Dùng neutral-600, KHÔNG dùng info-600 */}
+            {TEST_STATE !== 'chestReady' && (
+              <Pressable 
+                onPress={() => router.push('/(tabs)/missions' as any)} 
+                className="mt-4 pt-3 border-t border-neutral-100 flex-row items-center justify-center gap-1 active:opacity-70"
+              >
+                <Text className="font-bold text-neutral-600 text-[14px] font-inter uppercase tracking-wider">
+                  XEM TẤT CẢ NHIỆM VỤ
+                </Text>
+                <ChevronRightIcon size={16} className="text-neutral-600" />
+              </Pressable>
+            )}
+          </View>
+        </View>
+
+        {/* ==========================================
+            KHỐI 6: CONTINUE LEARNING DECK
+            Đặc tả MH-MAIN-01: Tên Deck gần nhất, tiến độ Card -> CTA: "Tiếp tục"
+            ========================================== */}
+        <View className="px-5 mb-6">
+          <View className="bg-white rounded-2xl p-5 border border-neutral-200/90 border-b-2">
             <View className="flex-row items-center justify-between mb-3">
-              <Text className="font-extrabold text-[13px] text-neutral-400 uppercase tracking-widest font-nunito">TIẾP TỤC HỌC</Text>
+              <Text className="font-extrabold text-[14px] text-neutral-400 uppercase tracking-wider font-nunito">
+                TIẾP TỤC HỌC
+              </Text>
               {TEST_STATE !== 'newUser' && (
-                <Pressable onPress={() => router.push('/topics')}>
-                  <Text className="font-bold text-[13px] text-info-600 font-inter">Khám phá chủ đề khác →</Text>
+                <Pressable onPress={() => router.push('/topics' as any)} className="active:opacity-70">
+                  <Text className="font-bold text-[14px] text-neutral-600 font-inter">
+                    Khám phá chủ đề →
+                  </Text>
                 </Pressable>
               )}
             </View>
+
             {TEST_STATE === 'newUser' ? (
               <View>
-                <Text className="font-extrabold text-[18px] text-mascot-navy font-nunito mb-1">Khám phá từ mới</Text>
-                <Text className="font-medium text-[14px] text-neutral-500 font-inter mb-5">Xây dựng vốn từ vựng của bạn bằng cách học bài đầu tiên.</Text>
+                <Text className="font-extrabold text-[18px] text-mascot-navy font-nunito mb-1">
+                  Khám phá bài học đầu tiên
+                </Text>
+                <Text className="font-medium text-[14px] text-neutral-500 font-inter mb-4">
+                  Bắt đầu học 10 từ vựng tiếng Anh cơ bản ngay hôm nay.
+                </Text>
                 <Pressable 
-                  onPress={() => router.push('/topics')}
-                  className="h-12 bg-white rounded-xl border-2 border-border border-b-[4px] active:bg-neutral-50 active:translate-y-[2px] active:border-b-2  flex-row items-center justify-center"
+                  onPress={() => router.push('/topics' as any)}
+                  className="h-12 bg-neutral-100 rounded-xl items-center justify-center border-b-4 border-neutral-300 active:border-b-0 active:translate-y-1"
                 >
-                  <Text className="text-mascot-navy font-bold text-[15px] uppercase font-nunito tracking-[0.04em]">BẮT ĐẦU NGAY</Text>
+                  <Text className="text-mascot-navy font-extrabold text-[15px] font-nunito uppercase tracking-wider">
+                    BẮT ĐẦU NGAY
+                  </Text>
                 </Pressable>
               </View>
             ) : (
               <View>
-                <Text className="font-extrabold text-[18px] text-mascot-navy font-nunito mb-1">{data.continueLearning.deckName}</Text>
-                <Text className="font-medium text-[14px] text-neutral-500 font-inter mb-3">Bài học {data.continueLearning.lesson} · {data.continueLearning.progress}/{data.continueLearning.total} từ</Text>
+                <Text className="font-extrabold text-[18px] text-mascot-navy font-nunito mb-1">
+                  {data.continueLearning.deckName}
+                </Text>
+                <Text className="font-medium text-[14px] text-neutral-500 font-inter mb-3">
+                  Bài học {data.continueLearning.lesson} · {data.continueLearning.progress}/{data.continueLearning.total} từ vựng
+                </Text>
                 
-                <View className="flex-row items-center gap-3 mb-5">
-                   <View className="flex-1 h-2.5 bg-neutral-100 rounded-full overflow-hidden">
-                      <View 
-                        className="h-full bg-primary-500 rounded-full" 
-                        style={{ width: `${(data.continueLearning.progress / data.continueLearning.total) * 100}%` }}
-                      />
-                   </View>
-                   <Text className="text-[13px] font-extrabold text-neutral-400 font-nunito tabular-nums">{Math.round((data.continueLearning.progress / data.continueLearning.total) * 100)}%</Text>
+                <View className="flex-row items-center gap-3 mb-4">
+                  <View className="flex-1 h-2.5 bg-neutral-100 rounded-full overflow-hidden">
+                    <View 
+                      className="h-full bg-primary-500 rounded-full" 
+                      style={{ width: `${(data.continueLearning.progress / data.continueLearning.total) * 100}%` }}
+                    />
+                  </View>
+                  <Text className="text-[14px] font-extrabold text-neutral-600 font-nunito tabular-nums">
+                    {Math.round((data.continueLearning.progress / data.continueLearning.total) * 100)}%
+                  </Text>
                 </View>
-                <Pressable className="h-12 bg-white rounded-xl border-2 border-border border-b-[4px] active:bg-neutral-50 active:translate-y-[2px] active:border-b-2  flex-row items-center justify-center">
-                  <Text className="text-mascot-navy font-bold text-[15px] uppercase font-nunito tracking-[0.04em]">TIẾP TỤC →</Text>
+
+                <Pressable 
+                  onPress={() => router.push('/study/flashcard' as any)}
+                  className="h-12 bg-neutral-100 rounded-xl flex-row items-center justify-center gap-2 border-b-4 border-neutral-300 active:border-b-0 active:translate-y-1"
+                >
+                  <Text className="text-mascot-navy font-extrabold text-[15px] font-nunito uppercase tracking-wider">
+                    TIẾP TỤC BÀI HỌC
+                  </Text>
+                  <ArrowRightIcon size={16} className="text-mascot-navy" />
                 </Pressable>
               </View>
             )}
@@ -340,75 +576,132 @@ export default function HomeDashboard() {
         </View>
 
         {/* ==========================================
-            SECTION 05: KHÁM PHÁ & HOẠT ĐỘNG
+            KHỐI 7: LEADERBOARD SNIPPET & THÀNH TỰU
+            Đặc tả MH-MAIN-01: Thứ hạng cá nhân theo Weekly XP -> CTA: MH-GAME-01
             ========================================== */}
-        <View className="px-4 mb-6">
-          <Text className="font-extrabold text-[14px] text-neutral-400 uppercase tracking-widest font-nunito mb-3 ml-1">KHÁM PHÁ & HOẠT ĐỘNG</Text>
+        <View className="px-5 mb-6">
+          <Text className="font-extrabold text-[14px] text-neutral-400 uppercase tracking-wider font-nunito mb-3">
+            BẢNG XẾP HẠNG & THÀNH TỰU
+          </Text>
+
           <View className="flex-row gap-3">
-            {/* Cột 1 */}
-            <View className="flex-1 gap-3">
-              {/* Thống kê */}
-              <Pressable 
-                onPress={() => router.push('/(tabs)/stats' as any)}
-                className="bg-info-50 rounded-2xl p-4 border-2 border-info-100 border-b-[4px] active:translate-y-[2px] active:border-b-[2px] "
-              >
-                <BookOpenIcon size={28} className="text-info-500 mb-3" fill="#1CB0F6" />
-                <Text className="font-extrabold text-[16px] text-info-700 font-nunito mb-0.5">Thống kê</Text>
-                <Text className="font-bold text-[13px] text-info-600/70 font-inter">{data.user.words} từ đã học</Text>
-              </Pressable>
-              
-              {/* Xếp hạng */}
-              <Pressable 
-                onPress={() => router.push('/(tabs)/leaderboard' as any)}
-                className="bg-reward-50 rounded-2xl p-4 border-2 border-reward-100 border-b-[4px] active:translate-y-[2px] active:border-b-[2px] "
-              >
-                <FlameIcon size={28} className="text-reward-500 mb-3" fill="#FFC42E" />
-                <Text className="font-extrabold text-[16px] text-reward-700 font-nunito mb-0.5">Xếp hạng</Text>
-                <Text className="font-bold text-[13px] text-reward-600/70 font-inter">Hạng #{data.leaderboardMe.rank}</Text>
-              </Pressable>
-            </View>
+            {/* Leaderboard Row */}
+            <Pressable 
+              onPress={() => router.push('/(tabs)/leaderboard' as any)}
+              className="flex-1 bg-white rounded-2xl p-4 border border-neutral-200/90 border-b-2 active:scale-[0.98]"
+            >
+              <View className="flex-row items-center gap-2 mb-2">
+                <StreakFlame3D size="sm" />
+                <Text className="font-extrabold text-[16px] text-mascot-navy font-nunito">
+                  Hạng #{data.leaderboardMe.rank}
+                </Text>
+              </View>
+              <Text className="font-medium text-[14px] text-neutral-500 font-inter">
+                Giải đấu {data.leaderboardMe.league}
+              </Text>
+              <View className="mt-3 pt-2.5 border-t border-neutral-100 flex-row items-center justify-between">
+                <Text className="font-bold text-[14px] text-neutral-600 font-inter">
+                  Bảng tuần
+                </Text>
+                <ChevronRightIcon size={14} className="text-neutral-500" />
+              </View>
+            </Pressable>
 
-            {/* Cột 2 */}
-            <View className="flex-1 gap-3">
-              {/* Cấp độ */}
-              <Pressable 
-                onPress={() => router.push('/stats/level-progress' as any)}
-                className="bg-primary-50 rounded-2xl p-4 border-2 border-primary-100 border-b-[4px] active:translate-y-[2px] active:border-b-[2px] "
-              >
-                <CircleIcon size={28} className="text-primary-500 mb-3" fill="#3B82F6" />
-                <Text className="font-extrabold text-[16px] text-primary-700 font-nunito mb-0.5">Cấp độ {data.user.level}</Text>
-                <Text className="font-bold text-[13px] text-primary-600/70 font-inter">{data.user.xp} XP</Text>
-              </Pressable>
-
-              {/* Thành tựu */}
-              <Pressable 
-                onPress={() => router.push('/(tabs)/achievements' as any)}
-                className="bg-success-50 rounded-2xl p-4 border-2 border-success-100 border-b-[4px] active:translate-y-[2px] active:border-b-[2px] "
-              >
-                <TrophyIcon size={28} className="text-success-500 mb-3" fill="#22C55E" />
-                <Text className="font-extrabold text-[16px] text-success-700 font-nunito mb-0.5">Thành tựu</Text>
-                <Text className="font-bold text-[13px] text-success-600/70 font-inter">Xem huy hiệu</Text>
-              </Pressable>
-            </View>
+            {/* Achievements Row */}
+            <Pressable 
+              onPress={() => router.push('/(tabs)/achievements' as any)}
+              className="flex-1 bg-white rounded-2xl p-4 border border-neutral-200/90 border-b-2 active:scale-[0.98]"
+            >
+              <View className="flex-row items-center gap-2 mb-2">
+                <AchievementTrophy3D size="sm" />
+                <Text className="font-extrabold text-[16px] text-mascot-navy font-nunito">
+                  Cấp {data.user.level}
+                </Text>
+              </View>
+              <Text className="font-medium text-[14px] text-neutral-500 font-inter">
+                Huy hiệu & Thưởng
+              </Text>
+              <View className="mt-3 pt-2.5 border-t border-neutral-100 flex-row items-center justify-between">
+                <Text className="font-bold text-[14px] text-neutral-600 font-inter">
+                  Chi tiết
+                </Text>
+                <ChevronRightIcon size={14} className="text-neutral-500" />
+              </View>
+            </Pressable>
           </View>
         </View>
 
         {/* ==========================================
-            SECTION 08: RECENTLY LEARNED - Level 2 Surface
+            KHỐI 8: RECENTLY LEARNED VOCABULARY CHIPS
+            Đặc tả MH-MAIN-01: 3-5 Note gần nhất -> CTA: Tra từ trong Từ điển
             ========================================== */}
-        {!TEST_STATE.includes('newUser') && (
-          <View className="mb-2">
-            <View className="px-4 mb-3">
-              <Text className="font-extrabold text-[13px] text-neutral-400 uppercase tracking-widest font-nunito">TỪ VỪA HỌC</Text>
+        {TEST_STATE !== 'newUser' && (
+          <View className="mb-4">
+            <View className="px-5 mb-3 flex-row items-center justify-between">
+              <Text className="font-extrabold text-[14px] text-neutral-400 uppercase tracking-wider font-nunito">
+                TỪ VỪA HỌC GẦN ĐÂY
+              </Text>
+              <Pressable onPress={() => router.push('/dictionary' as any)} className="active:opacity-70">
+                <Text className="font-bold text-[14px] text-neutral-600 font-inter">
+                  Xem tất cả →
+                </Text>
+              </Pressable>
             </View>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} className="px-4" contentContainerStyle={{ gap: 10, paddingRight: 32 }}>
+            <ScrollView 
+              horizontal 
+              showsHorizontalScrollIndicator={false} 
+              className="px-5" 
+              contentContainerStyle={{ gap: 10, paddingRight: 36 }}
+            >
               {data.recentWords.map((word, i) => (
-                <View key={i} className="bg-white rounded-xl px-4 py-3 border border-neutral-100 shadow-sm shadow-black/5">
-                   <Text className="font-extrabold text-[15px] text-mascot-navy font-nunito mb-0.5">{word.word}</Text>
-                   <Text className="font-medium text-[13px] text-neutral-400 font-inter">{word.translation}</Text>
-                </View>
+                <Pressable 
+                  key={i} 
+                  onPress={() => router.push(`/dictionary` as any)}
+                  className="bg-white rounded-xl px-4 py-3 border border-neutral-200/90 border-b-2 active:bg-neutral-50"
+                >
+                  <Text className="font-extrabold text-[15px] text-mascot-navy font-nunito mb-0.5">
+                    {word.word}
+                  </Text>
+                  <Text className="font-medium text-[14px] text-neutral-500 font-inter">
+                    {word.translation}
+                  </Text>
+                </Pressable>
               ))}
             </ScrollView>
+          </View>
+        )}
+
+        {/* ==========================================
+            PER-BLOCK ERROR FALLBACK DEMONSTRATION
+            Đặc tả MH-MAIN-01: Khối bị lỗi hiển thị "Không tải được" + nút thử lại, các khối khác bình thường
+            ========================================== */}
+        {TEST_STATE === 'error' && (
+          <View className="px-5 mt-2">
+            <View className="bg-danger-50 border border-danger-200 rounded-2xl p-4 flex-row items-center justify-between">
+              <View className="flex-row items-center gap-3 flex-1 pr-2">
+                <AlertCircleIcon size={20} className="text-danger-600" />
+                <View className="flex-1">
+                  <Text className="font-bold text-[14px] text-danger-700 font-inter">
+                    Không thể đồng bộ bảng xếp hạng
+                  </Text>
+                  <Text className="text-[14px] text-danger-600 font-inter">
+                    Vui lòng kiểm tra lại kết nối mạng.
+                  </Text>
+                </View>
+              </View>
+              <Pressable 
+                onPress={() => {
+                  setBlockErrorRetrying(true);
+                  setTimeout(() => setBlockErrorRetrying(false), 800);
+                }}
+                className="bg-white px-3 py-2 rounded-xl border border-danger-200 flex-row items-center gap-1.5 active:bg-neutral-50"
+              >
+                <RotateCcwIcon size={14} className={cn("text-danger-700", blockErrorRetrying && "animate-spin")} />
+                <Text className="font-bold text-[14px] text-danger-700 font-inter">
+                  Thử lại
+                </Text>
+              </Pressable>
+            </View>
           </View>
         )}
       </ScrollView>

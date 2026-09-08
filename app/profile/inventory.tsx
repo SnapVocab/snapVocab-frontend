@@ -272,7 +272,7 @@ export default function InventoryScreen() {
       >
         {items.length === 0 ? (
           <View className="items-center justify-center py-20 opacity-70">
-            <Snapy pose="curious" className="w-24 h-24 mb-4" />
+            <Snapy pose="to_mo" animation="idle" className="w-24 h-24 mb-4" />
             <Text className="font-extrabold text-[18px] text-mascot-navy font-nunito mb-1">Kho đồ trống!</Text>
             <Text className="font-medium text-[14px] text-neutral-500 font-inter">Bạn chưa sở hữu vật phẩm nào.</Text>
             

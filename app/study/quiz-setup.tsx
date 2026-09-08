@@ -88,7 +88,7 @@ export default function QuizSetupScreen() {
         // EMPTY STATE: INSUFFICIENT WORDS
         // ==========================================
         <View className="flex-1 items-center justify-center p-6">
-          <Snapy pose="curious" className="w-40 h-40 mb-6" />
+          <Snapy pose="suy_nghi" animation="idle" className="w-40 h-40 mb-6" />
           <Text className="font-extrabold text-[22px] text-mascot-navy font-nunito text-center mb-2">Chưa đủ từ để tạo Quiz</Text>
           <Text className="font-medium text-[15px] text-neutral-500 font-inter text-center mb-8 px-4">
             Deck này chỉ có {deck.wordCount} từ. Bạn cần ít nhất 5 từ để bắt đầu một bài quiz.

@@ -26,7 +26,7 @@ import { router } from 'expo-router';
 type MockState = 'idle' | 'noPermission' | 'processing' | 'exhausted' | 'offline';
 const TEST_STATE: MockState = 'idle';
 
-const MOCK_SCANS_LEFT = 3;
+const MOCK_SCANS_LEFT: number = 3;
 
 export default function CameraScanScreen() {
   const [permission, requestPermission] = useCameraPermissions();
@@ -77,7 +77,7 @@ export default function CameraScanScreen() {
     return (
       <SafeAreaView className="flex-1 bg-neutral-900 justify-center items-center px-6">
         <View className="bg-white rounded-[24px] p-6 items-center w-full max-w-[340px] shadow-sm shadow-black/10">
-          <Snapy pose="happy" animation="bounce" className="w-24 h-24 mb-4" />
+          <Snapy pose="kham_pha" animation="bounce" className="w-28 h-28 mb-4" />
           <Text className="font-extrabold text-[20px] text-mascot-navy font-nunito mb-2 text-center leading-tight">Sử dụng Camera để khám phá từ mới</Text>
           <Text className="font-medium text-[14px] text-neutral-500 font-inter mb-6 text-center leading-relaxed">
             Cho phép SnapVocab truy cập Camera để nhận diện vật thể xung quanh bạn.
@@ -191,7 +191,7 @@ export default function CameraScanScreen() {
       {isExhausted && !isProcessing && (
         <View className="flex-1 items-center justify-center px-6 z-20">
           <View className="bg-white rounded-[24px] p-6 items-center w-full shadow-lg shadow-black/20">
-            <Snapy pose="idle" animation="idle" className="w-20 h-20 mb-3" />
+            <Snapy pose="suy_nghi" animation="idle" className="w-24 h-24 mb-3" />
             <Text className="font-extrabold text-[20px] text-mascot-navy font-nunito mb-1 text-center">Hết lượt Scan</Text>
             <Text className="font-medium text-[14px] text-neutral-500 font-inter mb-5 text-center leading-relaxed">
               Bạn đã sử dụng hết lượt scan hôm nay. Lượt scan sẽ được làm mới vào <Text className="font-bold">00:00 ngày mai</Text>.
@@ -206,7 +206,7 @@ export default function CameraScanScreen() {
       {/* STATE: PROCESSING */}
       {isProcessing && (
         <View className="flex-1 items-center justify-center px-6 z-20">
-          <Snapy pose="happy" animation="bounce" className="w-32 h-32 mb-4" />
+          <Snapy pose="loading" animation="float" className="w-36 h-36 mb-4" />
           <View className="bg-black/70 px-6 py-4 rounded-3xl backdrop-blur-md items-center shadow-lg shadow-black/20">
             <Text className="font-extrabold text-[18px] text-white font-nunito mb-1 text-center">
               Mắt thần đang nhìn...

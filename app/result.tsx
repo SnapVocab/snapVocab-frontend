@@ -90,7 +90,7 @@ export default function DetectionResultScreen() {
       case 'processing':
         return (
           <View className="flex-1 items-center justify-center px-6">
-             <Snapy pose="happy" animation="bounce" className="w-32 h-32 mb-4" />
+             <Snapy pose="loading" animation="float" className="w-36 h-36 mb-4" />
              <Text className="font-extrabold text-[20px] text-mascot-navy font-nunito mb-2">Đang nhận diện</Text>
              <Text className="font-medium text-[14px] text-neutral-500 font-inter">Mắt thần đang phân tích hình ảnh...</Text>
           </View>
@@ -98,7 +98,7 @@ export default function DetectionResultScreen() {
       case 'queued':
         return (
           <View className="flex-1 items-center justify-center px-6">
-             <Snapy pose="idle" animation="idle" className="w-32 h-32 mb-4" />
+             <Snapy pose="suy_nghi" animation="idle" className="w-32 h-32 mb-4" />
              <Text className="font-extrabold text-[20px] text-mascot-navy font-nunito mb-2">Đang xếp hàng</Text>
              <Text className="font-medium text-[14px] text-neutral-500 font-inter mb-1">Vị trí hàng đợi: #3</Text>
              <Text className="font-medium text-[14px] text-neutral-500 font-inter mb-6">Ước tính: ~20 giây</Text>
@@ -110,7 +110,7 @@ export default function DetectionResultScreen() {
       case 'error':
         return (
           <View className="flex-1 items-center justify-center px-6">
-             <Snapy pose="idle" animation="idle" className="w-32 h-32 mb-4" />
+             <Snapy pose="bat_ngo" animation="shake" className="w-32 h-32 mb-4" />
              <Text className="font-extrabold text-[20px] text-mascot-navy font-nunito mb-2">Xử lý thất bại</Text>
              <Text className="font-medium text-[14px] text-neutral-500 font-inter text-center mb-6">Rất tiếc, đã có lỗi xảy ra trong quá trình nhận diện.</Text>
              <View className="w-full gap-3 max-w-[300px]">
@@ -126,7 +126,7 @@ export default function DetectionResultScreen() {
       case 'quotaExceeded':
         return (
           <View className="flex-1 items-center justify-center px-6">
-             <Snapy pose="idle" animation="idle" className="w-32 h-32 mb-4" />
+             <Snapy pose="suy_nghi" animation="idle" className="w-32 h-32 mb-4" />
              <Text className="font-extrabold text-[20px] text-mascot-navy font-nunito mb-2 text-center">Bạn đã dùng hết lượt scan hôm nay</Text>
              <Text className="font-medium text-[14px] text-neutral-500 font-inter text-center mb-6">Lượt scan sẽ được làm mới vào 00:00 ngày mai.</Text>
              <Pressable onPress={() => router.replace('/(tabs)')} className="w-full max-w-[300px] h-12 bg-primary-500 rounded-xl border-b-[4px] border-primary-700 active:bg-primary-600 active:translate-y-[2px] active:border-b-[2px] transition-all flex-row items-center justify-center">
@@ -137,7 +137,7 @@ export default function DetectionResultScreen() {
       case 'noObject':
         return (
           <View className="flex-1 items-center justify-center px-6">
-             <Snapy pose="idle" animation="idle" className="w-32 h-32 mb-4" />
+             <Snapy pose="to_mo" animation="idle" className="w-32 h-32 mb-4" />
              <Text className="font-extrabold text-[20px] text-mascot-navy font-nunito mb-2 text-center">Không nhận diện được vật thể</Text>
              <Text className="font-medium text-[14px] text-neutral-500 font-inter text-center mb-6">Mắt thần không tìm thấy vật thể nào rõ ràng trong ảnh.</Text>
              <Pressable onPress={handleRetake} className="w-full max-w-[300px] h-12 bg-primary-500 rounded-xl border-b-[4px] border-primary-700 active:bg-primary-600 active:translate-y-[2px] active:border-b-[2px] transition-all flex-row items-center justify-center">
@@ -202,7 +202,7 @@ export default function DetectionResultScreen() {
         {TEST_STATE === 'allLow' && (
           <View className="px-4 mb-4">
              <View className="bg-white rounded-[20px] p-5 border-2 border-neutral-100 items-center">
-               <Snapy pose="idle" className="w-20 h-20 mb-3" />
+               <Snapy pose="to_mo" animation="idle" className="w-24 h-24 mb-3" />
                <Text className="font-extrabold text-[16px] text-mascot-navy font-nunito mb-1 text-center">Không tìm thấy vật thể có độ tin cậy cao</Text>
                <Text className="font-medium text-[13px] text-neutral-500 font-inter mb-4 text-center">Bạn có muốn thử một góc chụp khác rõ ràng hơn không?</Text>
                <Pressable onPress={handleRetake} className="w-full h-12 bg-primary-500 rounded-xl border-b-[4px] border-primary-700 active:bg-primary-600 active:translate-y-[2px] active:border-b-[2px] transition-all flex-row items-center justify-center">
@@ -244,7 +244,7 @@ export default function DetectionResultScreen() {
               {/* Low Confidence Mascot Injection */}
               {item.confidence === 'Low' && (
                 <View className="flex-row items-center gap-3 mb-4 bg-warning-50/50 p-3 rounded-2xl">
-                  <Snapy pose="idle" className="w-12 h-12" />
+                  <Snapy pose="to_mo" animation="idle" className="w-12 h-12" />
                   <View className="flex-1 bg-white px-3 py-2 rounded-2xl rounded-tl-sm border border-neutral-100 shadow-sm shadow-black/5">
                     <Text className="font-medium text-[13px] text-neutral-600 font-inter">"Hình như đây là..."</Text>
                   </View>

@@ -53,7 +53,7 @@ export default function StatsScreen() {
         </View>
         
         <View className="flex-1 items-center justify-center p-6 pb-20">
-          <Snapy pose="curious" className="w-48 h-48 mb-6" />
+          <Snapy pose="kham_pha" animation="bounce" className="w-48 h-48 mb-6" />
           <Text className="font-extrabold text-[24px] text-mascot-navy font-nunito text-center mb-2">
             Hành trình bắt đầu!
           </Text>
@@ -178,13 +178,13 @@ export default function StatsScreen() {
         </View>
 
         {/* 2. STREAK */}
-        <View className="bg-white rounded-[24px] border-2 border-warning-100 border-b-[6px] shadow-sm shadow-warning-500/10 p-5 flex-row items-center justify-between mb-6 mt-2">
+        <View className="bg-white rounded-2xl border border-neutral-200/80 p-5 flex-row items-center justify-between mb-5">
           <View className="flex-1">
             <View className="flex-row items-center gap-2 mb-1">
-              <FlameIcon size={24} className="text-warning-500" fill="#F97316" />
-              <Text className="font-extrabold text-[24px] text-mascot-navy font-nunito">{MOCK_STATS.streak} Ngày</Text>
+              <FlameIcon size={22} className="text-mascot-500" fill="#FF8A00" />
+              <Text className="font-extrabold text-[22px] text-mascot-navy font-nunito tabular-nums">{MOCK_STATS.streak} Ngày</Text>
             </View>
-            <Text className="font-bold text-[13px] text-warning-600 font-inter uppercase tracking-wide">
+            <Text className="font-bold text-[12px] text-mascot-500 font-inter uppercase tracking-wide">
               Kỷ lục: {MOCK_STATS.longestStreak} ngày
             </Text>
           </View>
@@ -196,7 +196,7 @@ export default function StatsScreen() {
                 <Text className="font-bold text-[10px] text-neutral-400 font-inter">{day}</Text>
                 <View className={cn(
                   "w-6 h-6 rounded-full items-center justify-center",
-                  idx < 5 ? "bg-warning-500" : "bg-neutral-100"
+                  idx < 5 ? "bg-mascot-500" : "bg-neutral-100"
                 )}>
                   {idx < 5 && <CheckCircle2Icon size={12} className="text-white" />}
                 </View>
@@ -205,19 +205,19 @@ export default function StatsScreen() {
           </View>
         </View>
 
-        {/* 3. DAILY GOAL (Could Feature) */}
+        {/* 3. DAILY GOAL */}
         {MOCK_STATS.goal.current < MOCK_STATS.goal.target && (
-          <View className="bg-primary-50 rounded-[20px] p-5 border border-primary-200 mb-6 flex-row items-center justify-between">
+          <View className="bg-white rounded-2xl p-5 border border-neutral-200/80 mb-5 flex-row items-center justify-between">
             <View className="flex-1 pr-4">
               <View className="flex-row items-center gap-2 mb-1">
                 <TargetIcon size={18} className="text-primary-600" />
-                <Text className="font-extrabold text-[16px] text-primary-800 font-nunito">Mục tiêu ngày</Text>
+                <Text className="font-extrabold text-[16px] text-mascot-navy font-nunito">Mục tiêu hôm nay</Text>
               </View>
-              <Text className="font-medium text-[13px] text-primary-600 font-inter mb-3">
-                Còn {MOCK_STATS.goal.target - MOCK_STATS.goal.current} {MOCK_STATS.goal.unit} nữa!
+              <Text className="font-medium text-[13px] text-neutral-500 font-inter mb-3">
+                Còn {MOCK_STATS.goal.target - MOCK_STATS.goal.current} {MOCK_STATS.goal.unit} nữa để hoàn thành!
               </Text>
               
-              <View className="h-3 bg-primary-200 rounded-full overflow-hidden w-full">
+              <View className="h-2 bg-neutral-100 rounded-full overflow-hidden w-full">
                 <View 
                   className="h-full bg-primary-500 rounded-full" 
                   style={{ width: `${(MOCK_STATS.goal.current / MOCK_STATS.goal.target) * 100}%` }}
@@ -227,9 +227,9 @@ export default function StatsScreen() {
 
             <Pressable 
               onPress={() => router.push('/(tabs)/learn')}
-              className="bg-primary-500 w-12 h-12 rounded-full items-center justify-center border-b-[3px] border-primary-700 active:bg-primary-600 active:translate-y-[2px] active:border-b-[1px] "
+              className="bg-primary-500 w-11 h-11 rounded-xl items-center justify-center active:scale-[0.98] active:bg-primary-600 transition-all"
             >
-              <ChevronRightIcon size={24} className="text-white" />
+              <ChevronRightIcon size={22} className="text-white" />
             </Pressable>
           </View>
         )}

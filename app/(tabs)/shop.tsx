@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, ScrollView, Pressable, SafeAreaView } from 'react-native';
 import { router } from 'expo-router';
-import { CoinsIcon } from 'lucide-react-native';
+import { Coin3D } from '@/components/snapvocab';
 import { cn } from '@/lib/utils';
 import { ShopItemCard, ShopItemType } from '@/components/shop/ShopItemCard';
 import { PurchaseSuccessModal } from '@/components/shop/PurchaseSuccessModal';
@@ -195,41 +195,41 @@ export default function ShopScreen() {
   // RENDER MAIN SCREEN
   // ==========================================
   return (
-    <View className="flex-1 bg-[#F7F8FA]">
+    <View className="flex-1 bg-[#FAFAFA]">
       <SafeAreaView className="bg-white" />
       {/* 1. HEADER */}
-      <View className="px-4 py-3 border-b border-neutral-100 bg-white flex-row items-center justify-between z-10 shadow-sm shadow-black/5">
-        <Text className="font-extrabold text-[22px] text-mascot-navy font-nunito flex-1">Cửa hàng</Text>
+      <View className="px-5 py-3 border-b border-neutral-200/80 bg-white flex-row items-center justify-between z-10">
+        <Text className="font-extrabold text-[22px] text-mascot-navy font-nunito flex-1">Cửa hàng vật phẩm</Text>
         
         {/* Coin Balance Pill */}
         <Pressable 
           onPress={() => router.push('/profile/wallet' as any)} 
-          className="bg-reward-50 border border-reward-200 px-3 py-1.5 rounded-full flex-row items-center gap-1.5 active:bg-reward-100"
+          className="bg-reward-50 border border-reward-200 px-3.5 py-1 rounded-full flex-row items-center gap-1.5 active:scale-95 transition-all"
         >
-          <CoinsIcon size={18} fill="#FFC42E" className="text-reward-600" />
-          <Text className="font-extrabold text-[15px] text-reward-700 font-nunito tabular-nums">
+          <Coin3D size="xs" />
+          <Text className="font-extrabold text-[14px] text-reward-700 font-nunito tabular-nums">
             {coins.toLocaleString()}
           </Text>
         </Pressable>
       </View>
 
       {/* 2. CATEGORIES */}
-      <View className="bg-white border-b border-neutral-100">
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} className="px-4 py-3" contentContainerStyle={{ gap: 8 }}>
+      <View className="bg-white border-b border-neutral-200/80">
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} className="px-5 py-3" contentContainerStyle={{ gap: 8 }}>
           {CATEGORIES.map(cat => (
             <Pressable 
               key={cat.id}
               onPress={() => setActiveCategory(cat.id)}
               className={cn(
-                "px-5 py-2 rounded-full border-2 ",
+                "px-4 py-1.5 rounded-full border transition-all active:scale-95",
                 activeCategory === cat.id 
-                  ? "bg-primary-50 border-primary-500" 
+                  ? "bg-mascot-navy border-mascot-navy text-white" 
                   : "bg-white border-neutral-200"
               )}
             >
               <Text className={cn(
-                "font-bold text-[14px] font-inter",
-                activeCategory === cat.id ? "text-primary-700" : "text-neutral-500"
+                "font-bold text-[13px] font-inter",
+                activeCategory === cat.id ? "text-white" : "text-neutral-500"
               )}>
                 {cat.label}
               </Text>
@@ -240,13 +240,13 @@ export default function ShopScreen() {
 
       {/* 3. ITEM SECTIONS */}
       <ScrollView 
-        contentContainerStyle={{ padding: 16, paddingBottom: 60 }}
+        contentContainerStyle={{ padding: 20, paddingBottom: 60 }}
         showsVerticalScrollIndicator={false}
       >
         {filteredSections.map((section, index) => (
-          <View key={index} className="mb-8">
-            <View className="flex-row items-center justify-between mb-4">
-              <Text className="font-extrabold text-[20px] text-mascot-navy font-nunito">
+          <View key={index} className="mb-7">
+            <View className="flex-row items-center justify-between mb-3.5">
+              <Text className="font-extrabold text-[18px] text-mascot-navy font-nunito">
                 {section.title}
               </Text>
             </View>
@@ -278,3 +278,4 @@ export default function ShopScreen() {
     </View>
   );
 }
+

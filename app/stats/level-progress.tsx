@@ -210,7 +210,7 @@ export default function LevelProgressScreen() {
           
           {MOCK_STATE.isNewUser ? (
             <View className="bg-white rounded-[20px] p-6 border border-neutral-100 items-center justify-center border-dashed">
-              <Snapy pose="curious" className="w-20 h-20 mb-3 opacity-60" />
+              <Snapy pose="to_mo" animation="idle" className="w-20 h-20 mb-3 opacity-70" />
               <Text className="font-bold text-[15px] text-neutral-500 font-inter mb-1">Chưa có hoạt động XP</Text>
               <Text className="font-medium text-[13px] text-neutral-400 font-inter text-center">Hoàn thành bài học hoặc Quiz để bắt đầu tích XP!</Text>
             </View>
@@ -281,7 +281,7 @@ export default function LevelProgressScreen() {
         <View className="flex-1 bg-black/80 items-center justify-center px-6 pt-10">
           {renderConfetti()}
           
-          <Snapy pose="happy" className="w-48 h-48 mb-6 z-10" />
+          <Snapy pose="nhay_len" animation="celebrate" className="w-48 h-48 mb-6 z-10" />
           
           <Text className="font-extrabold text-[24px] text-warning-400 font-nunito uppercase tracking-widest mb-2">
             Level Up! 🎉

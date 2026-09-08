@@ -9,7 +9,8 @@ import Animated, {
   withDelay,
   runOnJS
 } from 'react-native-reanimated';
-import { CheckIcon, XIcon, CoinsIcon } from 'lucide-react-native';
+import { CheckIcon, XIcon } from 'lucide-react-native';
+import { Coin3D } from '@/components/snapvocab';
 import { cn } from '@/lib/utils';
 import { ShopItemType } from './ShopItemCard';
 import LottieView from 'lottie-react-native';
@@ -118,7 +119,7 @@ export function PurchaseSuccessModal({
                 <View className="flex-row items-center justify-between mb-2">
                   <Text className="font-bold text-[14px] text-neutral-500 font-inter">Giá vật phẩm:</Text>
                   <View className="flex-row items-center gap-1.5">
-                    <CoinsIcon size={16} fill="#FFC42E" className="text-reward-600" />
+                    <Coin3D size="xs" />
                     <Text className="font-extrabold text-[16px] text-mascot-navy font-nunito tabular-nums">
                       {item.price}
                     </Text>
@@ -128,7 +129,7 @@ export function PurchaseSuccessModal({
                 <View className="flex-row items-center justify-between mt-2">
                   <Text className="font-bold text-[14px] text-neutral-500 font-inter">Số dư của bạn:</Text>
                   <View className="flex-row items-center gap-1.5">
-                    <CoinsIcon size={16} fill="#FFC42E" className="text-reward-600" />
+                    <Coin3D size="xs" />
                     <Text className="font-extrabold text-[16px] text-reward-600 font-nunito tabular-nums">
                       {userCoins.toLocaleString()}
                     </Text>

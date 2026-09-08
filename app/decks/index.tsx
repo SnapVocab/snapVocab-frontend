@@ -147,7 +147,7 @@ export default function MyVocabularyScreen() {
         <View className="px-4 gap-4">
           {decks.length === 0 ? (
             <View className="bg-white rounded-[24px] border-2 border-neutral-100 border-b-[4px] p-8 items-center justify-center mt-4">
-              <Snapy pose="happy" className="w-28 h-28 mb-4" />
+              <Snapy pose="chao_mung" animation="wave" className="w-28 h-28 mb-4" />
               <Text className="font-extrabold text-[18px] text-mascot-navy font-nunito mb-1.5 text-center">Chưa có Deck nào</Text>
               <Text className="font-medium text-[14px] text-neutral-500 font-inter text-center mb-6">Tạo Deck đầu tiên và bắt đầu lưu từ vựng ngay nhé!</Text>
               <Pressable 

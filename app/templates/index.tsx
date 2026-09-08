@@ -266,7 +266,7 @@ export default function TemplateManagementScreen() {
 
             {customTemplates.length === 0 && (
               <View className="items-center justify-center py-10 opacity-70 bg-white rounded-3xl border border-neutral-100 border-dashed mb-6">
-                <Snapy pose="curious" className="w-20 h-20 mb-4" />
+                <Snapy pose="to_mo" animation="idle" className="w-20 h-20 mb-4" />
                 <Text className="font-extrabold text-[18px] text-mascot-navy font-nunito mb-1">Chưa có template nào</Text>
                 <Text className="font-medium text-[14px] text-neutral-500 font-inter text-center px-6">
                   Hãy nhân bản một mẫu hệ thống để bắt đầu tùy chỉnh theo ý bạn.

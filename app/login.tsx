@@ -107,14 +107,14 @@ export default function Login() {
           <Pressable 
             disabled={!canSubmit} 
             onPress={handleSubmit} 
-            className="btn-3d btn-primary mt-2"
+            className="h-14 w-full rounded-xl bg-primary-500 items-center justify-center active:scale-[0.98] active:bg-primary-600 disabled:opacity-50 mt-2"
           >
-            {loading ? <ActivityIndicator color="white" size="small" /> : <Text className="text-white font-bold text-[15px] uppercase">Đăng nhập</Text>}
+            {loading ? <ActivityIndicator color="white" size="small" /> : <Text className="text-white font-extrabold font-nunito text-[15px] uppercase tracking-wide">Đăng nhập</Text>}
           </Pressable>
 
-          <Pressable className="btn-3d btn-ghost gap-2 flex-row">
+          <Pressable className="h-14 w-full rounded-xl bg-white border border-neutral-200 gap-2 flex-row items-center justify-center active:scale-[0.98] active:bg-neutral-50">
             <FingerprintIcon size={22} className="text-info-600" />
-            <Text className="text-info-600 font-bold text-[15px] uppercase">Đăng nhập sinh trắc học</Text>
+            <Text className="text-info-600 font-extrabold font-nunito text-[15px] uppercase tracking-wide">Đăng nhập sinh trắc học</Text>
           </Pressable>
         </View>
 

@@ -271,7 +271,7 @@ export default function DictionarySearchScreen() {
 
         {currentState === 'empty' && (
           <View className="items-center justify-center py-12 px-6">
-            <Snapy pose="idle" className="w-32 h-32 mb-6" />
+            <Snapy pose="to_mo" animation="idle" className="w-32 h-32 mb-6" />
             <Text className="font-extrabold text-[18px] text-mascot-navy font-nunito mb-2 text-center">
               Không tìm thấy từ
             </Text>
@@ -325,9 +325,13 @@ export default function DictionarySearchScreen() {
             {/* Mascot Area */}
             <View className="items-center mb-4 h-[120px] justify-center">
               {voiceState === 'error' ? (
-                <Snapy pose="sad" className="w-28 h-28" />
+                <Snapy pose="bat_ngo" animation="shake" className="w-28 h-28" />
+              ) : voiceState === 'listening' ? (
+                <Snapy pose="tap_trung" animation="idle" className="w-28 h-28" />
+              ) : voiceState === 'searching' ? (
+                <Snapy pose="suy_nghi" animation="idle" className="w-28 h-28" />
               ) : (
-                <Snapy pose={voiceState === 'idle' ? 'welcome' : 'reading'} className="w-28 h-28" />
+                <Snapy pose="chao_mung" animation="wave" className="w-28 h-28" />
               )}
             </View>
 

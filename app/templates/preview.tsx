@@ -21,8 +21,23 @@ import { Snapy } from '@/components/Snapy';
 // TYPES
 // ==========================================
 type FieldType = 'WORD' | 'MEANING' | 'PART_OF_SPEECH' | 'EXAMPLE' | 'PERSONAL_NOTE' | 'IPA' | 'AUDIO' | 'IMAGE';
-type BaseLayout = 'SINGLE_COLUMN' | 'TWO_COLUMN' | 'IMAGE_TOP' | 'AUDIO_CENTER';
+type BaseLayout = 'SINGLE_COLUMN' | 'TWO_COLUMN' | 'IMAGE_TOP' | 'AUDIO_CENTER' | 'SKETCH_HERO_LEFT' | 'GRID_2X2' | 'HERO_TOP_SPLIT_BOTTOM';
 type InteractionType = 'FLIP' | 'TYPE_IN' | 'TAP_TO_REVEAL';
+
+export type GridZoneId =
+  | 'LEFT_HERO'
+  | 'RIGHT_TOP'
+  | 'RIGHT_MID_LEFT'
+  | 'RIGHT_MID_RIGHT'
+  | 'RIGHT_BOT_LEFT'
+  | 'RIGHT_BOT_RIGHT'
+  | 'GRID_TOP_LEFT'
+  | 'GRID_TOP_RIGHT'
+  | 'GRID_BOT_LEFT'
+  | 'GRID_BOT_RIGHT'
+  | 'HERO_TOP'
+  | 'BOT_LEFT'
+  | 'BOT_RIGHT';
 
 interface TemplateField {
   id: FieldType;
@@ -30,6 +45,7 @@ interface TemplateField {
   sample: string;
   enabled: boolean;
   isPrimary: boolean;
+  zone?: GridZoneId;
   config?: {
     autoPlay?: boolean;
     maskPattern?: '___' | '•••';
@@ -86,6 +102,42 @@ const LAYOUT_LABELS: Record<BaseLayout, string> = {
   TWO_COLUMN: '2 cột',
   IMAGE_TOP: 'Ảnh trên',
   AUDIO_CENTER: 'Audio giữa',
+  SKETCH_HERO_LEFT: 'Lưới Đa Vùng (Phác thảo)',
+  GRID_2X2: 'Lưới 2x2 (4 Ô)',
+  HERO_TOP_SPLIT_BOTTOM: 'Hero Trên + 2 Dưới',
+};
+
+const getDefaultZoneForLayout = (layout: BaseLayout, fieldId: FieldType): GridZoneId | undefined => {
+  if (layout === 'SKETCH_HERO_LEFT') {
+    switch (fieldId) {
+      case 'IMAGE': return 'LEFT_HERO';
+      case 'WORD': return 'RIGHT_TOP';
+      case 'IPA': return 'RIGHT_TOP';
+      case 'PART_OF_SPEECH': return 'RIGHT_MID_LEFT';
+      case 'MEANING': return 'RIGHT_MID_RIGHT';
+      case 'EXAMPLE': return 'RIGHT_BOT_LEFT';
+      case 'PERSONAL_NOTE': return 'RIGHT_BOT_RIGHT';
+      case 'AUDIO': return 'RIGHT_BOT_RIGHT';
+    }
+  } else if (layout === 'GRID_2X2') {
+    switch (fieldId) {
+      case 'WORD': return 'GRID_TOP_LEFT';
+      case 'IPA': return 'GRID_TOP_LEFT';
+      case 'MEANING': return 'GRID_TOP_RIGHT';
+      case 'EXAMPLE': return 'GRID_BOT_LEFT';
+      case 'IMAGE': return 'GRID_BOT_RIGHT';
+      default: return 'GRID_BOT_LEFT';
+    }
+  } else if (layout === 'HERO_TOP_SPLIT_BOTTOM') {
+    switch (fieldId) {
+      case 'WORD': return 'HERO_TOP';
+      case 'IMAGE': return 'HERO_TOP';
+      case 'MEANING': return 'BOT_LEFT';
+      case 'EXAMPLE': return 'BOT_RIGHT';
+      default: return 'BOT_LEFT';
+    }
+  }
+  return undefined;
 };
 
 const INTERACTION_LABELS: Record<InteractionType, string> = {
@@ -296,7 +348,7 @@ export default function TemplatePreviewScreen() {
     if (fields.length === 0) {
       return (
         <View style={{ alignItems: 'center', justifyContent: 'center', flex: 1 }}>
-          <Snapy pose="curious" className="w-16 h-16 mb-2" />
+          <Snapy pose="to_mo" animation="idle" className="w-16 h-16 mb-2" />
           <Text style={{ fontSize: 14, color: '#9CA3AF', textAlign: 'center', paddingHorizontal: 20 }}>
             Note này chưa có dữ liệu phù hợp để hiển thị mặt thẻ.
           </Text>
@@ -305,6 +357,112 @@ export default function TemplatePreviewScreen() {
     }
 
     const wordValue = fields.find(f => f.id === 'WORD')?.value;
+
+    // SKETCH_HERO_LEFT (Grid Đa Vùng phác thảo)
+    if (templateConfig.baseLayout === 'SKETCH_HERO_LEFT') {
+      const getZoneFields = (zoneId: GridZoneId) => {
+        return fields.filter(f => (f.zone || getDefaultZoneForLayout('SKETCH_HERO_LEFT', f.id)) === zoneId);
+      };
+
+      const leftHeroFields = getZoneFields('LEFT_HERO');
+      const rightTopFields = getZoneFields('RIGHT_TOP');
+      const rightMidLeftFields = getZoneFields('RIGHT_MID_LEFT');
+      const rightMidRightFields = getZoneFields('RIGHT_MID_RIGHT');
+      const rightBotLeftFields = getZoneFields('RIGHT_BOT_LEFT');
+      const rightBotRightFields = getZoneFields('RIGHT_BOT_RIGHT');
+
+      return (
+        <View style={{ flex: 1, flexDirection: 'row', borderRadius: 20, overflow: 'hidden', borderWidth: 2, borderColor: '#E0E7FF' }}>
+          {/* Left Hero Column */}
+          <View style={{ width: '38%', borderRightWidth: 2, borderRightColor: '#E0E7FF', backgroundColor: '#F8FAFC', padding: 8, justifyContent: 'center', alignItems: 'center' }}>
+            {leftHeroFields.length > 0 ? (
+              leftHeroFields.map(f => renderField(f, wordValue || undefined))
+            ) : (
+              <Text style={{ fontSize: 11, color: '#CBD5E1', fontStyle: 'italic' }}>Cột Trái</Text>
+            )}
+          </View>
+
+          {/* Right Panel */}
+          <View style={{ flex: 1, flexDirection: 'column' }}>
+            {/* Top Right Cell */}
+            <View style={{ flex: 1, borderBottomWidth: 2, borderBottomColor: '#E0E7FF', padding: 8, justifyContent: 'center', alignItems: 'center', backgroundColor: '#FFFFFF' }}>
+              {rightTopFields.map(f => renderField(f, wordValue || undefined))}
+            </View>
+
+            {/* Middle Right Row */}
+            <View style={{ flex: 1, flexDirection: 'row', borderBottomWidth: 2, borderBottomColor: '#E0E7FF', backgroundColor: '#FFFFFF' }}>
+              <View style={{ flex: 1, borderRightWidth: 2, borderRightColor: '#E0E7FF', padding: 6, justifyContent: 'center', alignItems: 'center' }}>
+                {rightMidLeftFields.map(f => renderField(f, wordValue || undefined))}
+              </View>
+              <View style={{ flex: 1, padding: 6, justifyContent: 'center', alignItems: 'center' }}>
+                {rightMidRightFields.map(f => renderField(f, wordValue || undefined))}
+              </View>
+            </View>
+
+            {/* Bottom Right Row */}
+            <View style={{ flex: 1, flexDirection: 'row', backgroundColor: '#FFFFFF' }}>
+              <View style={{ flex: 1, borderRightWidth: 2, borderRightColor: '#E0E7FF', padding: 6, justifyContent: 'center', alignItems: 'center' }}>
+                {rightBotLeftFields.map(f => renderField(f, wordValue || undefined))}
+              </View>
+              <View style={{ flex: 1, padding: 6, justifyContent: 'center', alignItems: 'center' }}>
+                {rightBotRightFields.map(f => renderField(f, wordValue || undefined))}
+              </View>
+            </View>
+          </View>
+        </View>
+      );
+    }
+
+    // GRID_2X2 Layout
+    if (templateConfig.baseLayout === 'GRID_2X2') {
+      const getZoneFields = (zoneId: GridZoneId) => {
+        return fields.filter(f => (f.zone || getDefaultZoneForLayout('GRID_2X2', f.id)) === zoneId);
+      };
+
+      return (
+        <View style={{ flex: 1, flexDirection: 'column', borderRadius: 20, overflow: 'hidden', borderWidth: 2, borderColor: '#E0E7FF' }}>
+          <View style={{ flex: 1, flexDirection: 'row', borderBottomWidth: 2, borderBottomColor: '#E0E7FF' }}>
+            <View style={{ flex: 1, borderRightWidth: 2, borderRightColor: '#E0E7FF', padding: 8, justifyContent: 'center', alignItems: 'center' }}>
+              {getZoneFields('GRID_TOP_LEFT').map(f => renderField(f, wordValue || undefined))}
+            </View>
+            <View style={{ flex: 1, padding: 8, justifyContent: 'center', alignItems: 'center' }}>
+              {getZoneFields('GRID_TOP_RIGHT').map(f => renderField(f, wordValue || undefined))}
+            </View>
+          </View>
+          <View style={{ flex: 1, flexDirection: 'row' }}>
+            <View style={{ flex: 1, borderRightWidth: 2, borderRightColor: '#E0E7FF', padding: 8, justifyContent: 'center', alignItems: 'center' }}>
+              {getZoneFields('GRID_BOT_LEFT').map(f => renderField(f, wordValue || undefined))}
+            </View>
+            <View style={{ flex: 1, padding: 8, justifyContent: 'center', alignItems: 'center' }}>
+              {getZoneFields('GRID_BOT_RIGHT').map(f => renderField(f, wordValue || undefined))}
+            </View>
+          </View>
+        </View>
+      );
+    }
+
+    // HERO_TOP_SPLIT_BOTTOM Layout
+    if (templateConfig.baseLayout === 'HERO_TOP_SPLIT_BOTTOM') {
+      const getZoneFields = (zoneId: GridZoneId) => {
+        return fields.filter(f => (f.zone || getDefaultZoneForLayout('HERO_TOP_SPLIT_BOTTOM', f.id)) === zoneId);
+      };
+
+      return (
+        <View style={{ flex: 1, flexDirection: 'column', borderRadius: 20, overflow: 'hidden', borderWidth: 2, borderColor: '#E0E7FF' }}>
+          <View style={{ flex: 1.2, borderBottomWidth: 2, borderBottomColor: '#E0E7FF', backgroundColor: '#F8FAFC', padding: 8, justifyContent: 'center', alignItems: 'center' }}>
+            {getZoneFields('HERO_TOP').map(f => renderField(f, wordValue || undefined))}
+          </View>
+          <View style={{ flex: 1, flexDirection: 'row' }}>
+            <View style={{ flex: 1, borderRightWidth: 2, borderRightColor: '#E0E7FF', padding: 8, justifyContent: 'center', alignItems: 'center' }}>
+              {getZoneFields('BOT_LEFT').map(f => renderField(f, wordValue || undefined))}
+            </View>
+            <View style={{ flex: 1, padding: 8, justifyContent: 'center', alignItems: 'center' }}>
+              {getZoneFields('BOT_RIGHT').map(f => renderField(f, wordValue || undefined))}
+            </View>
+          </View>
+        </View>
+      );
+    }
 
     // IMAGE_TOP layout
     if (templateConfig.baseLayout === 'IMAGE_TOP') {

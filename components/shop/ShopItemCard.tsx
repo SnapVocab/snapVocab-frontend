@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, Pressable, Image, ImageSourcePropType } from 'react-native';
-import { CheckIcon, CoinsIcon } from 'lucide-react-native';
+import { CheckIcon } from 'lucide-react-native';
+import { Coin3D } from '@/components/snapvocab';
 import { cn } from '@/lib/utils';
 
 export interface ShopItemType {
@@ -63,7 +64,7 @@ export function ShopItemCard({ item, onPress, canAfford }: ShopItemCardProps) {
           >
             {canAfford ? (
               <>
-                <CoinsIcon size={16} fill="#FFC42E" className="text-reward-600 mr-1.5" />
+                <Coin3D size="xs" style={{ marginRight: 4 }} />
                 <Text className="font-extrabold text-[14px] text-white font-nunito tabular-nums tracking-wide">
                   {item.price}
                 </Text>

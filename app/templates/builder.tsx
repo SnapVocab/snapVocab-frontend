@@ -16,7 +16,10 @@ import {
   SettingsIcon,
   RotateCcwIcon,
   KeyboardIcon,
-  ListIcon
+  ListIcon,
+  GridIcon,
+  Grid3X3Icon,
+  LayersIcon,
 } from 'lucide-react-native';
 import { cn } from '@/lib/utils';
 import { Snapy } from '@/components/Snapy';
@@ -25,8 +28,23 @@ import { Snapy } from '@/components/Snapy';
 // TYPES & MOCK DATA
 // ==========================================
 type FieldType = 'WORD' | 'MEANING' | 'PART_OF_SPEECH' | 'EXAMPLE' | 'PERSONAL_NOTE' | 'IPA' | 'AUDIO' | 'IMAGE';
-type BaseLayout = 'SINGLE_COLUMN' | 'TWO_COLUMN' | 'IMAGE_TOP' | 'AUDIO_CENTER';
+type BaseLayout = 'SINGLE_COLUMN' | 'TWO_COLUMN' | 'IMAGE_TOP' | 'AUDIO_CENTER' | 'SKETCH_HERO_LEFT' | 'GRID_2X2' | 'HERO_TOP_SPLIT_BOTTOM';
 type InteractionType = 'FLIP' | 'TYPE_IN' | 'TAP_TO_REVEAL';
+
+export type GridZoneId =
+  | 'LEFT_HERO'
+  | 'RIGHT_TOP'
+  | 'RIGHT_MID_LEFT'
+  | 'RIGHT_MID_RIGHT'
+  | 'RIGHT_BOT_LEFT'
+  | 'RIGHT_BOT_RIGHT'
+  | 'GRID_TOP_LEFT'
+  | 'GRID_TOP_RIGHT'
+  | 'GRID_BOT_LEFT'
+  | 'GRID_BOT_RIGHT'
+  | 'HERO_TOP'
+  | 'BOT_LEFT'
+  | 'BOT_RIGHT';
 
 interface FieldConfig {
   autoPlay?: boolean;
@@ -40,6 +58,7 @@ interface TemplateField {
   sample: string;
   enabled: boolean;
   isPrimary: boolean;
+  zone?: GridZoneId;
   config?: FieldConfig;
 }
 
@@ -53,6 +72,40 @@ const ALL_FIELDS_DEF: Omit<TemplateField, 'enabled' | 'isPrimary'>[] = [
   { id: 'AUDIO', label: 'Âm thanh', sample: '▶' },
   { id: 'IMAGE', label: 'Hình ảnh', sample: '🖼️ [image]' },
 ];
+
+// Helper to get default zone for a layout
+const getDefaultZoneForLayout = (layout: BaseLayout, fieldId: FieldType): GridZoneId | undefined => {
+  if (layout === 'SKETCH_HERO_LEFT') {
+    switch (fieldId) {
+      case 'IMAGE': return 'LEFT_HERO';
+      case 'WORD': return 'RIGHT_TOP';
+      case 'IPA': return 'RIGHT_TOP';
+      case 'PART_OF_SPEECH': return 'RIGHT_MID_LEFT';
+      case 'MEANING': return 'RIGHT_MID_RIGHT';
+      case 'EXAMPLE': return 'RIGHT_BOT_LEFT';
+      case 'PERSONAL_NOTE': return 'RIGHT_BOT_RIGHT';
+      case 'AUDIO': return 'RIGHT_BOT_RIGHT';
+    }
+  } else if (layout === 'GRID_2X2') {
+    switch (fieldId) {
+      case 'WORD': return 'GRID_TOP_LEFT';
+      case 'IPA': return 'GRID_TOP_LEFT';
+      case 'MEANING': return 'GRID_TOP_RIGHT';
+      case 'EXAMPLE': return 'GRID_BOT_LEFT';
+      case 'IMAGE': return 'GRID_BOT_RIGHT';
+      default: return 'GRID_BOT_LEFT';
+    }
+  } else if (layout === 'HERO_TOP_SPLIT_BOTTOM') {
+    switch (fieldId) {
+      case 'WORD': return 'HERO_TOP';
+      case 'IMAGE': return 'HERO_TOP';
+      case 'MEANING': return 'BOT_LEFT';
+      case 'EXAMPLE': return 'BOT_RIGHT';
+      default: return 'BOT_LEFT';
+    }
+  }
+  return undefined;
+};
 
 export default function TemplateBuilderScreen() {
   const params = useLocalSearchParams();
@@ -74,14 +127,24 @@ export default function TemplateBuilderScreen() {
   // ==========================================
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
-  const [baseLayout, setBaseLayout] = useState<BaseLayout>('SINGLE_COLUMN');
+  const [baseLayout, setBaseLayout] = useState<BaseLayout>('SKETCH_HERO_LEFT');
   
   const [frontFields, setFrontFields] = useState<TemplateField[]>(
-    ALL_FIELDS_DEF.map(f => ({ ...f, enabled: f.id === 'WORD', isPrimary: f.id === 'WORD' }))
+    ALL_FIELDS_DEF.map(f => ({
+      ...f,
+      enabled: ['WORD', 'IPA', 'IMAGE'].includes(f.id),
+      isPrimary: f.id === 'WORD',
+      zone: getDefaultZoneForLayout('SKETCH_HERO_LEFT', f.id)
+    }))
   );
   
   const [backFields, setBackFields] = useState<TemplateField[]>(
-    ALL_FIELDS_DEF.map(f => ({ ...f, enabled: f.id === 'MEANING', isPrimary: f.id === 'MEANING' }))
+    ALL_FIELDS_DEF.map(f => ({
+      ...f,
+      enabled: ['MEANING', 'PART_OF_SPEECH', 'EXAMPLE', 'AUDIO', 'PERSONAL_NOTE'].includes(f.id),
+      isPrimary: f.id === 'MEANING',
+      zone: getDefaultZoneForLayout('SKETCH_HERO_LEFT', f.id)
+    }))
   );
   
   const [interactionType, setInteractionType] = useState<InteractionType>('FLIP');
@@ -207,6 +270,98 @@ export default function TemplateBuilderScreen() {
     });
   };
 
+  const setFieldZone = (side: 'front' | 'back', fieldId: FieldType, zone: GridZoneId) => {
+    const setter = side === 'front' ? setFrontFields : setBackFields;
+    setter(prev => prev.map(f => f.id === fieldId ? { ...f, zone } : f));
+  };
+
+  const handleSelectBaseLayout = (newLayout: BaseLayout) => {
+    setBaseLayout(newLayout);
+
+    if (newLayout === 'SKETCH_HERO_LEFT') {
+      setFrontFields(ALL_FIELDS_DEF.map(f => ({
+        ...f,
+        enabled: ['WORD', 'IPA', 'IMAGE'].includes(f.id),
+        isPrimary: f.id === 'WORD',
+        zone: getDefaultZoneForLayout(newLayout, f.id)
+      })));
+      setBackFields(ALL_FIELDS_DEF.map(f => ({
+        ...f,
+        enabled: ['MEANING', 'PART_OF_SPEECH', 'EXAMPLE', 'AUDIO', 'PERSONAL_NOTE'].includes(f.id),
+        isPrimary: f.id === 'MEANING',
+        zone: getDefaultZoneForLayout(newLayout, f.id)
+      })));
+    } else if (newLayout === 'GRID_2X2') {
+      setFrontFields(ALL_FIELDS_DEF.map(f => ({
+        ...f,
+        enabled: ['WORD', 'IPA', 'IMAGE'].includes(f.id),
+        isPrimary: f.id === 'WORD',
+        zone: getDefaultZoneForLayout(newLayout, f.id)
+      })));
+      setBackFields(ALL_FIELDS_DEF.map(f => ({
+        ...f,
+        enabled: ['MEANING', 'PART_OF_SPEECH', 'EXAMPLE', 'AUDIO'].includes(f.id),
+        isPrimary: f.id === 'MEANING',
+        zone: getDefaultZoneForLayout(newLayout, f.id)
+      })));
+    } else if (newLayout === 'HERO_TOP_SPLIT_BOTTOM') {
+      setFrontFields(ALL_FIELDS_DEF.map(f => ({
+        ...f,
+        enabled: ['WORD', 'IMAGE', 'IPA'].includes(f.id),
+        isPrimary: f.id === 'WORD',
+        zone: getDefaultZoneForLayout(newLayout, f.id)
+      })));
+      setBackFields(ALL_FIELDS_DEF.map(f => ({
+        ...f,
+        enabled: ['MEANING', 'EXAMPLE', 'AUDIO'].includes(f.id),
+        isPrimary: f.id === 'MEANING',
+        zone: getDefaultZoneForLayout(newLayout, f.id)
+      })));
+    } else {
+      setFrontFields(ALL_FIELDS_DEF.map(f => ({
+        ...f,
+        enabled: f.id === 'WORD',
+        isPrimary: f.id === 'WORD',
+        zone: undefined
+      })));
+      setBackFields(ALL_FIELDS_DEF.map(f => ({
+        ...f,
+        enabled: f.id === 'MEANING',
+        isPrimary: f.id === 'MEANING',
+        zone: undefined
+      })));
+    }
+  };
+
+  const getAvailableZones = (layout: BaseLayout): { id: GridZoneId; label: string }[] => {
+    if (layout === 'SKETCH_HERO_LEFT') {
+      return [
+        { id: 'LEFT_HERO', label: 'Cột Trái (Hero)' },
+        { id: 'RIGHT_TOP', label: 'Phải - Trên' },
+        { id: 'RIGHT_MID_LEFT', label: 'Phải - Giữa Trái' },
+        { id: 'RIGHT_MID_RIGHT', label: 'Phải - Giữa Phải' },
+        { id: 'RIGHT_BOT_LEFT', label: 'Phải - Dưới Trái' },
+        { id: 'RIGHT_BOT_RIGHT', label: 'Phải - Dưới Phải' },
+      ];
+    }
+    if (layout === 'GRID_2X2') {
+      return [
+        { id: 'GRID_TOP_LEFT', label: 'Trên - Trái' },
+        { id: 'GRID_TOP_RIGHT', label: 'Trên - Phải' },
+        { id: 'GRID_BOT_LEFT', label: 'Dưới - Trái' },
+        { id: 'GRID_BOT_RIGHT', label: 'Dưới - Phải' },
+      ];
+    }
+    if (layout === 'HERO_TOP_SPLIT_BOTTOM') {
+      return [
+        { id: 'HERO_TOP', label: 'Tầng Trên (Hero)' },
+        { id: 'BOT_LEFT', label: 'Dưới - Trái' },
+        { id: 'BOT_RIGHT', label: 'Dưới - Phải' },
+      ];
+    }
+    return [];
+  };
+
   // ==========================================
   // RENDER HELPERS
   // ==========================================
@@ -220,6 +375,122 @@ export default function TemplateBuilderScreen() {
       );
     }
 
+    const renderCellFields = (zoneId: GridZoneId) => {
+      const cellFields = enabledFields.filter(f => (f.zone || getDefaultZoneForLayout(baseLayout, f.id)) === zoneId);
+      if (cellFields.length === 0) {
+        return <Text className="text-[10px] text-neutral-300 italic font-inter">Trống</Text>;
+      }
+      return cellFields.map(f => (
+        <Text 
+          key={f.id} 
+          className={cn(
+            "font-inter text-center leading-tight mb-0.5",
+            f.isPrimary ? "font-extrabold text-[12px] text-primary-600" : "font-medium text-[10px] text-mascot-navy"
+          )}
+          numberOfLines={1}
+        >
+          {f.sample}
+        </Text>
+      ));
+    };
+
+    // SKETCH_HERO_LEFT Preview Layout
+    if (baseLayout === 'SKETCH_HERO_LEFT') {
+      return (
+        <View className="bg-white border-2 border-primary-200 rounded-2xl overflow-hidden mb-6 shadow-sm shadow-black/5 min-h-[160px]">
+          <View className="absolute top-1.5 right-2 z-10 bg-primary-100 px-1.5 py-0.5 rounded">
+            <Text className="font-bold text-[9px] text-primary-700 font-inter uppercase">LƯỚI ĐA VÙNG (SKETCH)</Text>
+          </View>
+          <View className="flex-row flex-1">
+            {/* Left Hero Column */}
+            <View className="w-[35%] border-r-2 border-primary-100 bg-primary-50/20 p-2 items-center justify-center">
+              <Text className="font-bold text-[9px] text-primary-400 font-inter uppercase mb-1">CỘT TRÁI HERO</Text>
+              {renderCellFields('LEFT_HERO')}
+            </View>
+            {/* Right Panel */}
+            <View className="flex-1">
+              {/* Top Right Cell */}
+              <View className="h-12 border-b-2 border-primary-100 p-1.5 items-center justify-center bg-white">
+                {renderCellFields('RIGHT_TOP')}
+              </View>
+              {/* Middle Right Row */}
+              <View className="h-12 border-b-2 border-primary-100 flex-row bg-white">
+                <View className="flex-1 border-r-2 border-primary-100 p-1 items-center justify-center">
+                  {renderCellFields('RIGHT_MID_LEFT')}
+                </View>
+                <View className="flex-1 p-1 items-center justify-center">
+                  {renderCellFields('RIGHT_MID_RIGHT')}
+                </View>
+              </View>
+              {/* Bottom Right Row */}
+              <View className="h-12 flex-row bg-white">
+                <View className="flex-1 border-r-2 border-primary-100 p-1 items-center justify-center">
+                  {renderCellFields('RIGHT_BOT_LEFT')}
+                </View>
+                <View className="flex-1 p-1 items-center justify-center">
+                  {renderCellFields('RIGHT_BOT_RIGHT')}
+                </View>
+              </View>
+            </View>
+          </View>
+        </View>
+      );
+    }
+
+    // GRID_2X2 Preview Layout
+    if (baseLayout === 'GRID_2X2') {
+      return (
+        <View className="bg-white border-2 border-primary-200 rounded-2xl overflow-hidden mb-6 shadow-sm shadow-black/5 min-h-[140px]">
+          <View className="absolute top-1.5 right-2 z-10 bg-primary-100 px-1.5 py-0.5 rounded">
+            <Text className="font-bold text-[9px] text-primary-700 font-inter uppercase">LƯỚI 2X2</Text>
+          </View>
+          <View className="flex-1">
+            <View className="flex-1 flex-row border-b-2 border-primary-100">
+              <View className="flex-1 border-r-2 border-primary-100 p-2 items-center justify-center">
+                {renderCellFields('GRID_TOP_LEFT')}
+              </View>
+              <View className="flex-1 p-2 items-center justify-center">
+                {renderCellFields('GRID_TOP_RIGHT')}
+              </View>
+            </View>
+            <View className="flex-1 flex-row">
+              <View className="flex-1 border-r-2 border-primary-100 p-2 items-center justify-center">
+                {renderCellFields('GRID_BOT_LEFT')}
+              </View>
+              <View className="flex-1 p-2 items-center justify-center">
+                {renderCellFields('GRID_BOT_RIGHT')}
+              </View>
+            </View>
+          </View>
+        </View>
+      );
+    }
+
+    // HERO_TOP_SPLIT_BOTTOM Preview Layout
+    if (baseLayout === 'HERO_TOP_SPLIT_BOTTOM') {
+      return (
+        <View className="bg-white border-2 border-primary-200 rounded-2xl overflow-hidden mb-6 shadow-sm shadow-black/5 min-h-[140px]">
+          <View className="absolute top-1.5 right-2 z-10 bg-primary-100 px-1.5 py-0.5 rounded">
+            <Text className="font-bold text-[9px] text-primary-700 font-inter uppercase">HERO TRÊN + 2 DƯỚI</Text>
+          </View>
+          <View className="flex-1">
+            <View className="h-16 border-b-2 border-primary-100 p-2 items-center justify-center bg-primary-50/20">
+              {renderCellFields('HERO_TOP')}
+            </View>
+            <View className="flex-1 flex-row">
+              <View className="flex-1 border-r-2 border-primary-100 p-2 items-center justify-center">
+                {renderCellFields('BOT_LEFT')}
+              </View>
+              <View className="flex-1 p-2 items-center justify-center">
+                {renderCellFields('BOT_RIGHT')}
+              </View>
+            </View>
+          </View>
+        </View>
+      );
+    }
+
+    // Standard Vertical Preview
     return (
       <View className="bg-[#F7F8FA] border border-neutral-200 rounded-2xl p-4 items-center justify-center min-h-[140px] mb-6 shadow-sm shadow-black/5">
         <View className="absolute top-2 right-3">
@@ -242,6 +513,18 @@ export default function TemplateBuilderScreen() {
 
   const renderFieldRow = (side: 'front' | 'back', field: TemplateField, index: number, total: number) => {
     const hasConfig = ['AUDIO', 'EXAMPLE', 'MEANING', 'IPA', 'PART_OF_SPEECH', 'PERSONAL_NOTE'].includes(field.id);
+    const isGridMode = ['SKETCH_HERO_LEFT', 'GRID_2X2', 'HERO_TOP_SPLIT_BOTTOM'].includes(baseLayout);
+    const availableZones = getAvailableZones(baseLayout);
+    const currentZone = field.zone || getDefaultZoneForLayout(baseLayout, field.id) || availableZones[0]?.id;
+
+    const cycleZone = () => {
+      if (availableZones.length === 0) return;
+      const currentIndex = availableZones.findIndex(z => z.id === currentZone);
+      const nextIndex = (currentIndex + 1) % availableZones.length;
+      setFieldZone(side, field.id, availableZones[nextIndex].id);
+    };
+
+    const currentZoneLabel = availableZones.find(z => z.id === currentZone)?.label || 'Chọn vùng';
     const showUp = index > 0;
     const showDown = index < total - 1;
 
@@ -249,8 +532,6 @@ export default function TemplateBuilderScreen() {
       <View 
         key={field.id} 
         style={{
-          flexDirection: 'row',
-          alignItems: 'center',
           padding: 12,
           marginBottom: 8,
           borderRadius: 12,
@@ -260,65 +541,105 @@ export default function TemplateBuilderScreen() {
           opacity: field.enabled ? 1 : 0.6,
         }}
       >
-        {/* Drag Handle (Simulated with up/down arrows for MVP) */}
-        <View style={{ marginRight: 12, alignItems: 'center', justifyContent: 'center', width: 24 }}>
-          {field.enabled ? (
-            <View style={{ gap: 4 }}>
-              <Pressable onPress={() => moveField(side, index, 'up')} disabled={!showUp} style={{ opacity: showUp ? 1 : 0.2 }}>
-                <ArrowUpIcon size={16} color="#9CA3AF" />
-              </Pressable>
-              <Pressable onPress={() => moveField(side, index, 'down')} disabled={!showDown} style={{ opacity: showDown ? 1 : 0.2 }}>
-                <ArrowDownIcon size={16} color="#9CA3AF" />
-              </Pressable>
-            </View>
-          ) : (
-            <MenuIcon size={18} color="#D1D5DB" />
+        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+          {/* Drag Handle */}
+          <View style={{ marginRight: 12, alignItems: 'center', justifyContent: 'center', width: 24 }}>
+            {field.enabled ? (
+              <View style={{ gap: 4 }}>
+                <Pressable onPress={() => moveField(side, index, 'up')} disabled={!showUp} style={{ opacity: showUp ? 1 : 0.2 }}>
+                  <ArrowUpIcon size={16} color="#9CA3AF" />
+                </Pressable>
+                <Pressable onPress={() => moveField(side, index, 'down')} disabled={!showDown} style={{ opacity: showDown ? 1 : 0.2 }}>
+                  <ArrowDownIcon size={16} color="#9CA3AF" />
+                </Pressable>
+              </View>
+            ) : (
+              <MenuIcon size={18} color="#D1D5DB" />
+            )}
+          </View>
+          
+          {/* Toggle */}
+          <Switch 
+            value={field.enabled}
+            onValueChange={() => toggleField(side, field.id)}
+            trackColor={{ false: '#E5E7EB', true: '#58CC02' }}
+            thumbColor={'#FFFFFF'}
+            style={{ transform: [{ scaleX: 0.8 }, { scaleY: 0.8 }] }}
+          />
+
+          {/* Info */}
+          <View style={{ flex: 1, marginLeft: 8, justifyContent: 'center' }}>
+            <Text style={{ fontWeight: '700', fontSize: 14, color: field.enabled ? '#1B2541' : '#9CA3AF' }}>
+              {field.label}
+            </Text>
+            <Text style={{ fontWeight: '500', fontSize: 11, color: '#9CA3AF', marginTop: 2 }} numberOfLines={1}>
+              {field.sample}
+            </Text>
+          </View>
+
+          {/* Primary Radio */}
+          {field.enabled && (
+            <Pressable 
+              onPress={() => setPrimaryField(side, field.id)}
+              style={{ padding: 8, marginRight: 8, alignItems: 'center', justifyContent: 'center' }}
+            >
+              <View style={{
+                width: 20, height: 20, borderRadius: 10, borderWidth: 2,
+                borderColor: field.isPrimary ? '#3B82F6' : '#D1D5DB',
+                alignItems: 'center', justifyContent: 'center',
+              }}>
+                {field.isPrimary && <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: '#3B82F6' }} />}
+              </View>
+            </Pressable>
+          )}
+
+          {/* Config Button */}
+          {field.enabled && hasConfig && (
+            <Pressable onPress={() => setActiveConfigField(field)} style={{ padding: 8 }}>
+              <SettingsIcon size={18} color="#9CA3AF" />
+            </Pressable>
           )}
         </View>
-        
-        {/* Toggle */}
-        <Switch 
-          value={field.enabled}
-          onValueChange={() => toggleField(side, field.id)}
-          trackColor={{ false: '#E5E7EB', true: '#58CC02' }}
-          thumbColor={'#FFFFFF'}
-          style={{ transform: [{ scaleX: 0.8 }, { scaleY: 0.8 }] }}
-        />
 
-        {/* Info */}
-        <View style={{ flex: 1, marginLeft: 8, justifyContent: 'center' }}>
-          <Text style={{ fontWeight: '700', fontSize: 14, color: field.enabled ? '#1B2541' : '#9CA3AF' }}>
-            {field.label}
-          </Text>
-          <Text style={{ fontWeight: '500', fontSize: 11, color: '#9CA3AF', marginTop: 2 }} numberOfLines={1}>
-            {field.sample}
-          </Text>
-        </View>
-
-        {/* Primary Radio */}
-        {field.enabled && (
-          <Pressable 
-            onPress={() => setPrimaryField(side, field.id)}
-            style={{ padding: 8, marginRight: 8, alignItems: 'center', justifyContent: 'center' }}
-          >
-            <View style={{
-              width: 20, height: 20, borderRadius: 10, borderWidth: 2,
-              borderColor: field.isPrimary ? '#3B82F6' : '#D1D5DB',
-              alignItems: 'center', justifyContent: 'center',
-            }}>
-              {field.isPrimary && <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: '#3B82F6' }} />}
+        {/* Zone Selector Badge (When Grid Mode is Active) */}
+        {field.enabled && isGridMode && (
+          <View style={{ marginTop: 8, paddingTop: 8, borderTopWidth: 1, borderTopColor: '#F3F4F6', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <GridIcon size={14} color="#3B82F6" style={{ marginRight: 6 }} />
+              <Text style={{ fontSize: 12, fontWeight: '600', color: '#6B7280' }}>Vùng hiển thị:</Text>
             </View>
-          </Pressable>
-        )}
 
-        {/* Config Button */}
-        {field.enabled && hasConfig && (
-          <Pressable onPress={() => setActiveConfigField(field)} style={{ padding: 8 }}>
-            <SettingsIcon size={18} color="#9CA3AF" />
-          </Pressable>
+            <Pressable 
+              onPress={cycleZone}
+              style={{
+                backgroundColor: '#EFF6FF', borderWidth: 1, borderColor: '#BFDBFE',
+                borderRadius: 8, paddingHorizontal: 10, paddingVertical: 4, flexDirection: 'row', alignItems: 'center',
+              }}
+            >
+              <Text style={{ fontSize: 12, fontWeight: '700', color: '#1D4ED8', marginRight: 4 }}>
+                {currentZoneLabel}
+              </Text>
+              <Text style={{ fontSize: 10, color: '#3B82F6' }}>🔄</Text>
+            </Pressable>
+          </View>
         )}
       </View>
     );
+  };
+
+  const renderLayoutIcon = (id: string, isSelected: boolean, isHighlight?: boolean) => {
+    const color = isSelected ? '#3B82F6' : isHighlight ? '#2563EB' : '#9CA3AF';
+    const size = 28;
+    switch (id) {
+      case 'SKETCH_HERO_LEFT': return <Grid3X3Icon size={size} color={color} />;
+      case 'GRID_2X2': return <GridIcon size={size} color={color} />;
+      case 'HERO_TOP_SPLIT_BOTTOM': return <LayersIcon size={size} color={color} />;
+      case 'SINGLE_COLUMN': return <LayoutIcon size={size} color={color} />;
+      case 'TWO_COLUMN': return <ColumnsIcon size={size} color={color} />;
+      case 'IMAGE_TOP': return <ImageIcon size={size} color={color} />;
+      case 'AUDIO_CENTER': return <HeadphonesIcon size={size} color={color} />;
+      default: return <LayoutIcon size={size} color={color} />;
+    }
   };
 
   // ==========================================
@@ -362,26 +683,31 @@ export default function TemplateBuilderScreen() {
       <Text className="font-extrabold text-[16px] text-mascot-navy font-nunito mb-4">Base layout</Text>
       <View className="flex-row flex-wrap justify-between gap-y-4">
         {[
-          { id: 'SINGLE_COLUMN', label: '1 cột', icon: LayoutIcon },
-          { id: 'TWO_COLUMN', label: '2 cột', icon: ColumnsIcon },
-          { id: 'IMAGE_TOP', label: 'Ảnh trên', icon: ImageIcon },
-          { id: 'AUDIO_CENTER', label: 'Audio giữa', icon: HeadphonesIcon },
+          { id: 'SKETCH_HERO_LEFT', label: 'Lưới Đa Vùng (Phác thảo)', highlight: true },
+          { id: 'GRID_2X2', label: 'Lưới 2x2 (4 Ô)' },
+          { id: 'HERO_TOP_SPLIT_BOTTOM', label: 'Hero Trên + 2 Dưới' },
+          { id: 'SINGLE_COLUMN', label: '1 cột đơn' },
+          { id: 'TWO_COLUMN', label: '2 cột đơn' },
+          { id: 'IMAGE_TOP', label: 'Ảnh trên' },
+          { id: 'AUDIO_CENTER', label: 'Audio giữa' },
         ].map(layout => {
           const isSelected = baseLayout === layout.id;
-          const Icon = layout.icon;
           return (
             <Pressable 
               key={layout.id}
-              onPress={() => setBaseLayout(layout.id as BaseLayout)}
+              onPress={() => handleSelectBaseLayout(layout.id as BaseLayout)}
               className={cn(
-                "w-[48%] bg-white rounded-2xl border-2 p-4 items-center justify-center h-28 shadow-sm",
-                isSelected ? "border-primary-500 shadow-primary-500/20 bg-primary-50/20" : "border-neutral-100 shadow-black/5"
+                "w-[48%] bg-white rounded-2xl border-2 p-3.5 items-center justify-center min-h-[110px] shadow-sm",
+                isSelected ? "border-primary-500 shadow-primary-500/20 bg-primary-50/20" : "border-neutral-100 shadow-black/5",
+                layout.highlight && !isSelected && "border-primary-200 bg-primary-50/10"
               )}
             >
-              <Icon size={32} className={cn("mb-2", isSelected ? "text-primary-500" : "text-neutral-400")} />
+              <View className="mb-2">
+                {renderLayoutIcon(layout.id, isSelected, layout.highlight)}
+              </View>
               <Text className={cn(
-                "font-bold text-[13px] font-inter text-center",
-                isSelected ? "text-primary-700" : "text-neutral-500"
+                "font-bold text-[13px] font-inter text-center leading-tight",
+                isSelected ? "text-primary-700" : "text-neutral-600"
               )}>{layout.label}</Text>
               {isSelected && (
                 <View className="absolute top-2 right-2 bg-primary-500 rounded-full p-0.5">
@@ -395,43 +721,105 @@ export default function TemplateBuilderScreen() {
     </View>
   );
 
-  const renderStep2 = () => (
-    <View className="flex-1">
-      <Text className="font-extrabold text-[20px] text-mascot-navy font-nunito mb-4">Mặt trước</Text>
-      
-      {renderMiniPreview(frontFields)}
+  const renderStep2 = () => {
+    const isGridMode = ['SKETCH_HERO_LEFT', 'GRID_2X2', 'HERO_TOP_SPLIT_BOTTOM'].includes(baseLayout);
+    const availableZones = getAvailableZones(baseLayout);
 
-      <View className="flex-row items-center justify-between mb-4 mt-2">
-        <Text className="font-extrabold text-[16px] text-mascot-navy font-nunito">Trường dữ liệu</Text>
-        <Text className="font-bold text-[12px] text-neutral-400 font-inter uppercase tracking-wide">Trường chính</Text>
+    return (
+      <View className="flex-1">
+        <Text className="font-extrabold text-[20px] text-mascot-navy font-nunito mb-4">Mặt trước</Text>
+        
+        {renderMiniPreview(frontFields)}
+
+        <View className="flex-row items-center justify-between mb-4 mt-2">
+          <Text className="font-extrabold text-[16px] text-mascot-navy font-nunito">Trường dữ liệu theo ô Lưới</Text>
+          <Text className="font-bold text-[12px] text-neutral-400 font-inter uppercase tracking-wide">Trường chính</Text>
+        </View>
+
+        {validationError && currentStep === 2 && (
+          <Text className="font-bold text-[13px] text-error-500 font-inter mb-4 bg-error-50 p-3 rounded-xl border border-error-100">{validationError}</Text>
+        )}
+
+        {isGridMode ? (
+          availableZones.map(zone => {
+            const zoneFields = frontFields.filter(f => (f.zone || getDefaultZoneForLayout(baseLayout, f.id)) === zone.id);
+            return (
+              <View key={zone.id} className="mb-4 bg-white p-3.5 rounded-2xl border border-primary-100 shadow-sm">
+                <View className="flex-row items-center justify-between mb-3 pb-2 border-b border-neutral-100">
+                  <View className="flex-row items-center">
+                    <GridIcon size={16} color="#3B82F6" style={{ marginRight: 8 }} />
+                    <Text className="font-extrabold text-[14px] text-mascot-navy font-nunito">{zone.label}</Text>
+                  </View>
+                  <View className="bg-primary-50 px-2.5 py-0.5 rounded-full">
+                    <Text className="font-bold text-[11px] text-primary-700 font-inter">
+                      {zoneFields.filter(f => f.enabled).length} trường active
+                    </Text>
+                  </View>
+                </View>
+                {frontFields.map((f, i) => {
+                  const fZone = f.zone || getDefaultZoneForLayout(baseLayout, f.id);
+                  if (fZone !== zone.id) return null;
+                  return renderFieldRow('front', f, i, frontFields.length);
+                })}
+              </View>
+            );
+          })
+        ) : (
+          frontFields.map((f, i) => renderFieldRow('front', f, i, frontFields.length))
+        )}
       </View>
+    );
+  };
 
-      {validationError && currentStep === 2 && (
-        <Text className="font-bold text-[13px] text-error-500 font-inter mb-4 bg-error-50 p-3 rounded-xl border border-error-100">{validationError}</Text>
-      )}
+  const renderStep3 = () => {
+    const isGridMode = ['SKETCH_HERO_LEFT', 'GRID_2X2', 'HERO_TOP_SPLIT_BOTTOM'].includes(baseLayout);
+    const availableZones = getAvailableZones(baseLayout);
 
-      {frontFields.map((f, i) => renderFieldRow('front', f, i, frontFields.length))}
-    </View>
-  );
+    return (
+      <View className="flex-1">
+        <Text className="font-extrabold text-[20px] text-mascot-navy font-nunito mb-4">Mặt sau</Text>
+        
+        {renderMiniPreview(backFields)}
 
-  const renderStep3 = () => (
-    <View className="flex-1">
-      <Text className="font-extrabold text-[20px] text-mascot-navy font-nunito mb-4">Mặt sau</Text>
-      
-      {renderMiniPreview(backFields)}
+        <View className="flex-row items-center justify-between mb-4 mt-2">
+          <Text className="font-extrabold text-[16px] text-mascot-navy font-nunito">Trường dữ liệu theo ô Lưới</Text>
+          <Text className="font-bold text-[12px] text-neutral-400 font-inter uppercase tracking-wide">Trường chính</Text>
+        </View>
 
-      <View className="flex-row items-center justify-between mb-4 mt-2">
-        <Text className="font-extrabold text-[16px] text-mascot-navy font-nunito">Trường dữ liệu</Text>
-        <Text className="font-bold text-[12px] text-neutral-400 font-inter uppercase tracking-wide">Trường chính</Text>
+        {validationError && currentStep === 3 && (
+          <Text className="font-bold text-[13px] text-error-500 font-inter mb-4 bg-error-50 p-3 rounded-xl border border-error-100">{validationError}</Text>
+        )}
+
+        {isGridMode ? (
+          availableZones.map(zone => {
+            const zoneFields = backFields.filter(f => (f.zone || getDefaultZoneForLayout(baseLayout, f.id)) === zone.id);
+            return (
+              <View key={zone.id} className="mb-4 bg-white p-3.5 rounded-2xl border border-primary-100 shadow-sm">
+                <View className="flex-row items-center justify-between mb-3 pb-2 border-b border-neutral-100">
+                  <View className="flex-row items-center">
+                    <GridIcon size={16} color="#3B82F6" style={{ marginRight: 8 }} />
+                    <Text className="font-extrabold text-[14px] text-mascot-navy font-nunito">{zone.label}</Text>
+                  </View>
+                  <View className="bg-primary-50 px-2.5 py-0.5 rounded-full">
+                    <Text className="font-bold text-[11px] text-primary-700 font-inter">
+                      {zoneFields.filter(f => f.enabled).length} trường active
+                    </Text>
+                  </View>
+                </View>
+                {backFields.map((f, i) => {
+                  const fZone = f.zone || getDefaultZoneForLayout(baseLayout, f.id);
+                  if (fZone !== zone.id) return null;
+                  return renderFieldRow('back', f, i, backFields.length);
+                })}
+              </View>
+            );
+          })
+        ) : (
+          backFields.map((f, i) => renderFieldRow('back', f, i, backFields.length))
+        )}
       </View>
-
-      {validationError && currentStep === 3 && (
-        <Text className="font-bold text-[13px] text-error-500 font-inter mb-4 bg-error-50 p-3 rounded-xl border border-error-100">{validationError}</Text>
-      )}
-
-      {backFields.map((f, i) => renderFieldRow('back', f, i, backFields.length))}
-    </View>
-  );
+    );
+  };
 
   const renderStep4 = () => (
     <View className="flex-1">

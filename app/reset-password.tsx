@@ -132,9 +132,9 @@ export default function ResetPassword() {
           <Pressable 
             disabled={!canSubmit} 
             onPress={handleSubmit} 
-            className="btn-3d btn-primary mt-4"
+            className="h-14 w-full rounded-xl bg-primary-500 items-center justify-center active:scale-[0.98] active:bg-primary-600 disabled:opacity-50 mt-4"
           >
-            {loading ? <ActivityIndicator color="white" size="small" /> : <Text className="text-white font-bold text-[15px] uppercase">Xác nhận</Text>}
+            {loading ? <ActivityIndicator color="white" size="small" /> : <Text className="text-white font-extrabold font-nunito text-[15px] uppercase tracking-wide">Xác nhận</Text>}
           </Pressable>
         </View>
       </View>

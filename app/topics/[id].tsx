@@ -220,7 +220,7 @@ export default function TopicDetailScreen() {
           
           {MOCK_TOPIC.words.length === 0 ? (
             <View className="items-center justify-center py-12">
-              <Snapy pose="reading" className="w-28 h-28 mb-4" />
+              <Snapy pose="doc_sach" animation="idle" className="w-28 h-28 mb-4" />
               <Text className="font-bold text-[15px] text-neutral-500 font-inter">Chủ đề này chưa có từ vựng</Text>
             </View>
           ) : (

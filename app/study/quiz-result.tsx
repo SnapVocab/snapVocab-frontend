@@ -123,7 +123,11 @@ export default function QuizResultScreen() {
         <View className="items-center pt-8 pb-6">
           <View className="relative">
             <View className="absolute inset-0 bg-warning-200 blur-3xl opacity-50 rounded-full" />
-            <Snapy pose={isPerfect ? "happy" : "curious"} className="w-32 h-32 mb-2 z-10" />
+            <Snapy 
+              pose={isPerfect ? "tu_hao" : accuracy >= 80 ? "an_mung" : "suy_nghi"} 
+              animation={isPerfect ? "celebrate" : "bounce"}
+              className="w-36 h-36 mb-2 z-10" 
+            />
           </View>
           <Text className="font-extrabold text-[28px] text-mascot-navy font-nunito text-center px-4 leading-tight">
             {isPerfect ? 'PERFECT! 🎉' : 'Hoàn thành!'}

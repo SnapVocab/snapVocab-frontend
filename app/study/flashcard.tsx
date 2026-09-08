@@ -132,7 +132,7 @@ export default function FlashcardStudyScreen() {
   if (sessionState === 'EMPTY') {
     return (
       <SafeAreaView className="flex-1 bg-[#F7F8FA] items-center justify-center p-6">
-        <Snapy pose="reading" className="w-32 h-32 mb-4" />
+        <Snapy pose="to_mo" animation="idle" className="w-36 h-36 mb-4" />
         <Text className="font-extrabold text-[20px] text-mascot-navy font-nunito mb-2">Chưa có Card nào</Text>
         <Text className="font-medium text-[15px] text-neutral-500 font-inter text-center mb-8">Lưu thêm từ vào Deck để bắt đầu học nhé.</Text>
         <Pressable 
@@ -151,7 +151,7 @@ export default function FlashcardStudyScreen() {
         <View className="flex-1 items-center justify-center p-6">
           <View className="relative mb-6">
             <View className="absolute inset-0 bg-warning-200 blur-2xl opacity-50 rounded-full" />
-            <Snapy pose="happy" className="w-40 h-40 z-10" />
+            <Snapy pose="nhay_len" animation="celebrate" className="w-44 h-44 z-10" />
           </View>
           
           <Text className="font-extrabold text-[28px] text-mascot-navy font-nunito mb-2">Hoàn thành!</Text>

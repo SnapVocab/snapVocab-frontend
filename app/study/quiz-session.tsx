@@ -56,7 +56,8 @@ export default function QuizSessionScreen() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [selectedOpt, setSelectedOpt] = useState<string | null>(null);
   const [checkState, setCheckState] = useState<CheckState>('IDLE');
-  const [mascotPose, setMascotPose] = useState<SnapyPose>('welcome');
+  const [mascotPose, setMascotPose] = useState<SnapyPose>('tap_trung');
+  const [mascotAnim, setMascotAnim] = useState<string>('idle');
   
   // Animations
   const bottomBarAnim = useRef(new RNAnimated.Value(0)).current;
@@ -132,7 +133,8 @@ export default function QuizSessionScreen() {
 
     const isCorrect = selectedOpt === currentQ.correctId;
     setCheckState(isCorrect ? 'CORRECT' : 'INCORRECT');
-    setMascotPose(isCorrect ? 'happy' : 'curious');
+    setMascotPose(isCorrect ? 'nhay_len' : 'bat_ngo');
+    setMascotAnim(isCorrect ? 'celebrate' : 'shake');
 
     // Mascot reaction bounce
     RNAnimated.sequence([
@@ -167,7 +169,8 @@ export default function QuizSessionScreen() {
       setCurrentIndex(prev => prev + 1);
       setSelectedOpt(null);
       setCheckState('IDLE');
-      setMascotPose('welcome');
+      setMascotPose('tap_trung');
+      setMascotAnim('idle');
       bottomBarAnim.setValue(0);
       
       // Slide in new question
@@ -230,7 +233,7 @@ export default function QuizSessionScreen() {
             ] 
           }}
         >
-          <Snapy pose={mascotPose} className="w-[120px] h-[120px]" />
+          <Snapy pose={mascotPose} animation={mascotAnim} className="w-[120px] h-[120px]" />
         </RNAnimated.View>
 
         {/* QUESTION TEXT */}

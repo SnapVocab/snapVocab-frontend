@@ -186,7 +186,7 @@ export default function TopicsScreen() {
                     
                     {collection.topics.length === 0 ? (
                       <View className="py-8 items-center justify-center border-t border-neutral-100">
-                        <Snapy pose="reading" className="w-20 h-20 mb-3 opacity-80" />
+                        <Snapy pose="kham_pha" animation="idle" className="w-20 h-20 mb-3 opacity-90" />
                         <Text className="font-bold text-[14px] text-neutral-400 font-inter">Chưa có chủ đề nào</Text>
                       </View>
                     ) : (

@@ -217,7 +217,7 @@ export default function SettingsScreen() {
         </View>
 
         <View className="items-center mt-6">
-          <Snapy pose="happy" className="w-12 h-12 opacity-50 mb-2" />
+          <Snapy pose="main" animation="idle" className="w-12 h-12 opacity-60 mb-2" />
           <Text className="font-bold text-[14px] text-neutral-400 font-nunito">SnapVocab</Text>
           <Text className="font-medium text-[12px] text-neutral-400 font-inter">Version {APP_VERSION}</Text>
         </View>
