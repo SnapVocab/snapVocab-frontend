@@ -14,6 +14,7 @@ import {
   ColumnsIcon,
   ImageIcon,
   HeadphonesIcon,
+  RotateCcwIcon,
 } from 'lucide-react-native';
 import { Snapy } from '@/components/Snapy';
 
@@ -252,8 +253,9 @@ export default function TemplatePreviewScreen() {
   };
 
   const resetFlip = () => {
-    flipAnim.setValue(0);
-    setIsFlipped(false);
+    Animated.spring(flipAnim, { toValue: 0, friction: 8, tension: 10, useNativeDriver: true }).start(() => {
+      setIsFlipped(false);
+    });
   };
 
   const handleTypeInCheck = () => {
@@ -520,23 +522,19 @@ export default function TemplatePreviewScreen() {
   const renderInteraction = () => {
     // FLIP
     if (templateConfig.interactionType === 'FLIP') {
+      if (!isFlipped) return null;
       return (
-        <View style={{ alignItems: 'center', paddingVertical: 16 }}>
-          {isFlipped ? (
-            <Pressable
-              onPress={() => { resetFlip(); }}
-              style={{
-                backgroundColor: '#F3F4F6', paddingHorizontal: 24, paddingVertical: 12,
-                borderRadius: 16, flexDirection: 'row', alignItems: 'center', gap: 8,
-              }}
-            >
-              <Text style={{ fontWeight: '700', fontSize: 14, color: '#6B7280' }}>Lật lại mặt trước</Text>
-            </Pressable>
-          ) : (
-            <Text style={{ fontWeight: '600', fontSize: 13, color: '#9CA3AF', letterSpacing: 1 }}>
-              CHẠM VÀO THẺ ĐỂ LẬT
-            </Text>
-          )}
+        <View style={{ alignItems: 'center', paddingVertical: 12 }}>
+          <Pressable
+            onPress={() => { resetFlip(); }}
+            style={{
+              backgroundColor: '#F3F4F6', paddingHorizontal: 20, paddingVertical: 10,
+              borderRadius: 16, flexDirection: 'row', alignItems: 'center', gap: 6,
+            }}
+          >
+            <RotateCcwIcon size={14} color="#4B5563" />
+            <Text style={{ fontWeight: '700', fontSize: 13, color: '#4B5563' }}>Lật lại mặt trước</Text>
+          </Pressable>
         </View>
       );
     }
@@ -605,6 +603,7 @@ export default function TemplatePreviewScreen() {
   // ==========================================
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: '#F7F8FA' }} edges={['top']}>
+      <View className="flex-1 max-w-md mx-auto w-full bg-[#F7F8FA] relative">
 
       {/* HEADER */}
       <View style={{
@@ -652,7 +651,7 @@ export default function TemplatePreviewScreen() {
         <View style={{ paddingHorizontal: 20, marginTop: 20, alignItems: 'center' }}>
 
           {templateConfig.interactionType === 'FLIP' && (
-            <Pressable onPress={handleFlip} disabled={isFlipped} style={{ width: '100%', height: 340 }}>
+            <Pressable onPress={isFlipped ? resetFlip : handleFlip} style={{ width: '100%', height: 340 }}>
               {/* FRONT */}
               <Animated.View style={{
                 position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
@@ -663,8 +662,11 @@ export default function TemplatePreviewScreen() {
                 elevation: 4, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.08, shadowRadius: 12,
               }}>
                 {renderCardFace(visibleFront)}
-                <View style={{ position: 'absolute', bottom: 20, left: 0, right: 0, alignItems: 'center', opacity: 0.5 }}>
-                  <Text style={{ fontWeight: '700', fontSize: 12, color: '#9CA3AF', letterSpacing: 2 }}>CHẠM ĐỂ LẬT</Text>
+                <View style={{ position: 'absolute', bottom: 16, left: 0, right: 0, alignItems: 'center', opacity: 0.7 }}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: '#F3F4F6', paddingHorizontal: 12, paddingVertical: 4, borderRadius: 20 }}>
+                    <RotateCcwIcon size={12} color="#9CA3AF" />
+                    <Text style={{ fontWeight: '700', fontSize: 11, color: '#9CA3AF', letterSpacing: 1 }}>CHẠM ĐỂ LẬT</Text>
+                  </View>
                 </View>
               </Animated.View>
 
@@ -678,6 +680,12 @@ export default function TemplatePreviewScreen() {
                 elevation: 4, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.08, shadowRadius: 12,
               }}>
                 {renderCardFace(visibleBack)}
+                <View style={{ position: 'absolute', bottom: 16, left: 0, right: 0, alignItems: 'center', opacity: 0.7 }}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: '#F3F4F6', paddingHorizontal: 12, paddingVertical: 4, borderRadius: 20 }}>
+                    <RotateCcwIcon size={12} color="#9CA3AF" />
+                    <Text style={{ fontWeight: '700', fontSize: 11, color: '#9CA3AF', letterSpacing: 1 }}>CHẠM ĐỂ LẬT LẠI</Text>
+                  </View>
+                </View>
               </Animated.View>
             </Pressable>
           )}
@@ -799,60 +807,59 @@ export default function TemplatePreviewScreen() {
         backgroundColor: '#FFFFFF', borderTopWidth: 1, borderTopColor: '#F5F5F5',
         padding: 16, paddingBottom: 32,
       }}>
-        {source === 'FROM_BUILDER' ? (
-          <Pressable
-            onPress={() => router.back()}
-            style={{
-              height: 56, backgroundColor: '#1B2541', borderRadius: 16,
-              borderBottomWidth: 4, borderBottomColor: '#0F172A',
-              alignItems: 'center', justifyContent: 'center',
-            }}
-          >
-            <Text style={{ fontWeight: '800', fontSize: 16, color: '#FFFFFF', letterSpacing: 0.5 }}>QUAY LẠI SỬA</Text>
-          </Pressable>
-        ) : templateConfig.templateType === 'system' ? (
-          <Pressable
-            onPress={() => {
-              router.back();
-              setTimeout(() => {
-                router.push({ pathname: '/templates/builder' as any, params: { mode: 'CREATE_FROM_SYSTEM', id: templateId } });
-              }, 100);
-            }}
-            style={{
-              height: 56, backgroundColor: '#3B82F6', borderRadius: 16,
-              borderBottomWidth: 4, borderBottomColor: '#1D4ED8',
-              alignItems: 'center', justifyContent: 'center',
-            }}
-          >
-            <Text style={{ fontWeight: '800', fontSize: 16, color: '#FFFFFF', letterSpacing: 0.5 }}>NHÂN BẢN ĐỂ SỬA</Text>
-          </Pressable>
-        ) : (
-          <Pressable
-            onPress={() => {
-              router.back();
-              setTimeout(() => {
-                router.push({ pathname: '/templates/builder' as any, params: { mode: 'EDIT', id: templateId } });
-              }, 100);
-            }}
-            style={{
-              height: 56, backgroundColor: '#3B82F6', borderRadius: 16,
-              borderBottomWidth: 4, borderBottomColor: '#1D4ED8',
-              alignItems: 'center', justifyContent: 'center',
-            }}
-          >
-            <Text style={{ fontWeight: '800', fontSize: 16, color: '#FFFFFF', letterSpacing: 0.5 }}>SỬA TEMPLATE</Text>
-          </Pressable>
-        )}
+        <View className="max-w-md mx-auto w-full">
+          {source === 'FROM_BUILDER' ? (
+            <Pressable
+              onPress={() => router.back()}
+              style={{
+                height: 56, backgroundColor: '#1B2541', borderRadius: 16,
+                borderBottomWidth: 4, borderBottomColor: '#0F172A',
+                alignItems: 'center', justifyContent: 'center',
+              }}
+            >
+              <Text style={{ fontWeight: '800', fontSize: 16, color: '#FFFFFF', letterSpacing: 0.5 }}>QUAY LẠI SỬA</Text>
+            </Pressable>
+          ) : templateConfig.templateType === 'system' ? (
+            <Pressable
+              onPress={() => {
+                router.back();
+                setTimeout(() => {
+                  router.push({ pathname: '/templates/builder' as any, params: { mode: 'CREATE_FROM_SYSTEM', id: templateId } });
+                }, 100);
+              }}
+              style={{
+                height: 56, backgroundColor: '#58CC02', borderRadius: 16,
+                borderBottomWidth: 4, borderBottomColor: '#46A302',
+                alignItems: 'center', justifyContent: 'center',
+              }}
+            >
+              <Text style={{ fontWeight: '800', fontSize: 16, color: '#FFFFFF', letterSpacing: 0.5 }}>NHÂN BẢN ĐỂ SỬA</Text>
+            </Pressable>
+          ) : (
+            <Pressable
+              onPress={() => {
+                router.back();
+                setTimeout(() => {
+                  router.push({ pathname: '/templates/builder' as any, params: { mode: 'EDIT', id: templateId } });
+                }, 100);
+              }}
+              style={{
+                height: 56, backgroundColor: '#58CC02', borderRadius: 16,
+                borderBottomWidth: 4, borderBottomColor: '#46A302',
+                alignItems: 'center', justifyContent: 'center',
+              }}
+            >
+              <Text style={{ fontWeight: '800', fontSize: 16, color: '#FFFFFF', letterSpacing: 0.5 }}>SỬA TEMPLATE</Text>
+            </Pressable>
+          )}
+        </View>
       </View>
 
       {/* NOTE SELECTOR MODAL */}
       <Modal visible={showNoteSelector} transparent animationType="slide">
         <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'flex-end' }}>
           <Pressable style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }} onPress={() => setShowNoteSelector(false)} />
-          <View style={{
-            backgroundColor: '#FFFFFF', borderTopLeftRadius: 28, borderTopRightRadius: 28,
-            padding: 24, paddingBottom: 40,
-          }}>
+          <View className="max-w-md mx-auto w-full bg-white rounded-t-[28px] p-6 pb-10">
             <View style={{ width: 48, height: 6, backgroundColor: '#E5E7EB', borderRadius: 3, marginBottom: 20, alignSelf: 'center' }} />
             <Text style={{ fontWeight: '800', fontSize: 20, color: '#1B2541', marginBottom: 16 }}>Chọn Note mẫu</Text>
 
@@ -864,8 +871,8 @@ export default function TemplatePreviewScreen() {
                   flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
                   paddingVertical: 14, paddingHorizontal: 16, marginBottom: 8, borderRadius: 14,
                   borderWidth: 2,
-                  borderColor: selectedNoteIndex === idx ? '#3B82F6' : '#F5F5F5',
-                  backgroundColor: selectedNoteIndex === idx ? '#EFF6FF' : '#FFFFFF',
+                  borderColor: selectedNoteIndex === idx ? '#58CC02' : '#F5F5F5',
+                  backgroundColor: selectedNoteIndex === idx ? '#F2FBF0' : '#FFFFFF',
                 }}
               >
                 <View>
@@ -874,13 +881,14 @@ export default function TemplatePreviewScreen() {
                     {note.meaning || '(Thiếu nhiều dữ liệu)'}
                   </Text>
                 </View>
-                {selectedNoteIndex === idx && <CheckIcon size={20} color="#3B82F6" />}
+                {selectedNoteIndex === idx && <CheckIcon size={20} color="#58CC02" />}
               </Pressable>
             ))}
           </View>
         </View>
       </Modal>
 
+      </View>
     </SafeAreaView>
   );
 }

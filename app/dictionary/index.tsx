@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { 
   View, 
   Text, 
@@ -18,57 +18,44 @@ import {
   XIcon, 
   MicIcon,
   ClockIcon,
-  CheckCircle2Icon
+  CheckCircle2Icon,
+  Trash2Icon
 } from 'lucide-react-native';
 import { cn } from '@/lib/utils';
 import { Snapy } from '@/components/Snapy';
-
-// ==========================================
-// TEST STATE CONTROLLER
-// ==========================================
-type TestState = 'auto' | 'loading' | 'empty';
-const TEST_STATE: TestState = 'auto';
-
-const RECENT_SEARCHES = ['abandon', 'curious', 'resilient', 'opportunity'];
-const AUTOCOMPLETE_SUGGESTIONS = [
-  { text: 'abandon', meaning: 'từ bỏ' },
-  { text: 'abandoned', meaning: 'bị bỏ rơi' },
-  { text: 'abandonment', meaning: 'sự từ bỏ' },
-  { text: 'abandoning', meaning: 'đang từ bỏ' }
-];
-
-const MOCK_RESULTS = [
-  {
-    id: 'abandon',
-    word: 'abandon',
-    ipa: '/əˈbændən/',
-    meaning: 'từ bỏ, bỏ rơi',
-    saved: true,
-  },
-  {
-    id: 'abandoned',
-    word: 'abandoned',
-    ipa: '/əˈbændənd/',
-    meaning: 'bị bỏ rơi, ruồng bỏ',
-    saved: false,
-  }
-];
+import { DICTIONARY_STORE } from '@/lib/dictionary-data';
 
 export default function DictionarySearchScreen() {
   const [query, setQuery] = useState('');
   const [isFocused, setIsFocused] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
+  const [recentSearches, setRecentSearches] = useState<string[]>([
+    'abandon', 'curious', 'resilient', 'opportunity'
+  ]);
 
   // Voice Search States
   const [isVoiceModalOpen, setIsVoiceModalOpen] = useState(false);
-  const [voiceState, setVoiceState] = useState<'idle' | 'listening' | 'searching' | 'error' | 'unavailable' | 'permission_denied'>('idle');
+  const [voiceState, setVoiceState] = useState<'idle' | 'listening' | 'searching' | 'error'>('idle');
   const [voiceText, setVoiceText] = useState('');
 
-  let currentState: 'initial' | 'typing' | 'loading' | 'results' | 'empty' = 'initial';
-  if (TEST_STATE === 'loading') currentState = 'loading';
-  else if (TEST_STATE === 'empty') currentState = 'empty';
-  else if (hasSearched) currentState = 'results';
-  else if (query.length > 0) currentState = 'typing';
+  // Suggestions filtered by query
+  const autocompleteSuggestions = Object.values(DICTIONARY_STORE).filter(item => 
+    item.word.toLowerCase().includes(query.toLowerCase().trim())
+  );
+
+  // Search results
+  const searchResults = Object.values(DICTIONARY_STORE).filter(item => {
+    const q = query.toLowerCase().trim();
+    return item.word.toLowerCase().includes(q) || 
+      item.meanings.some(m => m.definitions.some(d => d.toLowerCase().includes(q)));
+  });
+
+  let currentState: 'initial' | 'typing' | 'results' | 'empty' = 'initial';
+  if (hasSearched) {
+    currentState = searchResults.length > 0 ? 'results' : 'empty';
+  } else if (query.trim().length > 0) {
+    currentState = 'typing';
+  }
 
   const handleClear = () => {
     setQuery('');
@@ -103,10 +90,23 @@ export default function DictionarySearchScreen() {
   };
 
   const handleSearchSubmit = () => {
-    if (query.trim().length > 0) {
+    const trimmed = query.trim();
+    if (trimmed.length > 0) {
+      if (!recentSearches.includes(trimmed.toLowerCase())) {
+        setRecentSearches(prev => [trimmed.toLowerCase(), ...prev.slice(0, 5)]);
+      }
       setHasSearched(true);
       Keyboard.dismiss();
     }
+  };
+
+  const handleSelectRecent = (term: string) => {
+    setQuery(term);
+    setHasSearched(true);
+  };
+
+  const handleClearRecent = () => {
+    setRecentSearches([]);
   };
 
   const handleResultTap = (id: string) => {
@@ -117,28 +117,30 @@ export default function DictionarySearchScreen() {
     <SafeAreaView className="flex-1 bg-[#F7F8FA]" edges={['top']}>
       
       {/* 1. HEADER */}
-      <View className="h-14 flex-row items-center px-4">
+      <View className="h-14 flex-row items-center justify-between px-4">
         <Pressable 
           onPress={() => router.back()} 
-          className="w-10 h-10 items-center justify-center rounded-full active:bg-neutral-100 -ml-2"
+          className="w-10 h-10 items-center justify-center rounded-full active:bg-neutral-100"
         >
           <ChevronLeftIcon size={28} className="text-mascot-navy" />
         </Pressable>
-        <Text className="flex-1 text-center font-extrabold text-[18px] text-mascot-navy font-nunito mr-8">
+        <Text className="font-extrabold text-[18px] text-mascot-navy font-nunito">
           Tra từ
         </Text>
+        <View className="w-10" />
       </View>
 
       {/* 2. SEARCH BAR */}
       <View className="px-4 py-2 z-10">
         <View className={cn(
           "flex-row items-center h-14 px-4 rounded-2xl bg-white border-2 shadow-sm transition-all",
-          isFocused ? "border-primary-400 shadow-primary-500/10" : "border-neutral-100 shadow-black/5"
+          isFocused ? "border-primary-500 shadow-primary-500/10" : "border-neutral-200/70 shadow-black/5"
         )}>
           <SearchIcon size={20} className={isFocused ? "text-primary-500" : "text-neutral-400"} />
           
           <TextInput
             className="flex-1 h-full px-3 font-inter text-[16px] text-mascot-navy"
+            style={Platform.OS === 'web' ? ({ outline: 'none' } as any) : undefined}
             placeholder="Tìm từ tiếng Anh..."
             placeholderTextColor="#9CA3AF"
             value={query}
@@ -166,7 +168,7 @@ export default function DictionarySearchScreen() {
               onPress={handleMic}
               className="w-10 h-10 rounded-xl bg-primary-50 items-center justify-center active:bg-primary-100 active:scale-95 transition-all"
             >
-              <MicIcon size={20} className="text-primary-500" />
+              <MicIcon size={20} className="text-primary-600" />
             </Pressable>
           )}
         </View>
@@ -178,102 +180,125 @@ export default function DictionarySearchScreen() {
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       >
-        {currentState === 'initial' && RECENT_SEARCHES.length > 0 && (
+        {/* RECENT SEARCHES */}
+        {currentState === 'initial' && recentSearches.length > 0 && (
           <View>
-            <Text className="font-extrabold text-[16px] text-mascot-navy font-nunito mb-3 px-1">Tìm kiếm gần đây</Text>
+            <View className="flex-row items-center justify-between mb-3 px-1">
+              <Text className="font-extrabold text-[16px] text-mascot-navy font-nunito">Tìm kiếm gần đây</Text>
+              <Pressable onPress={handleClearRecent} className="flex-row items-center gap-1 active:opacity-70">
+                <Trash2Icon size={14} className="text-neutral-400" />
+                <Text className="font-semibold text-[13px] text-neutral-400 font-inter">Xóa</Text>
+              </Pressable>
+            </View>
             <View className="flex-row flex-wrap gap-2.5">
-              {RECENT_SEARCHES.map((item, index) => (
+              {recentSearches.map((item, index) => (
                 <Pressable 
                   key={index}
-                  onPress={() => {
-                    setQuery(item);
-                    setHasSearched(true);
-                  }}
-                  className="flex-row items-center bg-white px-4 py-2.5 rounded-full border border-neutral-100 shadow-sm shadow-black/5 active:bg-neutral-50 active:scale-95 transition-all"
+                  onPress={() => handleSelectRecent(item)}
+                  className="flex-row items-center bg-white px-4 py-2.5 rounded-full border border-neutral-200/80 shadow-sm shadow-black/5 active:bg-neutral-50 active:scale-95 transition-all"
                 >
                   <ClockIcon size={14} className="text-neutral-400 mr-2" />
-                  <Text className="font-medium text-[14px] text-neutral-600 font-inter">{item}</Text>
+                  <Text className="font-medium text-[14px] text-neutral-700 font-inter">{item}</Text>
                 </Pressable>
               ))}
             </View>
           </View>
         )}
 
+        {/* AUTOCOMPLETE SUGGESTIONS */}
         {currentState === 'typing' && (
           <View className="bg-white rounded-3xl overflow-hidden border border-neutral-100 shadow-sm shadow-black/5">
-            {AUTOCOMPLETE_SUGGESTIONS.map((item, index) => {
-              const matchIndex = item.text.toLowerCase().indexOf(query.toLowerCase());
-              const hasMatch = matchIndex !== -1;
-              return (
-                <Pressable 
-                  key={index}
-                  onPress={() => {
-                    setQuery(item.text);
-                    setHasSearched(true);
-                    Keyboard.dismiss();
-                  }}
-                  className={cn(
-                    "flex-row items-center justify-between px-5 py-4 bg-white active:bg-neutral-50",
-                    index !== AUTOCOMPLETE_SUGGESTIONS.length - 1 && "border-b border-neutral-100"
-                  )}
-                >
-                  <View className="flex-row items-center flex-1">
-                    <SearchIcon size={16} className="text-neutral-400 mr-3" />
-                    <Text className="font-medium text-[16px] text-neutral-400 font-inter">
-                      {hasMatch ? (
-                        <>
-                          <Text className="text-mascot-navy font-bold">
-                            {item.text.substring(0, matchIndex + query.length)}
-                          </Text>
-                          {item.text.substring(matchIndex + query.length)}
-                        </>
-                      ) : (
-                        item.text
-                      )}
+            {autocompleteSuggestions.length > 0 ? (
+              autocompleteSuggestions.map((item, index) => {
+                const matchIndex = item.word.toLowerCase().indexOf(query.toLowerCase());
+                const hasMatch = matchIndex !== -1;
+                const primaryDef = item.meanings[0]?.definitions[0] || '';
+                return (
+                  <Pressable 
+                    key={item.id}
+                    onPress={() => handleResultTap(item.id)}
+                    className={cn(
+                      "flex-row items-center justify-between px-5 py-4 bg-white active:bg-neutral-50",
+                      index !== autocompleteSuggestions.length - 1 && "border-b border-neutral-100"
+                    )}
+                  >
+                    <View className="flex-row items-center flex-1 mr-3">
+                      <SearchIcon size={16} className="text-neutral-400 mr-3" />
+                      <Text className="font-medium text-[16px] text-neutral-400 font-inter">
+                        {hasMatch ? (
+                          <>
+                            <Text className="text-mascot-navy font-bold">
+                              {item.word.substring(0, matchIndex + query.length)}
+                            </Text>
+                            {item.word.substring(matchIndex + query.length)}
+                          </>
+                        ) : (
+                          item.word
+                        )}
+                      </Text>
+                    </View>
+                    <Text className="font-medium text-[13px] text-neutral-400 font-inter max-w-[45%]" numberOfLines={1}>
+                      {primaryDef}
                     </Text>
-                  </View>
-                  <Text className="font-medium text-[13px] text-neutral-400 font-inter" numberOfLines={1}>
-                    {item.meaning}
-                  </Text>
-                </Pressable>
-              );
-            })}
+                  </Pressable>
+                );
+              })
+            ) : (
+              <Pressable 
+                onPress={handleSearchSubmit}
+                className="flex-row items-center px-5 py-4 active:bg-neutral-50"
+              >
+                <SearchIcon size={16} className="text-primary-500 mr-3" />
+                <Text className="font-medium text-[15px] text-neutral-600 font-inter">
+                  Tìm kiếm <Text className="font-bold text-primary-600">"{query}"</Text>
+                </Text>
+              </Pressable>
+            )}
           </View>
         )}
 
+        {/* RESULTS LIST */}
         {currentState === 'results' && (
           <View>
-            <Text className="font-extrabold text-[16px] text-mascot-navy font-nunito mb-3 px-1">Kết quả</Text>
+            <Text className="font-extrabold text-[16px] text-mascot-navy font-nunito mb-3 px-1">
+              Kết quả ({searchResults.length})
+            </Text>
             <View className="gap-3">
-              {MOCK_RESULTS.map((item) => (
-                <Pressable 
-                  key={item.id}
-                  onPress={() => handleResultTap(item.id)}
-                  className="bg-white p-5 rounded-[24px] border-2 border-neutral-100 border-b-[4px] shadow-sm shadow-black/5 active:bg-neutral-50 active:translate-y-[2px] active:border-b-[2px] transition-all relative overflow-hidden"
-                >
-                  {item.saved && (
-                    <View className="absolute top-4 right-4 bg-primary-50 px-2.5 py-1 rounded-md flex-row items-center gap-1">
-                      <CheckCircle2Icon size={12} className="text-primary-600" />
-                      <Text className="font-bold text-[10px] text-primary-600 font-inter uppercase tracking-wider">Đã lưu</Text>
+              {searchResults.map((item) => {
+                const primaryDef = item.meanings[0]?.definitions[0] || '';
+                return (
+                  <Pressable 
+                    key={item.id}
+                    onPress={() => handleResultTap(item.id)}
+                    className="bg-white p-5 rounded-[24px] border-2 border-neutral-100 border-b-[4px] shadow-sm shadow-black/5 active:bg-neutral-50 active:translate-y-[2px] active:border-b-[2px] transition-all relative overflow-hidden"
+                  >
+                    {item.isSaved && (
+                      <View className="absolute top-4 right-4 bg-primary-50 px-2.5 py-1 rounded-md flex-row items-center gap-1">
+                        <CheckCircle2Icon size={12} className="text-primary-600" />
+                        <Text className="font-bold text-[10px] text-primary-600 font-inter uppercase tracking-wider">Đã lưu</Text>
+                      </View>
+                    )}
+                    <Text className="font-extrabold text-[24px] text-mascot-navy font-nunito mb-1.5">{item.word}</Text>
+                    <View className="flex-row items-center gap-2">
+                      <Text className="font-medium text-[14px] text-neutral-500 font-inter">{item.ipa}</Text>
+                      <Text className="font-medium text-[14px] text-neutral-300 font-inter">•</Text>
+                      <Text className="font-bold text-[14px] text-neutral-700 font-inter" numberOfLines={1}>{primaryDef}</Text>
                     </View>
-                  )}
-                  <Text className="font-extrabold text-[24px] text-mascot-navy font-nunito mb-1.5">{item.word}</Text>
-                  <View className="flex-row items-center gap-2">
-                    <Text className="font-medium text-[14px] text-neutral-500 font-inter">{item.ipa}</Text>
-                    <Text className="font-medium text-[14px] text-neutral-300 font-inter">•</Text>
-                    <Text className="font-bold text-[14px] text-neutral-700 font-inter">{item.meaning}</Text>
-                  </View>
-                </Pressable>
-              ))}
+                  </Pressable>
+                );
+              })}
             </View>
           </View>
         )}
 
+        {/* EMPTY STATE */}
         {currentState === 'empty' && (
           <View className="items-center justify-center py-12 px-6">
-            <Snapy pose="to_mo" animation="idle" className="w-32 h-32 mb-6" />
+            <View className="w-32 h-32 items-center justify-center mb-6">
+              <Snapy pose="to_mo" animation="idle" style={{ width: 110, height: 110 }} />
+            </View>
             <Text className="font-extrabold text-[18px] text-mascot-navy font-nunito mb-2 text-center">
-              Không tìm thấy từ
+              Không tìm thấy từ "{query}"
             </Text>
             <Text className="font-medium text-[14px] text-neutral-500 font-inter text-center mb-8">
               Hãy kiểm tra lại chính tả hoặc thử một từ khóa khác xem sao nhé!
@@ -283,7 +308,7 @@ export default function DictionarySearchScreen() {
                 setQuery('');
                 setHasSearched(false);
               }}
-              className="w-full max-w-[200px] h-12 bg-primary-50 rounded-xl border-2 border-primary-100 active:bg-primary-100 transition-all flex-row items-center justify-center"
+              className="w-full max-w-[200px] h-12 bg-primary-50 rounded-xl border-2 border-primary-200 active:bg-primary-100 transition-all flex-row items-center justify-center"
             >
               <Text className="text-primary-600 font-bold text-[15px] font-inter">Thử lại</Text>
             </Pressable>
@@ -302,7 +327,7 @@ export default function DictionarySearchScreen() {
           {/* Dismiss area */}
           <Pressable className="flex-1" onPress={() => setIsVoiceModalOpen(false)} />
           
-          <View className="bg-white rounded-t-3xl shadow-xl overflow-hidden pb-8">
+          <View className="bg-white rounded-t-3xl shadow-2xl overflow-hidden pb-8">
             
             {/* Modal Header */}
             <View className="flex-row justify-between items-center p-6 pb-2">
@@ -313,7 +338,7 @@ export default function DictionarySearchScreen() {
             </View>
 
             {/* Instruction / Status Text */}
-            <View className="px-6 mb-4 items-center">
+            <View className="px-6 mb-3 items-center">
               <Text className="font-bold text-[15px] text-neutral-400 font-inter text-center">
                 {voiceState === 'idle' && "Hãy nói một từ hoặc cụm từ tiếng Việt"}
                 {voiceState === 'listening' && "Đang lắng nghe..."}
@@ -322,30 +347,32 @@ export default function DictionarySearchScreen() {
               </Text>
             </View>
 
-            {/* Mascot Area */}
-            <View className="items-center mb-4 h-[120px] justify-center">
+            {/* Mascot Area - Fixed container with explicit dimensions */}
+            <View className="items-center mb-3 h-[110px] justify-center overflow-hidden">
               {voiceState === 'error' ? (
-                <Snapy pose="bat_ngo" animation="shake" className="w-28 h-28" />
+                <Snapy pose="bat_ngo" animation="shake" style={{ width: 100, height: 100 }} />
               ) : voiceState === 'listening' ? (
-                <Snapy pose="tap_trung" animation="idle" className="w-28 h-28" />
+                <Snapy pose="tap_trung" animation="idle" style={{ width: 100, height: 100 }} />
               ) : voiceState === 'searching' ? (
-                <Snapy pose="suy_nghi" animation="idle" className="w-28 h-28" />
+                <Snapy pose="suy_nghi" animation="idle" style={{ width: 100, height: 100 }} />
               ) : (
-                <Snapy pose="chao_mung" animation="wave" className="w-28 h-28" />
+                <Snapy pose="chao_mung" animation="wave" style={{ width: 100, height: 100 }} />
               )}
             </View>
 
             {/* Recognized Text Display (Transcript Window) */}
-            <View className="px-6 mb-8 h-[70px] justify-center">
+            <View className="px-6 mb-6 h-[64px] justify-center">
               {voiceText.length > 0 ? (
-                <View className="bg-neutral-50 rounded-2xl p-4 border border-neutral-100 items-center justify-center">
-                  <Text className="font-extrabold text-[22px] text-mascot-navy font-nunito text-center">
+                <View className="bg-neutral-50 rounded-2xl p-3 border border-neutral-100 items-center justify-center">
+                  <Text className="font-extrabold text-[20px] text-mascot-navy font-nunito text-center">
                     {voiceText}
                   </Text>
                 </View>
               ) : (
                 <View className="h-full items-center justify-center">
-                  {/* Placeholder space to prevent jumping */}
+                  <Text className="font-medium text-[13px] text-neutral-300 font-inter italic">
+                    {voiceState === 'listening' ? 'Nói rõ ràng vào microphone...' : 'Ví dụ: "quả táo", "từ bỏ"...'}
+                  </Text>
                 </View>
               )}
             </View>
@@ -382,7 +409,7 @@ export default function DictionarySearchScreen() {
                     onPress={voiceState === 'idle' ? startListening : undefined}
                     disabled={voiceState === 'searching'}
                     className={cn(
-                      "w-20 h-20 rounded-full items-center justify-center border-b-[6px] active:translate-y-[4px] active:border-b-[2px] transition-all",
+                      "w-20 h-20 rounded-full items-center justify-center border-b-[6px] active:translate-y-[4px] active:border-b-[2px] transition-all shadow-md",
                       voiceState === 'idle' 
                         ? "bg-primary-500 border-primary-700 active:bg-primary-600" 
                         : (voiceState === 'listening' 

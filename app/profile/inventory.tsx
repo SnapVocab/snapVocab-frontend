@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, ScrollView, Pressable, ActivityIndicator } from 'react-native';
+import { View, Text, ScrollView, Pressable, ActivityIndicator, Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { 
@@ -12,65 +12,9 @@ import {
 } from 'lucide-react-native';
 import { cn } from '@/lib/utils';
 import { Snapy } from '@/components/Snapy';
+import { useEconomyState, InventoryItem as StoreInventoryItem } from '@/lib/economyState';
 
-// ==========================================
-// TYPES & MOCK DATA
-// ==========================================
 type ItemCategory = 'all' | 'frame' | 'theme' | 'booster';
-type ItemState = 'equipped' | 'inactive' | 'expired';
-
-interface InventoryItem {
-  id: string;
-  name: string;
-  category: ItemCategory;
-  categoryName: string;
-  state: ItemState;
-  quantity?: number;
-  expiry?: string;
-  artworkIcon: any;
-  artworkColor: string;
-}
-
-const INITIAL_ITEMS: InventoryItem[] = [
-  {
-    id: 'i1',
-    name: 'Khung Học Giả',
-    category: 'frame',
-    categoryName: 'Avatar Frame',
-    state: 'equipped',
-    artworkIcon: CrownIcon,
-    artworkColor: 'text-info-500 bg-info-50 border-info-200'
-  },
-  {
-    id: 'i2',
-    name: 'Khung Cú Đêm',
-    category: 'frame',
-    categoryName: 'Avatar Frame',
-    state: 'inactive',
-    artworkIcon: CrownIcon,
-    artworkColor: 'text-mascot-navy bg-mascot-50 border-mascot-200'
-  },
-  {
-    id: 'i3',
-    name: 'Thẻ X2 Kinh Nghiệm',
-    category: 'booster',
-    categoryName: 'Booster',
-    state: 'inactive',
-    quantity: 3,
-    artworkIcon: ZapIcon,
-    artworkColor: 'text-warning-500 bg-warning-50 border-warning-200'
-  },
-  {
-    id: 'i4',
-    name: 'Bảo Vệ Chuỗi',
-    category: 'booster',
-    categoryName: 'Booster',
-    state: 'expired',
-    expiry: 'Hết hạn hôm qua',
-    artworkIcon: ZapIcon,
-    artworkColor: 'text-neutral-400 bg-neutral-100 border-neutral-200'
-  }
-];
 
 const CATEGORIES = [
   { id: 'all', label: 'Tất cả' },
@@ -80,9 +24,11 @@ const CATEGORIES = [
 ];
 
 export default function InventoryScreen() {
-  const [items, setItems] = useState<InventoryItem[]>(INITIAL_ITEMS);
+  const [economy, economyStore] = useEconomyState();
   const [activeCategory, setActiveCategory] = useState<ItemCategory>('all');
   const [processingId, setProcessingId] = useState<string | null>(null);
+
+  const items = economy.inventory;
 
   // Filter items
   const filteredItems = items.filter(item => 
@@ -92,31 +38,19 @@ export default function InventoryScreen() {
   // ==========================================
   // HANDLERS
   // ==========================================
-  const handleToggleState = (targetItem: InventoryItem) => {
+  const handleToggleState = (targetItem: StoreInventoryItem) => {
     if (targetItem.state === 'expired' || processingId) return;
 
     setProcessingId(targetItem.id);
 
     // Simulate API Delay
     setTimeout(() => {
-      setItems(prev => prev.map(item => {
-        // Exclusivity rule: If equipping a frame, unequip other frames
-        if (targetItem.state === 'inactive' && targetItem.category === 'frame' && item.category === 'frame' && item.id !== targetItem.id) {
-          return { ...item, state: 'inactive' };
-        }
-        
-        if (item.id === targetItem.id) {
-          // Toggle state
-          return { ...item, state: item.state === 'equipped' ? 'inactive' : 'equipped' };
-        }
-        
-        return item;
-      }));
+      economyStore.toggleEquip(targetItem.id);
       setProcessingId(null);
-    }, 800);
+    }, 600);
   };
 
-  const getButtonLabel = (category: ItemCategory, isEquipped: boolean) => {
+  const getButtonLabel = (category: string, isEquipped: boolean) => {
     if (isEquipped) return 'THÁO RA';
     if (category === 'booster') return 'SỬ DỤNG';
     return 'TRANG BỊ';
@@ -125,24 +59,23 @@ export default function InventoryScreen() {
   // ==========================================
   // RENDER ITEM CARD
   // ==========================================
-  const renderItemCard = (item: InventoryItem) => {
+  const renderItemCard = (item: StoreInventoryItem) => {
     const isEquipped = item.state === 'equipped';
     const isExpired = item.state === 'expired';
     const isProcessing = processingId === item.id;
-    const Icon = item.artworkIcon;
 
     return (
       <View 
         key={item.id} 
         className={cn(
-          "w-[48%] bg-white rounded-[24px] border shadow-sm overflow-hidden mb-4 transition-all",
+          "w-[48%] bg-white rounded-[24px] border-2 shadow-sm overflow-hidden mb-4 transition-all",
           isEquipped ? "border-primary-400 shadow-primary-500/20" : "border-neutral-100 shadow-black/5",
           isExpired && "opacity-80"
         )}
       >
         {/* Artwork Area */}
         <View className={cn(
-          "h-32 items-center justify-center p-4 relative",
+          "h-32 items-center justify-center p-3 relative",
           isEquipped ? "bg-primary-50" : "bg-[#F7F8FA]"
         )}>
           {/* Quantity Badge */}
@@ -152,23 +85,30 @@ export default function InventoryScreen() {
             </View>
           )}
 
-          {/* Icon */}
-          <View className={cn(
-            "w-16 h-16 rounded-2xl items-center justify-center border-2 shadow-sm",
-            item.artworkColor.split(' ').slice(1).join(' ')
-          )}>
-            <Icon size={32} className={item.artworkColor.split(' ')[0]} />
-          </View>
+          {/* Image Artwork Container */}
+          {item.imageSource ? (
+            <View style={{ width: 68, height: 68 }} className="items-center justify-center">
+              <Image 
+                source={item.imageSource} 
+                style={{ width: 64, height: 64 }}
+                resizeMode="contain"
+              />
+            </View>
+          ) : (
+            <View className="w-16 h-16 rounded-2xl items-center justify-center border-2 border-primary-200 bg-primary-50">
+              <CrownIcon size={32} color="#58CC02" />
+            </View>
+          )}
         </View>
 
         {/* Info Area */}
         <View className="p-3">
           <Text 
             className={cn(
-              "font-extrabold text-[15px] font-nunito mb-1",
+              "font-extrabold text-[15px] font-nunito mb-0.5",
               isExpired ? "text-neutral-500" : "text-mascot-navy"
             )} 
-            numberOfLines={2}
+            numberOfLines={1}
           >
             {item.name}
           </Text>
@@ -179,16 +119,16 @@ export default function InventoryScreen() {
           {/* Equipped Status Indicator */}
           {isEquipped ? (
             <View className="flex-row items-center gap-1.5 mb-2">
-              <CheckIcon size={14} className="text-primary-500" />
+              <CheckIcon size={14} color="#58CC02" />
               <Text className="font-extrabold text-[12px] text-primary-500 font-inter">Đang dùng</Text>
             </View>
           ) : isExpired ? (
             <View className="flex-row items-center gap-1.5 mb-2">
-              <ClockIcon size={14} className="text-danger-500" />
-              <Text className="font-bold text-[11px] text-danger-500 font-inter">{item.expiry}</Text>
+              <ClockIcon size={14} color="#EF4444" />
+              <Text className="font-bold text-[11px] text-rose-500 font-inter">{item.expiry}</Text>
             </View>
           ) : (
-            <View className="h-[22px] mb-2" /> // Spacer to align buttons
+            <View className="h-[22px] mb-2" />
           )}
 
           {/* Action Area */}
@@ -234,10 +174,15 @@ export default function InventoryScreen() {
       {/* 1. HEADER */}
       <View className="px-4 py-3 border-b border-neutral-100 bg-white flex-row items-center justify-between z-10 shadow-sm shadow-black/5">
         <Pressable onPress={() => router.back()} className="w-10 h-10 items-center justify-center -ml-2 active:bg-neutral-100 rounded-full">
-          <ArrowLeftIcon size={24} className="text-mascot-navy" />
+          <ArrowLeftIcon size={24} color="#1B1B3A" />
         </Pressable>
-        <Text className="font-extrabold text-[18px] text-mascot-navy font-nunito">Kho đồ</Text>
-        <View className="w-10 h-10" />
+        <Text className="font-extrabold text-[18px] text-mascot-navy font-nunito">Kho đồ của bạn</Text>
+        <Pressable 
+          onPress={() => router.push('/(tabs)/shop' as any)}
+          className="bg-primary-50 px-2.5 py-1 rounded-full border border-primary-200 active:scale-95"
+        >
+          <Text className="text-[12px] font-extrabold text-primary-700 font-nunito">Shop</Text>
+        </Pressable>
       </View>
 
       {/* 2. CATEGORIES */}
@@ -277,7 +222,7 @@ export default function InventoryScreen() {
             <Text className="font-medium text-[14px] text-neutral-500 font-inter">Bạn chưa sở hữu vật phẩm nào.</Text>
             
             <Pressable 
-              onPress={() => router.push('/shop' as any)}
+              onPress={() => router.push('/(tabs)/shop' as any)}
               className="mt-6 bg-primary-100 px-6 py-3 rounded-xl active:bg-primary-200"
             >
               <Text className="font-bold text-[15px] text-primary-700 font-inter">Đến Cửa Hàng</Text>

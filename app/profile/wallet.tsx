@@ -13,77 +13,15 @@ import {
 } from 'lucide-react-native';
 import { cn } from '@/lib/utils';
 import { Snapy } from '@/components/Snapy';
+import { useEconomyState, Transaction, TransactionSource, TransactionType } from '@/lib/economyState';
 
 // ==========================================
-// MOCK DATA
+// MOCK PROFILE LEVEL
 // ==========================================
-type TransactionType = 'earn' | 'spend';
-type TransactionSource = 'mission' | 'streak' | 'achievement' | 'shop_booster' | 'shop_cosmetic';
-
-interface Transaction {
-  id: string;
-  type: TransactionType;
-  source: TransactionSource;
-  title: string;
-  subtitle: string;
-  amount: number;
-  time: string;
-}
-
-const WALLET_DATA = {
-  coins: 2450,
+const WALLET_PROFILE = {
   xp: 2450,
   level: 12,
   xpMax: 3000,
-  // Change to true to see Empty State
-  isEmpty: false,
-  transactions: [
-    {
-      id: 'tx1',
-      type: 'earn',
-      source: 'mission',
-      title: 'Thưởng nhiệm vụ',
-      subtitle: 'Hoàn thành nhiệm vụ ngày',
-      amount: 50,
-      time: '2 giờ trước'
-    },
-    {
-      id: 'tx2',
-      type: 'spend',
-      source: 'shop_booster',
-      title: 'Thẻ X2 Kinh Nghiệm',
-      subtitle: 'Mua từ Cửa hàng',
-      amount: 250,
-      time: 'Hôm qua'
-    },
-    {
-      id: 'tx3',
-      type: 'earn',
-      source: 'streak',
-      title: 'Thưởng chuỗi 10 ngày',
-      subtitle: 'Duy trì học tập',
-      amount: 100,
-      time: 'Hôm qua'
-    },
-    {
-      id: 'tx4',
-      type: 'spend',
-      source: 'shop_cosmetic',
-      title: 'Mũ ảo thuật gia',
-      subtitle: 'Trang bị cho Snapy',
-      amount: 500,
-      time: '3 ngày trước'
-    },
-    {
-      id: 'tx5',
-      type: 'earn',
-      source: 'achievement',
-      title: 'Huy hiệu "Chăm Chỉ"',
-      subtitle: 'Phần thưởng thành tựu',
-      amount: 200,
-      time: 'Tuần trước'
-    }
-  ] as Transaction[]
 };
 
 // ==========================================
@@ -91,18 +29,19 @@ const WALLET_DATA = {
 // ==========================================
 const getSourceIcon = (source: TransactionSource, type: TransactionType) => {
   switch (source) {
-    case 'mission': return <TargetIcon size={20} className="text-reward-600" />;
-    case 'streak': return <ZapIcon size={20} className="text-mascot-500" fill="#FF8A00" />;
-    case 'achievement': return <TrophyIcon size={20} className="text-warning-500" />;
+    case 'mission': return <TargetIcon size={20} color="#EAB308" />;
+    case 'streak': return <ZapIcon size={20} color="#FF8A00" fill="#FF8A00" />;
+    case 'achievement': return <TrophyIcon size={20} color="#F59E0B" />;
     case 'shop_booster': 
     case 'shop_cosmetic': 
-      return <ShoppingCartIcon size={20} className="text-neutral-500" />;
+      return <ShoppingCartIcon size={20} color="#757793" />;
     default:
-      return <CoinsIcon size={20} className="text-neutral-500" />;
+      return <CoinsIcon size={20} color="#757793" />;
   }
 };
 
 export default function WalletScreen() {
+  const [economy] = useEconomyState();
   
   const renderTransaction = (tx: Transaction) => {
     const isEarn = tx.type === 'earn';
@@ -153,12 +92,17 @@ export default function WalletScreen() {
     <SafeAreaView className="flex-1 bg-[#F7F8FA]" edges={['top']}>
       
       {/* 1. HEADER */}
-      <View className="px-4 py-3 border-b border-neutral-100 bg-white flex-row items-center justify-between z-10">
+      <View className="px-4 py-3 border-b border-neutral-100 bg-white flex-row items-center justify-between z-10 shadow-sm shadow-black/5">
         <Pressable onPress={() => router.back()} className="w-10 h-10 items-center justify-center -ml-2 active:bg-neutral-100 rounded-full">
-          <ArrowLeftIcon size={24} className="text-mascot-navy" />
+          <ArrowLeftIcon size={24} color="#1B1B3A" />
         </Pressable>
-        <Text className="font-extrabold text-[18px] text-mascot-navy font-nunito">Ví tiền</Text>
-        <View className="w-10 h-10" />
+        <Text className="font-extrabold text-[18px] text-mascot-navy font-nunito">Ví của bạn</Text>
+        <Pressable 
+          onPress={() => router.push('/(tabs)/shop' as any)}
+          className="bg-reward-50 px-3 py-1 rounded-full border border-reward-200 active:scale-95"
+        >
+          <Text className="text-[12px] font-extrabold text-reward-700 font-nunito">Shop</Text>
+        </Pressable>
       </View>
 
       <ScrollView 
@@ -175,9 +119,9 @@ export default function WalletScreen() {
           </Text>
           
           <View className="flex-row items-center justify-center gap-3">
-            <CoinsIcon size={48} fill="#FFC42E" className="text-reward-600" />
-            <Text className="font-extrabold text-[56px] text-mascot-navy font-nunito tabular-nums leading-tight">
-              {WALLET_DATA.coins.toLocaleString()}
+            <CoinsIcon size={48} fill="#FFC42E" color="#B37F00" />
+            <Text className="font-extrabold text-[52px] text-mascot-navy font-nunito tabular-nums leading-tight">
+              {economy.coins.toLocaleString()}
             </Text>
           </View>
           <Text className="font-bold text-[16px] text-reward-600 font-inter mt-1 uppercase tracking-wider">
@@ -191,12 +135,12 @@ export default function WalletScreen() {
         <View className="bg-primary-50 rounded-[24px] p-5 border border-primary-200 mb-8">
           <View className="flex-row justify-between items-center mb-4">
             <View className="flex-row items-center gap-2">
-              <StarIcon size={20} fill="#3B82F6" className="text-primary-600" />
+              <StarIcon size={20} fill="#3B82F6" color="#2563EB" />
               <Text className="font-extrabold text-[15px] text-primary-800 font-inter">Kinh nghiệm</Text>
             </View>
             <View className="bg-white px-3 py-1 rounded-lg border border-primary-100">
               <Text className="font-extrabold text-[13px] text-primary-600 font-nunito uppercase">
-                Level {WALLET_DATA.level}
+                Level {WALLET_PROFILE.level}
               </Text>
             </View>
           </View>
@@ -205,11 +149,11 @@ export default function WalletScreen() {
             <View className="flex-1 h-3 bg-white rounded-full overflow-hidden border border-primary-100">
               <View 
                 className="h-full bg-primary-500 rounded-full" 
-                style={{ width: `${(WALLET_DATA.xp / WALLET_DATA.xpMax) * 100}%` }}
+                style={{ width: `${(WALLET_PROFILE.xp / WALLET_PROFILE.xpMax) * 100}%` }}
               />
             </View>
             <Text className="font-extrabold text-[14px] text-primary-800 font-nunito tabular-nums">
-              {WALLET_DATA.xp.toLocaleString()} / {WALLET_DATA.xpMax.toLocaleString()} XP
+              {WALLET_PROFILE.xp.toLocaleString()} / {WALLET_PROFILE.xpMax.toLocaleString()} XP
             </Text>
           </View>
         </View>
@@ -221,7 +165,7 @@ export default function WalletScreen() {
           Lịch sử giao dịch
         </Text>
 
-        {WALLET_DATA.isEmpty ? (
+        {economy.transactions.length === 0 ? (
           /* EMPTY STATE */
           <View className="bg-white rounded-3xl p-8 border border-neutral-100 items-center justify-center">
             <Snapy pose="suy_nghi" animation="idle" className="w-24 h-24 mb-4 opacity-80" />
@@ -235,7 +179,7 @@ export default function WalletScreen() {
         ) : (
           /* TRANSACTION LIST */
           <View className="bg-white rounded-[24px] border border-neutral-100 shadow-sm shadow-black/5 overflow-hidden">
-            {WALLET_DATA.transactions.map(renderTransaction)}
+            {economy.transactions.map(renderTransaction)}
           </View>
         )}
 

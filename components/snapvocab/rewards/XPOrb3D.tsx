@@ -90,8 +90,13 @@ export function XPOrb3D({
           {/* Internal Swirling Purple Energy Ring */}
           <Circle cx="30" cy="30" r="18" fill="url(#coreSpark)" opacity="0.85" />
 
-          {/* Lightning XP Motif */}
-          <G filter="drop-shadow(0px 2px 4px rgba(0,0,0,0.25))">
+          {/* Lightning XP Motif Shadow & Bolt */}
+          <Path
+            d="M34 15.5 L20 35.5 L31 35.5 L26 51.5 L44 29.5 L33 29.5 Z"
+            fill="#0284C7"
+            opacity="0.35"
+          />
+          <G>
             <Path
               d="M34 14 L20 34 L31 34 L26 50 L44 28 L33 28 Z"
               fill="url(#boltGrad)"

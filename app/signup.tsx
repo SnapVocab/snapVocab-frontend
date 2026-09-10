@@ -1,13 +1,18 @@
 import { Link, useRouter } from 'expo-router';
 import React, { useState } from 'react';
-import { View, Text, TextInput, Pressable, ActivityIndicator, ScrollView } from 'react-native';
-import { ArrowLeftIcon, EyeIcon, EyeOffIcon } from 'lucide-react-native';
+import { View, Text, TouchableOpacity, ActivityIndicator, ScrollView, Alert } from 'react-native';
+import { ArrowLeftIcon } from 'lucide-react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { cn } from '@/lib/utils';
-
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-// Policy: min 8 chars, at least 1 special char
-const PASSWORD_POLICY_RE = /^(?=.*[!@#$%^&*(),.?":{}|<>]).{8,}$/;
+import { Snapy } from '@/components/Snapy';
+import { AuthFormField } from '@/components/ui/AuthFormField';
+import {
+  EMAIL_RE,
+  PASSWORD_POLICY_RE,
+  validateEmail,
+  validatePassword,
+  validateConfirmPassword,
+  validateName,
+} from '@/lib/validators';
 
 export default function Signup() {
   const router = useRouter();
@@ -15,35 +20,20 @@ export default function Signup() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [showPwd, setShowPwd] = useState(false);
-  const [showConfirm, setShowConfirm] = useState(false);
   const [touched, setTouched] = useState({ name: false, email: false, password: false, confirm: false });
   const [loading, setLoading] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
 
-  const nameError = touched.name && !name.trim() ? "Vui lòng nhập họ tên" : null;
-  const emailError =
-    touched.email && !email.trim()
-      ? "Vui lòng nhập email"
-      : touched.email && !EMAIL_RE.test(email.trim())
-        ? "Email không đúng định dạng"
-        : null;
-  const passwordError = 
-    touched.password && !password 
-      ? "Vui lòng nhập mật khẩu" 
-      : touched.password && !PASSWORD_POLICY_RE.test(password)
-        ? "Mật khẩu chưa đạt yêu cầu"
-        : null;
-  const confirmError = 
-    touched.confirm && password !== confirmPassword 
-      ? "Mật khẩu xác nhận không khớp" 
-      : null;
+  const nameError = touched.name ? validateName(name) : null;
+  const emailError = touched.email ? validateEmail(email) : null;
+  const passwordError = touched.password ? validatePassword(password) : null;
+  const confirmError = touched.confirm ? validateConfirmPassword(password, confirmPassword) : null;
 
-  const canSubmit = 
+  const canSubmit =
     name.trim().length > 0 &&
-    EMAIL_RE.test(email.trim()) && 
-    PASSWORD_POLICY_RE.test(password) && 
-    password === confirmPassword && 
+    EMAIL_RE.test(email.trim()) &&
+    PASSWORD_POLICY_RE.test(password) &&
+    password === confirmPassword &&
     !loading;
 
   async function handleSubmit() {
@@ -61,110 +51,93 @@ export default function Signup() {
       setFormError("Email đã được sử dụng");
       return;
     }
-    
+
     // Redirect to OTP
     router.push({ pathname: "/verify", params: { email: value, mode: "signup" } });
   }
-
-  const field =
-    "h-14 w-full rounded-2xl border-2 bg-neutral-50/60 px-4 text-[15px] font-medium text-mascot-navy placeholder:text-neutral-300 focus:border-info-500 focus:bg-white";
 
   return (
     <SafeAreaView className="flex-1 bg-background">
       <ScrollView contentContainerStyle={{ flexGrow: 1 }} keyboardShouldPersistTaps="handled">
         <View className="mx-auto flex-1 w-full max-w-md flex-col px-6 pt-4 pb-10">
           <View className="flex-row items-center">
-            <Link href="/login" asChild>
-              <Pressable className="-ml-2 rounded-full p-2 active:bg-neutral-100">
-                <ArrowLeftIcon size={28} strokeWidth={3} className="text-neutral-300" />
-              </Pressable>
-            </Link>
+            <TouchableOpacity
+              onPress={() => router.back()}
+              className="-ml-2 rounded-full p-2 active:bg-neutral-100"
+              accessibilityLabel="Quay lại"
+              accessibilityRole="button"
+            >
+              <ArrowLeftIcon size={28} strokeWidth={3} className="text-neutral-300" />
+            </TouchableOpacity>
           </View>
 
-          <Text className="mt-6 text-center text-2xl font-extrabold text-mascot-navy">
-            Đăng ký tài khoản
-          </Text>
-
-          <View className="mt-8 flex-col gap-4">
-            <View>
-              <TextInput
-                autoCapitalize="words"
-                placeholder="Họ và tên"
-                placeholderTextColor="#9597ad"
-                value={name}
-                maxLength={100}
-                onChangeText={setName}
-                onBlur={() => setTouched((t) => ({ ...t, name: true }))}
-                className={cn(field, nameError ? "border-danger-500" : "border-neutral-100")}
-              />
-              {nameError && <Text className="mt-1.5 px-1 text-sm text-danger-600">{nameError}</Text>}
+          {/* Mascot + Title */}
+          <View className="mt-3 flex-row items-center justify-center gap-3">
+            <View style={{ width: 64, height: 64 }} className="items-center justify-center">
+              <Snapy pose="happy" animation="idle" style={{ width: 64, height: 64 }} />
             </View>
-
-            <View>
-              <TextInput
-                keyboardType="email-address"
-                autoCapitalize="none"
-                autoComplete="email"
-                placeholder="Email"
-                placeholderTextColor="#9597ad"
-                value={email}
-                maxLength={255}
-                onChangeText={setEmail}
-                onBlur={() => setTouched((t) => ({ ...t, email: true }))}
-                className={cn(field, emailError ? "border-danger-500" : "border-neutral-100")}
-              />
-              {emailError && <Text className="mt-1.5 px-1 text-sm text-danger-600">{emailError}</Text>}
+            <View className="flex-col">
+              <Text className="text-2xl font-extrabold text-mascot-navy">
+                Đăng ký tài khoản
+              </Text>
+              <Text className="mt-0.5 text-[13px] text-neutral-400">
+                Miễn phí, chỉ 30 giây!
+              </Text>
             </View>
+          </View>
 
-            <View>
-              <View className="relative justify-center">
-                <TextInput
-                  secureTextEntry={!showPwd}
-                  autoCapitalize="none"
-                  placeholder="Mật khẩu"
-                  placeholderTextColor="#9597ad"
-                  value={password}
-                  maxLength={128}
-                  onChangeText={setPassword}
-                  onBlur={() => setTouched((t) => ({ ...t, password: true }))}
-                  className={cn(field, "pr-12", passwordError ? "border-danger-500" : "border-neutral-100")}
-                />
-                <Pressable
-                  onPress={() => setShowPwd((s) => !s)}
-                  className="absolute right-3 p-1"
-                >
-                  {showPwd ? <EyeOffIcon size={22} className="text-neutral-300" /> : <EyeIcon size={22} className="text-neutral-300" />}
-                </Pressable>
-              </View>
-              {passwordError ? (
-                <Text className="mt-1.5 px-1 text-sm text-danger-600">{passwordError}</Text>
-              ) : (
-                <Text className="mt-1.5 px-1 text-xs text-neutral-400">Ít nhất 8 ký tự và 1 ký tự đặc biệt (!@#$)</Text>
-              )}
-            </View>
+          {/* Form */}
+          <View className="mt-7 flex-col gap-4">
+            <AuthFormField
+              autoCapitalize="words"
+              placeholder="Họ và tên"
+              value={name}
+              maxLength={100}
+              onChangeText={setName}
+              onBlur={() => setTouched((t) => ({ ...t, name: true }))}
+              error={nameError}
+              accessibilityLabel="Họ và tên"
+            />
 
-            <View>
-              <View className="relative justify-center">
-                <TextInput
-                  secureTextEntry={!showConfirm}
-                  autoCapitalize="none"
-                  placeholder="Xác nhận mật khẩu"
-                  placeholderTextColor="#9597ad"
-                  value={confirmPassword}
-                  maxLength={128}
-                  onChangeText={setConfirmPassword}
-                  onBlur={() => setTouched((t) => ({ ...t, confirm: true }))}
-                  className={cn(field, "pr-12", confirmError ? "border-danger-500" : "border-neutral-100")}
-                />
-                <Pressable
-                  onPress={() => setShowConfirm((s) => !s)}
-                  className="absolute right-3 p-1"
-                >
-                  {showConfirm ? <EyeOffIcon size={22} className="text-neutral-300" /> : <EyeIcon size={22} className="text-neutral-300" />}
-                </Pressable>
-              </View>
-              {confirmError && <Text className="mt-1.5 px-1 text-sm text-danger-600">{confirmError}</Text>}
-            </View>
+            <AuthFormField
+              keyboardType="email-address"
+              autoCapitalize="none"
+              autoComplete="email"
+              placeholder="Email"
+              value={email}
+              maxLength={255}
+              onChangeText={setEmail}
+              onBlur={() => setTouched((t) => ({ ...t, email: true }))}
+              error={emailError}
+              accessibilityLabel="Email"
+            />
+
+            <AuthFormField
+              isPassword
+              autoCapitalize="none"
+              autoComplete="new-password"
+              placeholder="Mật khẩu"
+              value={password}
+              maxLength={128}
+              onChangeText={setPassword}
+              onBlur={() => setTouched((t) => ({ ...t, password: true }))}
+              error={passwordError}
+              hint="Ít nhất 8 ký tự và 1 ký tự đặc biệt (!@#$)"
+              accessibilityLabel="Mật khẩu"
+            />
+
+            <AuthFormField
+              isPassword
+              autoCapitalize="none"
+              autoComplete="new-password"
+              placeholder="Xác nhận mật khẩu"
+              value={confirmPassword}
+              maxLength={128}
+              onChangeText={setConfirmPassword}
+              onBlur={() => setTouched((t) => ({ ...t, confirm: true }))}
+              error={confirmError}
+              accessibilityLabel="Xác nhận mật khẩu"
+            />
 
             {formError && (
               <View className="rounded-2xl border-2 border-danger-100 bg-danger-50 px-4 py-3">
@@ -172,16 +145,50 @@ export default function Signup() {
               </View>
             )}
 
-            <Pressable 
-              disabled={!canSubmit} 
-              onPress={handleSubmit} 
-              className="h-14 w-full rounded-xl bg-primary-500 items-center justify-center active:scale-[0.98] active:bg-primary-600 disabled:opacity-50 mt-4"
+            {/* Primary CTA */}
+            <TouchableOpacity
+              disabled={!canSubmit}
+              onPress={handleSubmit}
+              activeOpacity={0.7}
+              className="h-14 w-full rounded-2xl bg-primary-500 border-b-[4px] border-primary-700 items-center justify-center mt-2"
+              accessibilityLabel="Đăng ký"
+              accessibilityRole="button"
+              accessibilityState={{ disabled: !canSubmit }}
+              style={!canSubmit ? { opacity: 0.5 } : undefined}
             >
-              {loading ? <ActivityIndicator color="white" size="small" /> : <Text className="text-white font-extrabold font-nunito text-[15px] uppercase tracking-wide">Đăng ký</Text>}
-            </Pressable>
+              {loading ? (
+                <ActivityIndicator color="white" size="small" />
+              ) : (
+                <Text className="text-white font-extrabold font-nunito text-[16px] uppercase tracking-wider">
+                  Đăng ký
+                </Text>
+              )}
+            </TouchableOpacity>
+
+            {/* Divider */}
+            <View className="flex-row items-center gap-3 mt-1">
+              <View className="flex-1 h-[1px] bg-neutral-200" />
+              <Text className="text-xs font-semibold text-neutral-300 uppercase">hoặc</Text>
+              <View className="flex-1 h-[1px] bg-neutral-200" />
+            </View>
+
+            {/* Social Login (Mock) */}
+            <TouchableOpacity
+              onPress={() => Alert.alert("Sắp ra mắt!", "Đăng ký bằng Google đang được phát triển.")}
+              activeOpacity={0.7}
+              className="h-14 w-full rounded-2xl bg-white border-2 border-neutral-200 border-b-[4px] border-b-neutral-300 flex-row items-center justify-center gap-2.5"
+              accessibilityLabel="Đăng ký bằng Google"
+              accessibilityRole="button"
+            >
+              <Text className="text-lg font-bold">G</Text>
+              <Text className="text-mascot-navy font-extrabold font-nunito text-[15px] uppercase tracking-wide">
+                Google
+              </Text>
+            </TouchableOpacity>
           </View>
 
-          <View className="mt-auto pt-10 flex-row justify-center pb-4">
+          {/* Footer */}
+          <View className="mt-auto pt-8 flex-row justify-center pb-4">
             <Text className="text-sm font-medium text-neutral-400">
               Đã có tài khoản?{" "}
             </Text>

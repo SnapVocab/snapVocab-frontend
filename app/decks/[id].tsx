@@ -14,7 +14,8 @@ import {
   Edit3Icon,
   Trash2Icon,
   ArchiveIcon,
-  CheckIcon
+  CheckIcon,
+  LayersIcon
 } from 'lucide-react-native';
 import { cn } from '@/lib/utils';
 import { Snapy } from '@/components/Snapy';
@@ -74,7 +75,9 @@ const STATE_CONFIG = {
 };
 
 export default function DeckDetailScreen() {
-  const { id } = useLocalSearchParams();
+  const params = useLocalSearchParams();
+  const { id } = params;
+  const [currentTemplate, setCurrentTemplate] = useState((params.template as string) || MOCK_DECK.template);
   const [notes, setNotes] = useState<Note[]>(INITIAL_NOTES);
   const [toastMsg, setToastMsg] = useState<string | null>(null);
   const [toastAnim] = useState(new Animated.Value(0));
@@ -82,6 +85,7 @@ export default function DeckDetailScreen() {
   // Modals state
   const [activeNoteMenu, setActiveNoteMenu] = useState<string | null>(null);
   const [editingNote, setEditingNote] = useState<Note | null>(null);
+  const [isDeckMenuOpen, setIsDeckMenuOpen] = useState(false);
   
   // Edit Form State
   const [editForm, setEditForm] = useState({ meaning: '', ipa: '', example: '', personalNote: '' });
@@ -141,12 +145,20 @@ export default function DeckDetailScreen() {
         </Pressable>
         <View className="flex-1 items-center">
           <Text className="font-extrabold text-[18px] text-mascot-navy font-nunito">{MOCK_DECK.name}</Text>
-          <View className="bg-neutral-100 px-2 py-0.5 rounded mt-0.5">
-            <Text className="font-bold text-[10px] text-neutral-500 font-inter uppercase tracking-widest">{MOCK_DECK.template}</Text>
-          </View>
+          <Pressable 
+            onPress={() => router.push({
+              pathname: '/templates' as any,
+              params: { mode: 'PICK_FOR_DECK', deckId: (id as string) || MOCK_DECK.id, currentTemplateId: currentTemplate }
+            })}
+            className="flex-row items-center gap-1.5 bg-primary-50 px-2.5 py-0.5 rounded-full mt-1 border border-primary-200 active:bg-primary-100 transition-all"
+          >
+            <LayersIcon size={12} className="text-primary-600" />
+            <Text className="font-bold text-[10px] text-primary-700 font-inter uppercase tracking-wider">{currentTemplate}</Text>
+            <Text className="font-extrabold text-[9px] text-primary-500 uppercase">Đổi mẫu</Text>
+          </Pressable>
         </View>
         <Pressable 
-          onPress={() => showToast('Tính năng Đổi Template sẽ mở màn hình MH-LEARN-06')}
+          onPress={() => setIsDeckMenuOpen(true)}
           className="w-10 h-10 items-center justify-center rounded-full active:bg-neutral-100"
         >
           <MoreVerticalIcon size={24} className="text-mascot-navy" />
@@ -412,6 +424,83 @@ export default function DeckDetailScreen() {
             </View>
           </View>
         </KeyboardAvoidingView>
+      </Modal>
+
+      {/* DECK OPTIONS MODAL */}
+      <Modal
+        visible={isDeckMenuOpen}
+        transparent
+        animationType="fade"
+      >
+        <Pressable 
+          onPress={() => setIsDeckMenuOpen(false)}
+          className="flex-1 bg-black/40 justify-end"
+        >
+          <View className="bg-white rounded-t-[32px] p-6 pb-10 shadow-xl max-w-md mx-auto w-full">
+            <View className="flex-row items-center justify-between mb-4">
+              <Text className="font-extrabold text-[18px] text-mascot-navy font-nunito">Tùy chọn Deck</Text>
+              <Pressable 
+                onPress={() => setIsDeckMenuOpen(false)}
+                className="w-9 h-9 bg-neutral-100 rounded-full items-center justify-center active:bg-neutral-200"
+              >
+                <XIcon size={18} className="text-neutral-500" />
+              </Pressable>
+            </View>
+
+            <View className="gap-2">
+              <Pressable 
+                onPress={() => {
+                  setIsDeckMenuOpen(false);
+                  router.push({
+                    pathname: '/templates' as any,
+                    params: { mode: 'PICK_FOR_DECK', deckId: (id as string) || MOCK_DECK.id, currentTemplateId: currentTemplate }
+                  });
+                }}
+                className="flex-row items-center p-3.5 bg-neutral-50 rounded-2xl active:bg-primary-50 border border-neutral-100"
+              >
+                <View className="w-10 h-10 rounded-xl bg-primary-100 items-center justify-center mr-3">
+                  <LayersIcon size={20} className="text-primary-600" />
+                </View>
+                <View className="flex-1">
+                  <Text className="font-bold text-[15px] text-mascot-navy font-nunito">Đổi mẫu thẻ (Card Template)</Text>
+                  <Text className="text-[12px] text-neutral-500 font-inter">Đang dùng: {currentTemplate}</Text>
+                </View>
+              </Pressable>
+
+              <Pressable 
+                onPress={() => {
+                  setIsDeckMenuOpen(false);
+                  showToast('Đã sao chép liên kết Deck');
+                }}
+                className="flex-row items-center p-3.5 bg-neutral-50 rounded-2xl active:bg-neutral-100 border border-neutral-100"
+              >
+                <View className="w-10 h-10 rounded-xl bg-neutral-100 items-center justify-center mr-3">
+                  <Edit3Icon size={20} className="text-neutral-600" />
+                </View>
+                <View className="flex-1">
+                  <Text className="font-bold text-[15px] text-mascot-navy font-nunito">Đổi tên bộ từ vựng</Text>
+                  <Text className="text-[12px] text-neutral-500 font-inter">Chỉnh sửa tên và mô tả Deck</Text>
+                </View>
+              </Pressable>
+
+              <Pressable 
+                onPress={() => {
+                  setIsDeckMenuOpen(false);
+                  showToast('Đã lưu trữ Deck');
+                }}
+                className="flex-row items-center p-3.5 bg-neutral-50 rounded-2xl active:bg-neutral-100 border border-neutral-100"
+              >
+                <View className="w-10 h-10 rounded-xl bg-warning-50 items-center justify-center mr-3">
+                  <ArchiveIcon size={20} className="text-warning-600" />
+                </View>
+                <View className="flex-1">
+                  <Text className="font-bold text-[15px] text-mascot-navy font-nunito">Lưu trữ Deck</Text>
+                  <Text className="text-[12px] text-neutral-500 font-inter">Tạm ẩn khỏi danh sách ôn tập</Text>
+                </View>
+              </Pressable>
+            </View>
+          </View>
+        </Pressable>
       </Modal>
 
       {/* 6. TOAST NOTIFICATION */}

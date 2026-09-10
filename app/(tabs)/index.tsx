@@ -182,10 +182,11 @@ export default function HomeDashboard() {
       )}
 
       <ScrollView
-        contentContainerStyle={{ paddingBottom: 48 }}
+        contentContainerStyle={{ paddingBottom: 110 }}
         showsVerticalScrollIndicator={false}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#58CC02" />}
       >
+        <View className="w-full max-w-xl mx-auto">
         {/* ==========================================
             KHỐI 1: HEADER & USER CONTEXT
             Đặc tả: Avatar, Lời chào, Streak pill, Chuông thông báo
@@ -371,8 +372,8 @@ export default function HomeDashboard() {
               </View>
 
               {/* Snapy Nhân vật Neo thị giác */}
-              <View className="items-center -mt-2 -mr-2">
-                <Snapy pose={mascot.pose} animation={mascot.animation} className="w-24 h-24 shrink-0" />
+              <View className="items-center justify-center shrink-0 -mt-2 -mr-1" style={{ width: 96, height: 96 }}>
+                <Snapy pose={mascot.pose} animation={mascot.animation} style={{ width: 96, height: 96 }} />
               </View>
             </View>
 
@@ -453,17 +454,24 @@ export default function HomeDashboard() {
                   <View key={m.id} className="py-3.5 flex-row items-center justify-between first:pt-0 last:pb-0">
                     <View className="flex-row items-center gap-3 flex-1 pr-3">
                       {m.completed ? (
-                        <CheckCircle2Icon size={22} fill="#58CC02" className="text-white" />
+                        <CheckCircle2Icon size={22} fill="#58CC02" className="text-white shrink-0" />
                       ) : (
-                        <CircleIcon size={22} className="text-neutral-300" />
+                        <CircleIcon size={22} className="text-neutral-300 shrink-0" />
                       )}
                       
                       <View className="flex-1">
-                        <Text className={cn("font-bold text-[14px] font-inter mb-1.5", m.completed ? "text-neutral-400 line-through" : "text-mascot-navy")}>
-                          {m.title}
-                        </Text>
+                        <View className="flex-row items-center justify-between mb-1">
+                          <Text className={cn("font-bold text-[14px] font-inter", m.completed ? "text-neutral-400 line-through" : "text-mascot-navy")}>
+                            {m.title}
+                          </Text>
+                          {!m.completed && (
+                            <Text className="text-[12px] font-extrabold text-neutral-400 font-nunito tabular-nums">
+                              {m.progress}/{m.total}
+                            </Text>
+                          )}
+                        </View>
                         {!m.completed && (
-                          <View className="h-2 bg-neutral-100 rounded-full overflow-hidden">
+                          <View className="h-2 bg-neutral-100 rounded-full overflow-hidden mt-0.5">
                             <View 
                               className="h-full bg-primary-500 rounded-full" 
                               style={{ width: `${(m.progress / m.total) * 100}%` }}
@@ -474,7 +482,7 @@ export default function HomeDashboard() {
                     </View>
 
                     {/* Huy hiệu phần thưởng */}
-                    <View className="flex-row items-center gap-1.5 bg-neutral-50 px-2.5 py-1 rounded-lg border border-neutral-100">
+                    <View className="flex-row items-center gap-1.5 bg-neutral-50 px-2.5 py-1 rounded-lg border border-neutral-100 shrink-0">
                       {m.isCoin ? (
                         <Coin3D size="xs" />
                       ) : (
@@ -563,12 +571,12 @@ export default function HomeDashboard() {
 
                 <Pressable 
                   onPress={() => router.push('/study/flashcard' as any)}
-                  className="h-12 bg-neutral-100 rounded-xl flex-row items-center justify-center gap-2 border-b-4 border-neutral-300 active:border-b-0 active:translate-y-1"
+                  className="h-13 py-3.5 bg-primary-500 rounded-xl flex-row items-center justify-center gap-2 border-b-4 border-primary-700 active:border-b-0 active:translate-y-1 shadow-sm"
                 >
-                  <Text className="text-mascot-navy font-extrabold text-[15px] font-nunito uppercase tracking-wider">
+                  <Text className="text-white font-extrabold text-[15px] font-nunito uppercase tracking-wider">
                     TIẾP TỤC BÀI HỌC
                   </Text>
-                  <ArrowRightIcon size={16} className="text-mascot-navy" />
+                  <ArrowRightIcon size={18} className="text-white" />
                 </Pressable>
               </View>
             )}
@@ -704,6 +712,7 @@ export default function HomeDashboard() {
             </View>
           </View>
         )}
+        </View>
       </ScrollView>
     </SafeAreaView>
   );

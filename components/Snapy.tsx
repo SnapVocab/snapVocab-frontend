@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import { View, Text, Image, Animated, Easing, StyleProp, ViewStyle, ImageStyle } from 'react-native';
+import { View, Text, Image, Animated, Easing, StyleProp, ViewStyle, ImageStyle, StyleSheet } from 'react-native';
 import { cn } from '@/lib/utils';
 
 const POSES = { 
@@ -276,11 +276,19 @@ export function Snapy({
     };
   }
 
+  const flattenedStyle = StyleSheet.flatten(style) || {};
+  const hasDimension = flattenedStyle.width !== undefined || flattenedStyle.height !== undefined;
+  const hasClassDimension = className?.includes('w-') || className?.includes('h-');
+
   return (
     <Animated.Image
       source={POSES[pose] || POSES.main}
       resizeMode="contain"
-      style={[animatedTransform, style]}
+      style={[
+        animatedTransform,
+        !hasDimension && !hasClassDimension && { width: 90, height: 90 },
+        style,
+      ]}
       className={cn("drop-shadow-md", className)}
     />
   );
@@ -290,25 +298,38 @@ export function SpeechBubble({
   children, 
   className = "",
   direction = "bottom",
+  arrowClassName = "",
 }: { 
   children: React.ReactNode; 
   className?: string;
-  direction?: 'bottom' | 'left' | 'right';
+  direction?: 'bottom' | 'left' | 'right' | 'top';
+  arrowClassName?: string;
 }) {
   return (
     <View className={cn("relative rounded-2xl border-2 border-mascot-200/90 bg-[#FFFDF9] px-4 py-3 shadow-sm shadow-orange-950/5", className)}>
       {direction === 'bottom' && (
         <View
-          className="absolute -bottom-[9px] left-8 h-4 w-4 rotate-45 border-r-2 border-b-2 border-mascot-200/90 bg-[#FFFDF9]"
+          className={cn("absolute -bottom-[9px] left-8 h-4 w-4 rotate-45 border-r-2 border-b-2 border-mascot-200/90 bg-[#FFFDF9]", arrowClassName)}
         />
       )}
       {direction === 'left' && (
         <View
-          className="absolute -left-[9px] top-4 h-4 w-4 rotate-45 border-l-2 border-b-2 border-mascot-200/90 bg-[#FFFDF9]"
+          className={cn("absolute -left-[9px] top-4 h-4 w-4 rotate-45 border-l-2 border-b-2 border-mascot-200/90 bg-[#FFFDF9]", arrowClassName)}
+        />
+      )}
+      {direction === 'top' && (
+        <View
+          className={cn("absolute -top-[9px] left-8 h-4 w-4 rotate-45 border-l-2 border-t-2 border-mascot-200/90 bg-[#FFFDF9]", arrowClassName)}
+        />
+      )}
+      {direction === 'right' && (
+        <View
+          className={cn("absolute -right-[9px] top-4 h-4 w-4 rotate-45 border-r-2 border-t-2 border-mascot-200/90 bg-[#FFFDF9]", arrowClassName)}
         />
       )}
       <Text className="text-[15px] leading-snug font-bold text-mascot-navy">{children}</Text>
     </View>
   );
 }
+
 

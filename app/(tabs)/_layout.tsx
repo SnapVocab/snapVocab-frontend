@@ -49,6 +49,7 @@ export default function TabsLayout() {
         name="scan"
         options={{
           title: 'Chụp ảnh',
+          tabBarStyle: { display: 'none' },
           tabBarIcon: ({ focused }) => (
             <View
               className={`rounded-full items-center justify-center -mt-5 border-2 border-white ${

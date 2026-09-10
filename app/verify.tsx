@@ -1,18 +1,20 @@
-import { Link, useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, Pressable, ActivityIndicator } from 'react-native';
-import { ArrowLeftIcon } from 'lucide-react-native';
+import { View, Text, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { ArrowLeftIcon, CircleCheckIcon } from 'lucide-react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { cn } from '@/lib/utils';
+import { Snapy } from '@/components/Snapy';
+import { OtpInput } from '@/components/ui/OtpInput';
 
 export default function VerifyOTP() {
   const router = useRouter();
   const { email, mode } = useLocalSearchParams<{ email: string; mode: string }>();
-  
+
   const [otp, setOtp] = useState("");
   const [loading, setLoading] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
-  
+  const [success, setSuccess] = useState(false);
+
   const [countdown, setCountdown] = useState(60);
   const [attempts, setAttempts] = useState(0);
 
@@ -26,7 +28,7 @@ export default function VerifyOTP() {
     return () => clearInterval(timer);
   }, [countdown]);
 
-  const canSubmit = otp.length === 6 && !loading && attempts < 5;
+  const canSubmit = otp.length === 6 && !loading && attempts < 5 && !success;
 
   async function handleSubmit() {
     if (!canSubmit) return;
@@ -41,7 +43,7 @@ export default function VerifyOTP() {
       setFormError("Mã đã hết hạn, vui lòng gửi lại");
       return;
     }
-    
+
     if (otp !== "123456") {
       const newAttempts = attempts + 1;
       setAttempts(newAttempts);
@@ -53,13 +55,16 @@ export default function VerifyOTP() {
       return;
     }
 
-    // Success
-    if (mode === "reset") {
-      router.replace({ pathname: "/reset-password", params: { email } });
-    } else {
-      // Auto login for signup
-      router.replace("/");
-    }
+    // Success – show celebration before redirect
+    setSuccess(true);
+    setTimeout(() => {
+      if (mode === "reset") {
+        router.replace({ pathname: "/reset-password", params: { email } });
+      } else {
+        // Auto login for signup
+        router.replace("/(tabs)");
+      }
+    }, 1800);
   }
 
   function handleResend() {
@@ -71,63 +76,115 @@ export default function VerifyOTP() {
     setOtp("");
   }
 
-  const field =
-    "h-14 w-full rounded-2xl border-2 bg-neutral-50/60 px-4 text-center text-2xl font-bold text-mascot-navy tracking-[0.25em] placeholder:text-neutral-300 focus:border-info-500 focus:bg-white";
+  // Success state
+  if (success) {
+    return (
+      <SafeAreaView className="flex-1 bg-background">
+        <View className="flex-1 items-center justify-center px-6">
+          <View style={{ width: 140, height: 140 }} className="items-center justify-center">
+            <Snapy pose="an_mung" animation="celebrate" style={{ width: 140, height: 140 }} />
+          </View>
+          <View className="mt-5 h-16 w-16 rounded-full bg-primary-100 items-center justify-center">
+            <CircleCheckIcon size={36} className="text-primary-500" />
+          </View>
+          <Text className="mt-5 text-2xl font-extrabold text-mascot-navy text-center">
+            Xác thực thành công!
+          </Text>
+          <Text className="mt-2 text-[15px] text-neutral-500 text-center">
+            {mode === "reset" ? "Đang chuyển tới đặt lại mật khẩu..." : "Đang đưa bạn vào ứng dụng..."}
+          </Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView className="flex-1 bg-background">
       <View className="mx-auto flex-1 w-full max-w-md flex-col px-6 pt-4 pb-10">
         <View className="flex-row items-center">
-          <Pressable onPress={() => router.back()} className="-ml-2 rounded-full p-2 active:bg-neutral-100">
+          <TouchableOpacity
+            onPress={() => router.back()}
+            className="-ml-2 rounded-full p-2 active:bg-neutral-100"
+            accessibilityLabel="Quay lại"
+            accessibilityRole="button"
+          >
             <ArrowLeftIcon size={28} strokeWidth={3} className="text-neutral-300" />
-          </Pressable>
+          </TouchableOpacity>
         </View>
 
-        <Text className="mt-6 text-center text-2xl font-extrabold text-mascot-navy">
+        {/* Mascot */}
+        <View className="mt-4 items-center">
+          <View style={{ width: 110, height: 110 }} className="items-center justify-center">
+            <Snapy
+              pose={formError ? "bat_ngo" : "to_mo"}
+              animation={formError ? "shake" : "bounce"}
+              style={{ width: 110, height: 110 }}
+            />
+          </View>
+        </View>
+
+        <Text className="mt-4 text-center text-2xl font-extrabold text-mascot-navy">
           Xác thực Email
         </Text>
-        <Text className="mt-3 text-center text-[15px] leading-6 text-neutral-500 px-4">
+        <Text className="mt-2 text-center text-[15px] leading-6 text-neutral-500 px-4">
           Mã xác nhận đã được gửi đến{'\n'}
           <Text className="font-bold text-mascot-navy">{email}</Text>
         </Text>
 
         <View className="mt-8 flex-col gap-4">
-          <View>
-            <TextInput
-              keyboardType="number-pad"
-              placeholder="000000"
-              placeholderTextColor="#9597ad"
-              value={otp}
-              maxLength={6}
-              onChangeText={setOtp}
-              editable={attempts < 5}
-              className={cn(field, formError ? "border-danger-500" : "border-neutral-100")}
-            />
-          </View>
+          {/* 6-cell OTP input */}
+          <OtpInput
+            value={otp}
+            onChange={setOtp}
+            disabled={attempts >= 5}
+            hasError={!!formError}
+          />
 
           {formError && (
             <View className="rounded-2xl border-2 border-danger-100 bg-danger-50 px-4 py-3">
-              <Text className="text-sm font-semibold text-danger-600">{formError}</Text>
+              <Text className="text-sm font-semibold text-danger-600 text-center">{formError}</Text>
             </View>
           )}
 
-          <Pressable 
-            disabled={!canSubmit} 
-            onPress={handleSubmit} 
-            className="h-14 w-full rounded-xl bg-primary-500 items-center justify-center active:scale-[0.98] active:bg-primary-600 disabled:opacity-50 mt-2"
+          <TouchableOpacity
+            disabled={!canSubmit}
+            onPress={handleSubmit}
+            activeOpacity={0.7}
+            className="h-14 w-full rounded-2xl bg-primary-500 border-b-[4px] border-primary-700 items-center justify-center mt-1"
+            accessibilityLabel="Xác nhận mã OTP"
+            accessibilityRole="button"
+            accessibilityState={{ disabled: !canSubmit }}
+            style={!canSubmit ? { opacity: 0.5 } : undefined}
           >
-            {loading ? <ActivityIndicator color="white" size="small" /> : <Text className="text-white font-extrabold font-nunito text-[15px] uppercase tracking-wide">Xác nhận</Text>}
-          </Pressable>
-          
-          <Pressable 
-            disabled={countdown > 0} 
+            {loading ? (
+              <ActivityIndicator color="white" size="small" />
+            ) : (
+              <Text className="text-white font-extrabold font-nunito text-[16px] uppercase tracking-wider">
+                Xác nhận
+              </Text>
+            )}
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            disabled={countdown > 0}
             onPress={handleResend}
-            className={cn("h-14 w-full rounded-xl items-center justify-center active:scale-[0.98] mt-2", countdown > 0 ? "bg-neutral-100" : "bg-white border border-neutral-200 active:bg-neutral-50")}
+            activeOpacity={0.7}
+            className="h-14 w-full rounded-2xl items-center justify-center mt-1"
+            style={[
+              countdown > 0
+                ? { backgroundColor: '#eeeff3' }
+                : { backgroundColor: '#fff', borderWidth: 2, borderColor: '#d4d5df' },
+            ]}
+            accessibilityLabel={countdown > 0 ? `Gửi lại mã sau ${countdown} giây` : "Gửi lại mã OTP"}
+            accessibilityRole="button"
           >
-            <Text className={cn("font-extrabold font-nunito text-[15px] uppercase tracking-wide", countdown > 0 ? "text-neutral-400" : "text-info-600")}>
+            <Text
+              className="font-extrabold font-nunito text-[15px] uppercase tracking-wide"
+              style={{ color: countdown > 0 ? '#9597ad' : '#1cb0f6' }}
+            >
               {countdown > 0 ? `Gửi lại mã (${countdown}s)` : "Gửi lại mã OTP"}
             </Text>
-          </Pressable>
+          </TouchableOpacity>
         </View>
       </View>
     </SafeAreaView>

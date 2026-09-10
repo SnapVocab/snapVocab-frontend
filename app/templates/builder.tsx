@@ -898,6 +898,7 @@ export default function TemplateBuilderScreen() {
   // ==========================================
   return (
     <SafeAreaView className="flex-1 bg-[#F7F8FA]" edges={['top']}>
+      <View className="flex-1 max-w-md mx-auto w-full bg-[#F7F8FA] relative">
       
       {/* HEADER */}
       <View className="px-4 py-3 border-b border-neutral-100 bg-white z-10 shadow-sm shadow-black/5">
@@ -970,42 +971,44 @@ export default function TemplateBuilderScreen() {
 
       {/* BOTTOM ACTIONS */}
       <View className="absolute bottom-0 left-0 right-0 bg-white border-t border-neutral-100 p-4 pb-8 shadow-[0_-10px_20px_rgba(0,0,0,0.05)]">
-        <View className="flex-row gap-3">
-          {currentStep === 4 && (
-            <Pressable 
-              onPress={() => {
-                const config = JSON.stringify({
-                  name,
-                  baseLayout,
-                  frontFields,
-                  backFields,
-                  interactionType,
-                  strictMode,
-                });
-                router.push({ pathname: '/templates/preview' as any, params: { source: 'FROM_BUILDER', templateConfig: config } });
-              }}
-              className="flex-1 h-14 bg-white border-2 border-primary-500 rounded-2xl items-center justify-center active:bg-primary-50"
-            >
-              <Text className="font-extrabold text-[15px] text-primary-600 font-nunito tracking-wide">XEM TRƯỚC</Text>
-            </Pressable>
-          )}
+        <View className="max-w-md mx-auto w-full">
+          <View className="flex-row gap-3">
+            {currentStep === 4 && (
+              <Pressable 
+                onPress={() => {
+                  const config = JSON.stringify({
+                    name,
+                    baseLayout,
+                    frontFields,
+                    backFields,
+                    interactionType,
+                    strictMode,
+                  });
+                  router.push({ pathname: '/templates/preview' as any, params: { source: 'FROM_BUILDER', templateConfig: config } });
+                }}
+                className="flex-1 h-14 bg-white border-2 border-primary-500 rounded-2xl items-center justify-center active:bg-primary-50"
+              >
+                <Text className="font-extrabold text-[15px] text-primary-600 font-nunito tracking-wide">XEM TRƯỚC</Text>
+              </Pressable>
+            )}
 
-          <Pressable 
-            onPress={currentStep === 4 ? handleSave : handleNext}
-            disabled={isSaving}
-            className={cn(
-              "h-14 rounded-2xl border-b-[4px] items-center justify-center active:translate-y-[2px] active:border-b-[2px]",
-              currentStep === 4 ? "flex-1 bg-primary-500 border-primary-700 active:bg-primary-600" : "w-full bg-mascot-navy border-mascot-700 active:bg-mascot-800"
-            )}
-          >
-            {isSaving ? (
-              <ActivityIndicator color="white" />
-            ) : (
-              <Text className="font-extrabold text-[16px] text-white font-nunito uppercase tracking-wide">
-                {currentStep === 4 ? 'LƯU TEMPLATE' : 'TIẾP TỤC'}
-              </Text>
-            )}
-          </Pressable>
+            <Pressable 
+              onPress={currentStep === 4 ? handleSave : handleNext}
+              disabled={isSaving}
+              className={cn(
+                "h-14 rounded-2xl border-b-[4px] items-center justify-center active:translate-y-[2px] active:border-b-[2px]",
+                currentStep === 4 ? "flex-1 bg-primary-500 border-primary-700 active:bg-primary-600" : "w-full bg-mascot-navy border-mascot-700 active:bg-mascot-800"
+              )}
+            >
+              {isSaving ? (
+                <ActivityIndicator color="white" />
+              ) : (
+                <Text className="font-extrabold text-[16px] text-white font-nunito uppercase tracking-wide">
+                  {currentStep === 4 ? 'LƯU TEMPLATE' : 'TIẾP TỤC'}
+                </Text>
+              )}
+            </Pressable>
+          </View>
         </View>
       </View>
 
@@ -1086,7 +1089,7 @@ export default function TemplateBuilderScreen() {
       <Modal visible={!!activeConfigField} transparent animationType="slide">
         <View className="flex-1 bg-black/40 justify-end">
           <Pressable className="absolute inset-0" onPress={() => setActiveConfigField(null)} />
-          <View className="bg-white rounded-t-[32px] p-6 pb-12 shadow-xl">
+          <View className="bg-white rounded-t-[32px] p-6 pb-12 shadow-xl max-w-md mx-auto w-full">
             <View className="w-12 h-1.5 bg-neutral-200 rounded-full mb-6 self-center" />
             
             <View className="flex-row items-center justify-between mb-6">
@@ -1164,6 +1167,7 @@ export default function TemplateBuilderScreen() {
         </View>
       </Modal>
 
+      </View>
     </SafeAreaView>
   );
 }

@@ -36,7 +36,7 @@ MH-{GROUP}-{nn}
 | DICT    | Search, Word Detail, Voice Search                   | M1        |
 | TOPIC   | Collections, Topic List, Topic Items                | M1        |
 | VOCAB   | My Vocabulary (Deck/Note list), Deck Detail         | M1        |
-| LEARN   | Flashcards, Quiz, SRS Review, Template Management   | M1, M3    |
+| LEARN   | Flashcards, Quiz, SRS Review, Card Template (Manage/Builder/Preview) | M1, M3    |
 | STATS   | Stats/Progress, Level                               | M3        |
 | GAME    | Missions, Achievements, Leaderboard, Rewards        | M4        |
 | ECONOMY | Wallet, Shop, Inventory                             | M4        |
@@ -89,6 +89,8 @@ flowchart TD
         QR["MH-LEARN-04<br/>Quiz Result"]
         SRS["MH-LEARN-05<br/>SRS Review"]
         TM["MH-LEARN-06<br/>Template Mgmt"]
+        TB["MH-LEARN-07<br/>Template Builder"]
+        TP["MH-LEARN-08<br/>Template Preview"]
     end
 
     subgraph Stats["Progress & Gamification"]
@@ -128,13 +130,17 @@ flowchart TD
     LEARN_HUB --> DECK & FC & QS & SRS & COL
     COL --> TOP --> WD
     DECK --> DD --> FC & QS & SRS & TM
+    DECK --> TM
+    TM --> TB --> TP
+    TM --> TP
     QS --> QP --> QR
 
     PROF --> EP & SE & NO & AC & WA
+    SE --> TM
     WA --> SH --> IN
 
     HOME --> LB
-    MI --> HOME
+    MI --> CAM & FC & QS & SRS & SEARCH
 ```
 
 ---
@@ -166,6 +172,8 @@ flowchart TD
 | MH-LEARN-04   | Quiz Result                | Learner | QUIZ, PROGRESS, GAME    | M3        | Chưa thiết kế (Figma) |
 | MH-LEARN-05   | SRS Review Session         | Learner | SRS, FLASH              | M3        | Chưa thiết kế (Figma) |
 | MH-LEARN-06   | Template Management        | Learner | FLASH                   | M3        | Chưa thiết kế (Figma) |
+| MH-LEARN-07   | Template Builder           | Learner | FLASH                   | M3        | Chưa thiết kế (Figma) |
+| MH-LEARN-08   | Template Preview           | Learner | FLASH                   | M3        | Chưa thiết kế (Figma) |
 | MH-STATS-01   | Stats/Progress             | Learner | PROGRESS                | M3        | Chưa thiết kế (Figma) |
 | MH-STATS-02   | Level Progress             | Learner | PROGRESS, GAME          | M4        | Chưa thiết kế (Figma) |
 | MH-GAME-01    | Leaderboard                | Learner | GAME                    | M4        | Chưa thiết kế (Figma) |
@@ -659,7 +667,7 @@ Luồng Onboarding được thiết kế tương tác từng bước (step-by-st
     - Note count
     - Template hiện tại (CLASSIC, LISTENING...)
     - Due count (Cards đến hạn)
-- "Tạo Deck mới" button
+- "Tạo Deck mới" button → bottom-sheet nhập tên Deck + chọn Card Template (mặc định CLASSIC, CTA "Xem tất cả mẫu" → MH-LEARN-06 ở `mode = PICK_FOR_DECK`)
 - Empty state: "Chưa có Deck nào. Tạo Deck và bắt đầu lưu từ!"
 
 **Tap Deck →** MH-VOCAB-02 (Deck Detail)
@@ -698,7 +706,7 @@ Luồng Onboarding được thiết kế tương tác từng bước (step-by-st
     - "Học Flashcard" → MH-LEARN-01
     - "Làm Quiz" → MH-LEARN-02
     - "Ôn SRS" → MH-LEARN-05
-    - "Đổi Template" → MH-LEARN-06
+    - "Đổi Template" → MH-LEARN-06 (`mode = PICK_FOR_DECK`)
 - Empty state: "Chưa có từ nào. Tra cứu hoặc Scan để thêm từ mới!"
 
 **Tap Note →** MH-DICT-02 (Word Detail)
@@ -835,21 +843,141 @@ Luồng Onboarding được thiết kế tương tác từng bước (step-by-st
 
 ---
 
-### MH-LEARN-06 — Template Selection (Stretch/Could)
+### MH-LEARN-06 — Template Management (Danh sách template)
 
-| Thuộc tính | Mô tả                                                 |
-| ---------- | ----------------------------------------------------- |
-| Actor      | Learner                                               |
-| Feature    | F-FLASH-03, F-FLASH-04                                |
-| BF         | BF-08                                                 |
-| FR         | FR-05.03                                              |
-| Mục tiêu   | Đổi template cho Deck (MVP chỉ dùng System templates) |
+| Thuộc tính | Mô tả                                                        |
+| ---------- | ------------------------------------------------------------ |
+| Actor      | Learner                                                      |
+| Feature    | F-FLASH-02, F-FLASH-03, F-FLASH-04, F-FLASH-11               |
+| BF         | BF-08 (AF-08.2, AF-08.4)                                     |
+| FR         | FR-05.02, FR-05.03, FR-05.04                                 |
+| Mục tiêu   | Chọn template cho Deck, quản lý template tự thiết kế          |
+| Milestone  | M3                                                           |
+
+**Điểm vào & điều hướng:**
+
+- **Vào từ:** MH-VOCAB-02 (Deck Detail) → "Đổi Template" — mở ở **chế độ chọn cho Deck** (`mode = PICK_FOR_DECK`, có Deck đích).
+- **Vào từ phụ:** MH-VOCAB-01 → luồng "Tạo Deck mới" → bước chọn template; MH-PROFILE-03 (Settings) → "Card template của tôi" — mở ở **chế độ quản lý** (`mode = MANAGE`, không có Deck đích).
+- **Hiển thị:** Full-screen push route. 2 tab trong màn: **Hệ thống** (6 template seed) và **Của tôi** (custom template).
+- **Thoát:** `PICK_FOR_DECK` — áp dụng xong → Back về MH-VOCAB-02 kèm toast; `MANAGE` — Back về màn gọi.
 
 **Dữ liệu hiển thị:**
 
-- System templates (read-only): CLASSIC, REVERSE, LISTENING, IMAGE_VOCAB, SPELLING, CONTEXT
-- Nút "Áp dụng cho Deck"
-- _Ghi chú:_ Bỏ hoàn toàn Template Builder tự do ở phase này để tập trung vào Hardening. Khách hàng chỉ chọn mẫu có sẵn.
+- Tab **Hệ thống** (read-only): CLASSIC, REVERSE, LISTENING, IMAGE_VOCAB, SPELLING, CONTEXT — mỗi item gồm tên, mô tả ngắn, thumbnail mặt trước/sau, badge interaction type (Flip / Type-in / Tap-to-reveal)
+- Tab **Của tôi**: custom template của Learner + counter `n/20`, thumbnail, ngày cập nhật
+- Badge "Đang dùng" trên template hiện tại của Deck đích (chỉ ở `PICK_FOR_DECK`)
+- Số Deck đang dùng mỗi template
+- CTA **"+ Tạo template mới"** → MH-LEARN-07 (ẩn/disable kèm tooltip khi đã đủ 20)
+- Tap item → MH-LEARN-08 (Preview) để xem trước khi quyết định
+- Action mỗi custom item (long-press hoặc icon "⋯"): Sửa → MH-LEARN-07, **Nhân bản**, Xóa
+- Action mỗi system item: **Nhân bản để sửa** (tạo custom template copy từ system) — đường dẫn chính để Learner bắt đầu tự thiết kế
+- Nút "Áp dụng cho Deck" (chỉ ở `PICK_FOR_DECK`)
+
+**Trạng thái UI:**
+
+- Tab "Của tôi" rỗng → empty state: "Bạn chưa có template nào. Nhân bản một mẫu hệ thống để bắt đầu tùy chỉnh." + CTA tạo mới
+- Đủ 20 custom template → CTA tạo mới disabled + "Đã đạt giới hạn 20 template. Xóa bớt để tạo mới."
+- Xóa template: confirm dialog nêu rõ số Deck bị ảnh hưởng — "X Deck đang dùng template này sẽ chuyển về CLASSIC. Card và tiến độ ôn tập không bị mất."
+- Áp dụng template khác cho Deck: confirm "Thẻ trong Deck sẽ hiển thị theo mẫu mới từ phiên học tiếp theo. Tiến độ SRS giữ nguyên."
+- Offline → chỉ xem được template đã cache, ẩn action tạo/sửa/xóa
+
+---
+
+### MH-LEARN-07 — Template Builder (Tự thiết kế thẻ)
+
+| Thuộc tính | Mô tả                                                              |
+| ---------- | ------------------------------------------------------------------ |
+| Actor      | Learner                                                            |
+| Feature    | F-FLASH-08, F-FLASH-09, F-FLASH-10                                 |
+| BF         | BF-08 (AF-08.4)                                                    |
+| FR         | FR-05.03                                                           |
+| Mục tiêu   | Tự cấu hình layout, field và kiểu tương tác cho thẻ — không cần code |
+| Milestone  | M3                                                                 |
+
+**Điểm vào & điều hướng:**
+
+- **Vào từ:** MH-LEARN-06 → "+ Tạo template mới" (`mode = CREATE`), "Sửa" một custom template (`mode = EDIT`), hoặc "Nhân bản để sửa" từ system template (`mode = CREATE` với field prefill).
+- **Hiển thị:** Full-screen push route dạng **wizard 4 bước** với step indicator ở header; mỗi bước là 1 trang, có Back/Tiếp tục. Không dùng scroll dài một trang để tránh nặng trên mobile.
+- **Thoát:** Lưu thành công → về MH-LEARN-06, template mới nằm đầu tab "Của tôi"; nếu vào từ `PICK_FOR_DECK` thì hỏi "Áp dụng luôn cho Deck <tên>?". Thoát giữa chừng có thay đổi → dialog "Hủy thay đổi?" (Tiếp tục sửa / Bỏ).
+
+**Bước 1 — Thông tin & Layout:**
+
+- Input **Tên template** (bắt buộc, tối đa 50 ký tự), **Mô tả ngắn** (tùy chọn)
+- Chọn **Base layout** dạng 4 card có hình minh họa: `SINGLE_COLUMN` (1 cột), `TWO_COLUMN` (2 cột), `IMAGE_TOP` (ảnh trên — text dưới), `AUDIO_CENTER` (nút audio lớn ở giữa)
+
+**Bước 2 — Mặt trước (FRONT):**
+
+- Danh sách 8 field khả dụng với **toggle bật/tắt**: `WORD`, `MEANING`, `PART_OF_SPEECH`, `EXAMPLE`, `PERSONAL_NOTE`, `IPA`, `AUDIO`, `IMAGE` — mỗi field kèm nhãn tiếng Việt và ví dụ giá trị thật từ Note mẫu
+- Field đã bật → nằm trong danh sách sắp xếp được bằng **kéo thả** (drag handle), thứ tự map sang `displayOrder`
+- **Radio "Field chính"** trên các field đã bật (tối đa 1/mặt) — field chính render font lớn, ở vị trí nổi bật
+- Icon ⚙ mỗi field → **bottom-sheet Field Config** tùy loại:
+    - `AUDIO`: toggle "Tự động phát khi mở thẻ" (`autoPlay`)
+    - `EXAMPLE`: toggle "Ẩn từ chính trong câu" + chọn ký hiệu che (`maskPattern`: `___`, `•••`)
+    - `MEANING` / `IPA` / `PART_OF_SPEECH` / `PERSONAL_NOTE`: toggle "Hiện tất cả giá trị" (`showAll`)
+- **Mini preview** mặt trước cập nhật realtime ở nửa trên màn hình
+
+**Bước 3 — Mặt sau (BACK):**
+
+- Cấu hình giống Bước 2, độc lập với mặt trước
+- Field đã dùng ở mặt trước vẫn chọn được ở mặt sau (constraint chỉ chặn trùng trong **cùng một mặt**)
+
+**Bước 4 — Kiểu tương tác & Lưu:**
+
+- Chọn **Interaction type** (radio card kèm mô tả + minh họa):
+    - `FLIP` — chạm để lật xem đáp án
+    - `TYPE_IN` — gõ đáp án, hệ thống so khớp (kèm toggle **strict mode**: phân biệt hoa/thường)
+    - `TAP_TO_REVEAL` — chạm từng phần để lộ dần đáp án
+- Nút **"Xem trước"** → MH-LEARN-08
+- Nút **"Lưu template"**
+
+**Validation (chặn tại client trước khi gọi API):**
+
+| Rule                                                          | Thông báo                                                      |
+| ------------------------------------------------------------- | -------------------------------------------------------------- |
+| Tên trống                                                     | "Nhập tên cho template"                                        |
+| Mặt trước hoặc mặt sau không có field nào                      | "Mỗi mặt cần ít nhất 1 field"                                  |
+| Chọn hơn 1 field chính trên cùng một mặt                       | Radio tự bỏ chọn field trước, không báo lỗi                    |
+| `TYPE_IN` nhưng mặt sau không có `WORD`                        | "Kiểu gõ đáp án cần field Từ vựng ở mặt sau" + CTA thêm nhanh   |
+| Đã đủ 20 custom template (chỉ `mode = CREATE`)                 | Chặn ngay ở MH-LEARN-06, không vào được builder                |
+
+**Trạng thái UI:**
+
+- `mode = EDIT` template đang được Deck dùng → banner "X Deck đang dùng template này. Thay đổi áp dụng từ phiên học tiếp theo, không ảnh hưởng tiến độ SRS."
+- Lưu thất bại (mất mạng / validation phía backend) → giữ nguyên toàn bộ cấu hình đang nhập, hiện lỗi inline, không mất dữ liệu form
+- Field bật lên nhưng Note mẫu không có dữ liệu → mini preview hiển thị chú thích "Note này chưa có dữ liệu — field sẽ tự ẩn khi học"
+
+---
+
+### MH-LEARN-08 — Template Preview
+
+| Thuộc tính | Mô tả                                                     |
+| ---------- | --------------------------------------------------------- |
+| Actor      | Learner                                                   |
+| Feature    | F-FLASH-05, F-FLASH-08                                    |
+| BF         | BF-08                                                     |
+| FR         | FR-05.05                                                  |
+| Mục tiêu   | Thử thẻ như khi học thật trước khi lưu / áp dụng cho Deck  |
+| Milestone  | M3                                                        |
+
+**Điểm vào & điều hướng:**
+
+- **Vào từ:** MH-LEARN-07 Bước 4 → "Xem trước" (preview cấu hình **chưa lưu**); MH-LEARN-06 → tap 1 template (preview cấu hình **đã lưu**).
+- **Hiển thị:** Full-screen route hiển thị đúng thẻ như trong MH-LEARN-01, tái dùng component flashcard — dùng **modal full-screen** khi vào từ builder để giữ nguyên state wizard.
+- **Thoát:** Từ builder → Back giữ nguyên Bước 4 (không mất cấu hình). Từ MH-LEARN-06 → Back về danh sách.
+
+**Dữ liệu hiển thị:**
+
+- Thẻ render đầy đủ theo cấu hình: mặt trước → tương tác (lật / gõ / chạm lộ dần) → mặt sau
+- Chọn **Note mẫu**: Note thật trong Deck của Learner (mặc định Note đầu tiên có nhiều dữ liệu nhất), hoặc Note demo hệ thống nếu chưa có từ nào
+- Switch **Note khác** để thử với dữ liệu thiếu field (kiểm tra graceful fallback)
+- Hàng thông tin: base layout, interaction type, số field mỗi mặt
+- CTA theo ngữ cảnh: từ builder → "Quay lại sửa"; từ MH-LEARN-06 → "Áp dụng cho Deck" / "Nhân bản để sửa"
+
+**Trạng thái UI:**
+
+- Learner chưa có Note nào → dùng Note demo hệ thống + chú thích "Đang xem với dữ liệu mẫu"
+- Note mẫu thiếu field trong template → field tự ẩn, hiển thị chú thích danh sách field bị ẩn
+- Preview **không** ghi ReviewLog, không cộng XP, không ảnh hưởng SRS hay Daily Mission
 
 ---
 
@@ -898,6 +1026,22 @@ Luồng Onboarding được thiết kế tương tác từng bước (step-by-st
 
 ## 13. GAME Screens
 
+> **Vị trí trong app:** Không màn GAME nào là Bottom Tab (Bottom Tab chỉ có 5: Home, Learn Hub, Camera, Search, Profile). Cả 3 màn là **full-screen push route** trên stack, có Back về đúng màn gọi. Toàn bộ nhóm thuộc **M4**; trước M4 các entry point tương ứng bị ẩn (không disable) theo rule ẩn khối của MH-MAIN-01.
+
+| Màn hình   | Điểm vào chính                                                    | Điểm vào phụ                                                          | Cách hiển thị                             | Back về                |
+| ---------- | ----------------------------------------------------------------- | --------------------------------------------------------------------- | ----------------------------------------- | ---------------------- |
+| MH-GAME-01 | MH-MAIN-01 → khối **Leaderboard Snippet** (tap hàng hoặc "Xem tất cả") | —                                                                     | Full-screen push                          | Màn gọi                |
+| MH-GAME-02 | MH-MAIN-01 → khối **Daily Mission** → "Xem tất cả"                | Deep link từ MH-PROFILE-04 (notification type `Mission`); push notification nhắc claim | Full-screen push                          | Màn gọi (deep link → MH-MAIN-01) |
+| MH-GAME-03 | MH-PROFILE-01 → shortcut **Achievements**                         | MH-PROFILE-01 → tap khối "Badges nổi bật"; deep link từ notification type `Badge`; popup badge mới sau MH-LEARN-04/05 → "Xem huy hiệu" | Full-screen push; badge detail = bottom-sheet | Màn gọi                |
+
+**Quy ước chung cho cả nhóm:**
+
+- Không có màn GAME nào là điểm vào đầu tiên của app; mọi màn đều yêu cầu session Learner hợp lệ.
+- Reward claim thành công → cập nhật Coin/XP ở header của chính màn đó **và** invalidate cache MH-MAIN-01, MH-STATS-02, MH-ECONOMY-01; không điều hướng tự động.
+- Mỗi màn hỗ trợ pull-to-refresh và có skeleton riêng khi load lần đầu.
+
+---
+
 ### MH-GAME-01 — Leaderboard
 
 | Thuộc tính | Mô tả                                    |
@@ -907,13 +1051,26 @@ Luồng Onboarding được thiết kế tương tác từng bước (step-by-st
 | BF         | BF-11                                    |
 | FR         | FR-09.05                                 |
 | Mục tiêu   | Xếp hạng theo XP / streak / điểm học tập |
+| Milestone  | M4                                       |
+
+**Điểm vào & điều hướng:**
+
+- **Vào từ:** MH-MAIN-01 → khối **Leaderboard Snippet** (tap hàng thứ hạng cá nhân hoặc CTA "Xem tất cả").
+- **Hiển thị:** Full-screen push route, có header Back. Không phải tab, không phải modal.
+- **Thoát:** Back → MH-MAIN-01. Tap 1 user trong bảng xếp hạng: MVP **không** mở profile người khác (chưa có màn public profile) — chỉ highlight hàng.
 
 **Dữ liệu hiển thị:**
 
-- My rank + score
+- My rank + score (hàng sticky, luôn thấy được khi scroll)
 - Top N users (avatar, name, score)
 - Filter: period (chỉ dùng weekly cho MVP), type (chỉ dùng XP)
 - Scroll to "Your position"
+
+**Trạng thái UI:**
+
+- Chưa có XP tuần này → hiển thị "Chưa có XP tuần này" ở hàng cá nhân, CTA "Học ngay" → MH-MAIN-02
+- Ngoài Top N → hàng cá nhân vẫn hiển thị kèm rank thật
+- Lỗi API / offline → skeleton → "Không tải được bảng xếp hạng" + Retry
 
 ---
 
@@ -926,16 +1083,33 @@ Luồng Onboarding được thiết kế tương tác từng bước (step-by-st
 | BF         | BF-12                                 |
 | FR         | FR-09.03                              |
 | Mục tiêu   | Xem nhiệm vụ ngày/tuần và nhận thưởng |
+| Milestone  | M4                                    |
+
+**Điểm vào & điều hướng:**
+
+- **Vào từ:** MH-MAIN-01 → khối **Daily Mission** → CTA "Xem tất cả" (tap 1 mission trên Home cũng mở màn này, scroll tới mission đó).
+- **Vào từ phụ:** MH-PROFILE-04 tap notification type `Mission`; push notification nhắc claim trước reset → deep link trực tiếp vào màn này.
+- **Hiển thị:** Full-screen push route với 2 section trong cùng 1 màn (Daily ở trên, Weekly Milestone ở dưới) — không tách thành 2 tab.
+- **Thoát:** Back → màn gọi; nếu vào bằng deep link từ notification → Back về MH-MAIN-01.
+- **Go-to-task CTA:** rời màn này sang MH-CAMERA-01 / MH-LEARN-01 / MH-LEARN-02 / MH-LEARN-05 / MH-DICT-01 tùy loại mission; Back từ các màn đó quay lại đúng đây.
 
 **Dữ liệu hiển thị:**
 
-- **Daily missions** (3–5 missions): tên, progress bar (VD: 7/10), reward (coin + XP)
-- **Weekly stamps** (hoàn thành all daily → stamp → rương tuần)
-- Claim button (COMPLETED → CLAIMED)
+- **Daily missions** — 5 mission bắt buộc + tối đa 1 Bonus Mission: tên, mô tả ngắn, progress bar (VD: 7/10), reward (coin + XP), trạng thái `Đang làm` / `Hoàn thành` / `Đã nhận thưởng`
+- **Daily Chest** (mở khi claim đủ 5/5 mission bắt buộc; Bonus không tính vào điều kiện)
+- **Weekly Milestone**: Activity Stamp của tuần (Thứ 2 → Chủ Nhật, GMT+7) + 3 mốc rương 3/5/7 stamp với trạng thái locked / claimable / claimed
+- Claim button (COMPLETED → CLAIMED); hiển thị đồng thời mọi mốc đang claim được
 - Go-to-task CTA (deep link tới hoạt động liên quan)
-- Reset countdown (thời gian đến 00:00)
+- Reset countdown (thời gian đến 00:00 GMT+7) + nhấn mạnh "hoàn thành chưa đồng nghĩa đã nhận thưởng"
 
-**Detail:** Xem [daily_mission.md](./daily_mission.md)
+**Trạng thái UI:**
+
+- Mission `COMPLETED` chưa claim khi gần reset → badge cảnh báo hết hạn
+- Mission/Chest `EXPIRED` sau reset → không hiển thị ở ngày mới (không cộng dồn)
+- Weekly Chest chưa claim khi sang tuần mới → hết hạn, reset stamp về 0
+- Claim thất bại (mất mạng / đã claim ở thiết bị khác) → toast lỗi, refetch trạng thái, không cộng reward cục bộ
+
+**Detail:** Xem [daily_mission.md](../decisions/daily_mission.md)
 
 ---
 
@@ -948,12 +1122,26 @@ Luồng Onboarding được thiết kế tương tác từng bước (step-by-st
 | BF         | BF-12                                    |
 | FR         | FR-09.04                                 |
 | Mục tiêu   | Xem huy hiệu đã đạt và điều kiện mở khóa |
+| Milestone  | M4                                       |
+
+**Điểm vào & điều hướng:**
+
+- **Vào từ:** MH-PROFILE-01 → shortcut **Achievements** (hoặc tap khối "Badges nổi bật").
+- **Vào từ phụ:** MH-PROFILE-04 tap notification type `Badge`; popup "Mở khóa huy hiệu mới" sau MH-LEARN-04 / MH-LEARN-05 → CTA "Xem huy hiệu".
+- **Hiển thị:** Full-screen push route. **Badge detail = bottom-sheet** đè trên grid, không phải màn riêng (nên không có mã MH riêng cho detail).
+- **Thoát:** Back → MH-PROFILE-01; đóng bottom-sheet → về grid.
+- Màn này **không** vào được từ MH-MAIN-01 trong MVP để giữ Home gọn.
 
 **Dữ liệu hiển thị:**
 
 - Badge grid: icon, name, locked/unlocked state
-- Tap badge → detail: điều kiện, date earned, rarity
+- Tap badge → bottom-sheet detail: điều kiện, date earned, rarity
 - Progress towards locked badges
+
+**Trạng thái UI:**
+
+- Chưa unlock badge nào → grid vẫn hiển thị toàn bộ badge ở trạng thái locked (không dùng empty state)
+- Badge vừa unlock → highlight/animation 1 lần khi mở màn
 
 ---
 
@@ -1063,7 +1251,7 @@ Luồng Onboarding được thiết kế tương tác từng bước (step-by-st
 
 - **Account:** Change password, Biometric login toggle
 - **Notifications:** Push on/off, quiet hours (nếu hỗ trợ)
-- **Learning:** Daily goal (Could), SRS reminder time
+- **Learning:** Daily goal (Could), SRS reminder time, **"Card template của tôi"** → MH-LEARN-06 (`mode = MANAGE`)
 - **App:** Language, Theme (nếu có shop theme)
 - **Logout** button
 - App version
@@ -1114,6 +1302,7 @@ Luồng Onboarding được thiết kế tương tác từng bước (step-by-st
 - Gamification components: XP bar, Coin badge, Streak flame, Level badge, Progress bar
 - Leaderboard row
 - Flashcard component (front/back, flip animation)
+- **Template Builder components:** layout picker card, field toggle row (có drag handle), primary-field radio, step indicator, template thumbnail (mặt trước/sau), interaction-type radio card
 - Icon usage
 
 ---
@@ -1234,7 +1423,7 @@ Luồng Onboarding được thiết kế tương tác từng bước (step-by-st
 | MH-LEARN-01                   | BF-08                      |
 | MH-LEARN-02 → MH-LEARN-04     | BF-09                      |
 | MH-LEARN-05                   | BF-10                      |
-| MH-LEARN-06                   | BF-08                      |
+| MH-LEARN-06 → MH-LEARN-08     | BF-08                      |
 | MH-STATS-01, MH-STATS-02      | BF-11                      |
 | MH-GAME-01 → MH-GAME-03       | BF-11, BF-12               |
 | MH-ECONOMY-01 → MH-ECONOMY-03 | BF-12                      |
@@ -1259,7 +1448,7 @@ Luồng Onboarding được thiết kế tương tác từng bước (step-by-st
 | MH-LEARN-01                | FLASH, SRS, PROGRESS                    |
 | MH-LEARN-02 → LEARN-04     | QUIZ, PROGRESS, GAME                    |
 | MH-LEARN-05                | SRS, FLASH, PROGRESS                    |
-| MH-LEARN-06                | FLASH                                   |
+| MH-LEARN-06 → LEARN-08     | FLASH                                   |
 | MH-STATS-01, STATS-02      | PROGRESS, GAME                          |
 | MH-GAME-01 → GAME-03       | GAME                                    |
 | MH-ECONOMY-01 → ECONOMY-03 | GAME, SHOP                              |
@@ -1275,9 +1464,9 @@ Luồng Onboarding được thiết kế tương tác từng bước (step-by-st
 | ------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **M1** — Core Auth & Vocabulary | ONBOARD-01, AUTH-01→05, MAIN-01, MAIN-02, DICT-01, DICT-02, TOPIC-01, TOPIC-02, VOCAB-01, VOCAB-02, LEARN-01 (basic), PROFILE-01, PROFILE-02, PROFILE-03, SYSTEM-01, SYSTEM-02            |
 | **M2** — Camera Recognition     | CAMERA-01, CAMERA-02, DICT-02 (từ scan), detection states                                                                                                                                 |
-| **M3** — Learning Engine        | LEARN-01, LEARN-02→05, STATS-01, STATS-02, PROFILE-04                                                                                                                                     |
-| **M4** — Demo & Hardening       | GAME-01→03 (XP/Mission cơ bản), MAIN-01 (mission widget), Level Progress, MH-ADM-01→06 (Admin MVP), Kịch bản demo Scan. _(MH-ECONOMY-01→03 và MH-LEARN-06 là Stretch/Could, cắt nếu trễ)_ |
-| **Admin (web riêng)**           | Admin tối giản phục vụ demo và quản trị cơ bản. Chức năng phức tạp (Game config, Templates builder) không có UI trong MVP                                                                 |
+| **M3** — Learning Engine        | LEARN-01, LEARN-02→05, LEARN-06→08 (Card Template: Manage / Builder / Preview), STATS-01, STATS-02, PROFILE-04                                                                             |
+| **M4** — Demo & Hardening       | GAME-01→03 (XP/Mission cơ bản), MAIN-01 (mission widget), Level Progress, MH-ADM-01→06 (Admin MVP), Kịch bản demo Scan. _(MH-ECONOMY-01→03 là Stretch/Could, cắt nếu trễ)_                  |
+| **Admin (web riêng)**           | Admin tối giản phục vụ demo và quản trị cơ bản. Chức năng phức tạp (Gamification config) không có UI trong MVP; Card Template builder là màn của Learner trên mobile, không phải Admin      |
 
 ---
 
@@ -1286,9 +1475,9 @@ Luồng Onboarding được thiết kế tương tác từng bước (step-by-st
 | Trạng thái                   | Số màn hình |
 | ---------------------------- | ----------- |
 | Mobile — đã dựng UI trong app | 1 (MH-MAIN-01) |
-| Mobile — chưa thiết kế Figma | 36          |
+| Mobile — chưa thiết kế Figma | 38          |
 | Admin Web (MVP demo)         | 6           |
-| **Tổng**                     | **43**      |
+| **Tổng**                     | **45**      |
 
 ---
 
@@ -1300,7 +1489,8 @@ Luồng Onboarding được thiết kế tương tác từng bước (step-by-st
 - [x] Đặc tả chi tiết MH-DICT-02 (Word Detail) — dùng chung cho search/detection/topic/vocabulary.
 - [x] Đặc tả chi tiết MH-TOPIC-01, MH-TOPIC-02 — duyệt Collection/Topic/TopicItem.
 - [x] Đặc tả chi tiết MH-VOCAB-02 (Deck Detail) — quản lý Notes trong Deck.
-- [x] MH-LEARN-06 (Template Management)
+- [x] MH-LEARN-06 (Template Management) + MH-LEARN-07 (Template Builder) + MH-LEARN-08 (Template Preview) — Learner tự thiết kế thẻ qua UI, không viết HTML/CSS.
+- [x] Nhóm GAME (MH-GAME-01→03) làm rõ điểm vào, cách hiển thị (push route, không phải tab) và đường Back.
 - [x] Detection Result thể hiện đủ states: success, no-object, low-reliability, dictionary miss, AI error.
 - [x] Vocabulary screens = Deck/Note/Card, không `SavedWord`/`UserWord`.
 - [x] AI pipeline = Florence-2 + SAM + CLIP, không YOLO.
