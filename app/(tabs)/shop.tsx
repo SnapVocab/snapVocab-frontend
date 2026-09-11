@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, ScrollView, Pressable } from 'react-native';
+import { View, Text, ScrollView, Pressable, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { Image } from 'react-native';
+import Svg, { Defs, LinearGradient, Stop, Rect } from 'react-native-svg';
 import { 
   PackageIcon, 
   SparklesIcon, 
@@ -339,21 +340,36 @@ export default function ShopScreen() {
       >
         {/* HERO BANNER: DAILY DEAL */}
         {activeCategory === 'all' && (
-          <View className="mb-6 rounded-[28px] bg-gradient-to-r from-amber-500 to-mascot-500 p-4 border-2 border-b-4 border-amber-600 relative overflow-hidden shadow-md shadow-amber-900/10">
+          <View 
+            className="mb-6 rounded-[28px] p-4 border-2 border-b-4 border-amber-600 relative overflow-hidden shadow-md shadow-amber-900/15"
+            style={{ backgroundColor: '#FF8A00' }}
+          >
+            {/* SVG Gradient Background */}
+            <Svg style={StyleSheet.absoluteFill} width="100%" height="100%">
+              <Defs>
+                <LinearGradient id="heroBannerGrad" x1="0" y1="0" x2="1" y2="1">
+                  <Stop offset="0%" stopColor="#F59E0B" />
+                  <Stop offset="100%" stopColor="#EA580C" />
+                </LinearGradient>
+              </Defs>
+              <Rect width="100%" height="100%" fill="url(#heroBannerGrad)" rx={26} />
+            </Svg>
+
             {/* Background Decorative Circles */}
             <View className="absolute -right-8 -bottom-8 w-36 h-36 rounded-full bg-white/10 pointer-events-none" />
+            <View className="absolute -left-6 -top-6 w-24 h-24 rounded-full bg-white/10 pointer-events-none" />
             
             <View className="flex-row items-center justify-between mb-2">
-              <View className="flex-row items-center gap-1.5 bg-black/20 px-2.5 py-1 rounded-full">
+              <View className="flex-row items-center gap-1.5 bg-black/25 px-2.5 py-1 rounded-full">
                 <TagIcon size={12} color="#FFFFFF" />
                 <Text className="text-[11px] font-extrabold text-white font-nunito uppercase tracking-wide">
                   Ưu đãi chớp nhoáng • Giảm 25%
                 </Text>
               </View>
 
-              <View className="flex-row items-center gap-1 bg-white/20 px-2 py-0.5 rounded-full">
+              <View className="flex-row items-center gap-1 bg-black/20 px-2.5 py-1 rounded-full">
                 <ClockIcon size={11} color="#FFFFFF" />
-                <Text className="text-[11px] font-bold text-white font-nunito tabular-nums">
+                <Text className="text-[11px] font-extrabold text-white font-nunito tabular-nums">
                   07:42:15
                 </Text>
               </View>
@@ -362,16 +378,16 @@ export default function ShopScreen() {
             <View className="flex-row items-center justify-between">
               {/* Text info */}
               <View className="flex-1 pr-3">
-                <Text className="font-extrabold text-[19px] text-white font-nunito leading-tight mb-1">
+                <Text className="font-extrabold text-[20px] text-white font-nunito leading-tight mb-1">
                   Bảo Hiểm Chuỗi
                 </Text>
-                <Text className="font-medium text-[12px] text-amber-100 font-inter mb-3 leading-snug">
+                <Text className="font-bold text-[13px] text-amber-50 font-nunito mb-3.5 leading-snug">
                   Đừng để mất công sức học tập! Tích trữ ngay để giữ chuỗi ngày của bạn.
                 </Text>
 
                 <Pressable
                   onPress={() => handleItemPress(dailyDealItem)}
-                  className="bg-white self-start px-4 py-2 rounded-xl border-b-[3px] border-amber-200 active:translate-y-[1px] active:border-b-[1px] flex-row items-center gap-1.5 shadow-sm"
+                  className="bg-white self-start px-4 py-2 rounded-xl border-b-[3px] border-amber-300 active:translate-y-[1px] active:border-b-[1px] flex-row items-center gap-1.5 shadow-sm"
                 >
                   <Coin3D size="xs" />
                   <Text className="font-extrabold text-[14px] text-mascot-navy font-nunito tabular-nums">

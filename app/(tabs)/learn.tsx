@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, ScrollView, RefreshControl, Pressable } from 'react-native';
+import { View, Text, ScrollView, RefreshControl, Pressable, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { 
   WifiOffIcon,
@@ -20,6 +20,20 @@ import { cn } from '@/lib/utils';
 import { Snapy } from '@/components/Snapy';
 import { XPOrb3D, MasteredBadge3D } from '@/components/snapvocab';
 import { router } from 'expo-router';
+
+// Soft Ambient Shadow token
+const SOFT_CARD_SHADOW = Platform.select({
+  web: {
+    boxShadow: '0 4px 12px rgba(15, 23, 42, 0.05)',
+  },
+  default: {
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.05,
+    shadowRadius: 12,
+    elevation: 2,
+  },
+}) as any;
 
 // ==========================================
 // THIẾT LẬP TRẠNG THÁI KIỂM THỬ (MOCK STATE)
@@ -171,7 +185,10 @@ export default function LearnHub() {
 
           {/* Thanh Tiến Độ Mục Tiêu Ngày */}
           {TEST_STATE !== 'newUser' && (
-            <View className="bg-white rounded-xl p-3.5 border border-neutral-200/90 border-b-2 mb-2 flex-row items-center justify-between">
+            <View 
+              className="bg-white rounded-2xl p-3.5 border border-neutral-200/60 mb-2 flex-row items-center justify-between"
+              style={SOFT_CARD_SHADOW}
+            >
               <View className="flex-1 mr-4">
                 <View className="flex-row items-center justify-between mb-1.5">
                   <Text className="text-[12px] font-extrabold text-mascot-navy uppercase tracking-wider font-nunito">
@@ -205,7 +222,10 @@ export default function LearnHub() {
             ========================================== */}
         {TEST_STATE === 'newUser' && (
           <View className="px-5 mb-6">
-            <View className="bg-white rounded-2xl p-5 border border-neutral-200/90 border-b-2 items-center">
+            <View 
+              className="bg-white rounded-3xl p-5 border border-neutral-200/60 items-center"
+              style={SOFT_CARD_SHADOW}
+            >
               <Snapy 
                 pose="chao_mung" 
                 animation="bounce" 
@@ -253,12 +273,15 @@ export default function LearnHub() {
             Khác biệt hóa với Home: Quản trị sức khỏe trí nhớ & phân nhóm
             ========================================== */}
         <View className="px-5 mb-6">
-          <View className={cn(
-            "rounded-2xl p-5 border",
-            TEST_STATE === 'newUser' || data.srs.due === 0
-              ? "bg-white border-neutral-200/90 border-b-2"
-              : "bg-mascot-navy border-mascot-navy/90 border-b-4 border-b-mascot-800 shadow-sm"
-          )}>
+          <View 
+            className={cn(
+              "rounded-2xl p-5 border",
+              TEST_STATE === 'newUser' || data.srs.due === 0
+                ? "bg-white border-neutral-200/60"
+                : "bg-mascot-navy border-mascot-navy/90 border-b-4 border-b-mascot-800 shadow-sm"
+            )}
+            style={TEST_STATE === 'newUser' || data.srs.due === 0 ? SOFT_CARD_SHADOW : undefined}
+          >
             {/* Header của Khối SRS */}
             <View className="flex-row items-center justify-between mb-3.5">
               <View className="flex-row items-center gap-2">
@@ -401,7 +424,10 @@ export default function LearnHub() {
             ========================================== */}
         {TEST_STATE !== 'newUser' && (
           <View className="px-5 mb-6">
-            <View className="bg-white rounded-2xl p-5 border border-neutral-200/90 border-b-2">
+            <View 
+              className="bg-white rounded-3xl p-5 border border-neutral-200/60"
+              style={SOFT_CARD_SHADOW}
+            >
               {/* Header Khóa học */}
               <View className="flex-row items-center justify-between mb-2.5">
                 <View className="flex-row items-center gap-2">
@@ -481,7 +507,8 @@ export default function LearnHub() {
             {/* Chế độ 1: Flashcards FSRS (Hero Row - Full Width) */}
             <Pressable 
               onPress={() => router.push('/study/flashcard' as any)}
-              className="bg-white rounded-2xl p-4 border border-neutral-200/90 border-b-2 flex-row items-center justify-between active:scale-[0.99]"
+              className="bg-white rounded-2xl p-4 border border-neutral-200/60 flex-row items-center justify-between active:scale-[0.99]"
+              style={SOFT_CARD_SHADOW}
             >
               <View className="flex-row items-center gap-3.5 flex-1 pr-2">
                 <View className="w-12 h-12 bg-danger-50 rounded-2xl items-center justify-center border border-danger-100 shrink-0">
@@ -518,7 +545,8 @@ export default function LearnHub() {
               {/* Chế độ 2: Quiz Kiểm Tra Nhanh */}
               <Pressable 
                 onPress={() => router.push('/study/quiz-setup' as any)}
-                className="flex-1 bg-white rounded-2xl p-4 border border-neutral-200/90 border-b-2 justify-between active:scale-[0.99]"
+                className="flex-1 bg-white rounded-2xl p-4 border border-neutral-200/60 justify-between active:scale-[0.99]"
+                style={SOFT_CARD_SHADOW}
               >
                 <View>
                   <View className="flex-row items-center justify-between mb-2.5">
@@ -550,7 +578,8 @@ export default function LearnHub() {
               {/* Chế độ 3: Bộ Sưu Tập Chủ Đề */}
               <Pressable 
                 onPress={() => router.push('/topics' as any)}
-                className="flex-1 bg-white rounded-2xl p-4 border border-neutral-200/90 border-b-2 justify-between active:scale-[0.99]"
+                className="flex-1 bg-white rounded-2xl p-4 border border-neutral-200/60 justify-between active:scale-[0.99]"
+                style={SOFT_CARD_SHADOW}
               >
                 <View>
                   <View className="flex-row items-center justify-between mb-2.5">
@@ -583,7 +612,8 @@ export default function LearnHub() {
             {/* Chế độ 4: Ngân Hàng Từ Vựng Cá Nhân (Word Bank Bar) */}
             <Pressable 
               onPress={() => router.push('/decks' as any)}
-              className="bg-white rounded-2xl p-4 border border-neutral-200/90 border-b-2 flex-row items-center justify-between active:scale-[0.99]"
+              className="bg-white rounded-2xl p-4 border border-neutral-200/60 flex-row items-center justify-between active:scale-[0.99]"
+              style={SOFT_CARD_SHADOW}
             >
               <View className="flex-row items-center gap-3.5">
                 <View className="w-10 h-10 bg-info-50 rounded-xl items-center justify-center border border-info-100">

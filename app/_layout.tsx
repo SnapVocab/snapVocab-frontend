@@ -1,3 +1,4 @@
+import '@/lib/suppressWarnings';
 import '@/global.css';
 
 import { PortalHost } from '@rn-primitives/portal';

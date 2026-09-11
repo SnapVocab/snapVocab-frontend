@@ -67,6 +67,11 @@
     @apply bg-white border border-neutral-200/60 rounded-2xl;
   }
 
+  /* Soft Ambient Card (Khuyên dùng cho card thông tin/thống kê) */
+  .card-soft {
+    @apply bg-white border border-neutral-200/60 rounded-3xl p-5;
+  }
+
   .surface-focal {
     @apply bg-mascot-navy text-white rounded-2xl;
   }
@@ -89,11 +94,11 @@
   }
 
   .btn-tactile-primary {
-    @apply bg-primary-500 text-white font-extrabold rounded-xl px-5 py-3.5 items-center justify-center flex-row active:scale-[0.98] active:opacity-90 transition-all;
+    @apply bg-primary-500 text-white font-extrabold rounded-xl px-5 py-3.5 items-center justify-center flex-row border-b-4 border-primary-700 active:border-b-0 active:translate-y-1 active:opacity-95 transition-all;
   }
 
   .btn-tactile-secondary {
-    @apply bg-neutral-100 text-mascot-navy font-bold rounded-xl px-5 py-3.5 items-center justify-center flex-row active:scale-[0.98] active:bg-neutral-200 transition-all;
+    @apply bg-neutral-100 text-mascot-navy font-bold rounded-xl px-5 py-3.5 items-center justify-center flex-row border-b-4 border-neutral-300 active:border-b-0 active:translate-y-1 active:bg-neutral-200 transition-all;
   }
   
   .btn-tactile-ghost {

@@ -83,6 +83,9 @@ module.exports = {
         info: {
           50: '#e8f7fe',
           100: '#c7ecfc',
+          200: '#a7e2fb',
+          300: '#7cd3f9',
+          400: '#4bc2f8',
           500: '#1cb0f6',
           600: '#0b8fce',
         },

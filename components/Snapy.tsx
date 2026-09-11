@@ -1,6 +1,8 @@
 import React, { useEffect, useRef } from 'react';
-import { View, Text, Image, Animated, Easing, StyleProp, ViewStyle, ImageStyle, StyleSheet } from 'react-native';
+import { View, Text, Image, Animated, Easing, StyleProp, ViewStyle, ImageStyle, StyleSheet, Platform } from 'react-native';
 import { cn } from '@/lib/utils';
+
+const USE_NATIVE_DRIVER = Platform.OS !== 'web';
 
 const POSES = { 
   // Main
@@ -85,13 +87,13 @@ export function Snapy({
             toValue: 1,
             duration: 1800,
             easing: Easing.inOut(Easing.sin),
-            useNativeDriver: true,
+            useNativeDriver: USE_NATIVE_DRIVER,
           }),
           Animated.timing(animValue, {
             toValue: 0,
             duration: 1800,
             easing: Easing.inOut(Easing.sin),
-            useNativeDriver: true,
+            useNativeDriver: USE_NATIVE_DRIVER,
           }),
         ])
       );
@@ -104,13 +106,13 @@ export function Snapy({
             toValue: 1,
             friction: 3,
             tension: 40,
-            useNativeDriver: true,
+            useNativeDriver: USE_NATIVE_DRIVER,
           }),
           Animated.timing(animValue, {
             toValue: 0,
             duration: 250,
             easing: Easing.inOut(Easing.quad),
-            useNativeDriver: true,
+            useNativeDriver: USE_NATIVE_DRIVER,
           }),
           Animated.delay(1000),
         ])
@@ -124,19 +126,19 @@ export function Snapy({
             toValue: 1,
             duration: 350,
             easing: Easing.inOut(Easing.quad),
-            useNativeDriver: true,
+            useNativeDriver: USE_NATIVE_DRIVER,
           }),
           Animated.timing(animValue, {
             toValue: -1,
             duration: 700,
             easing: Easing.inOut(Easing.quad),
-            useNativeDriver: true,
+            useNativeDriver: USE_NATIVE_DRIVER,
           }),
           Animated.timing(animValue, {
             toValue: 0,
             duration: 350,
             easing: Easing.inOut(Easing.quad),
-            useNativeDriver: true,
+            useNativeDriver: USE_NATIVE_DRIVER,
           }),
           Animated.delay(1200),
         ])
@@ -145,19 +147,19 @@ export function Snapy({
     } else if (animation === 'shake') {
       // Horizontal wobble (for wrong answers or alerts)
       animLoop.current = Animated.sequence([
-        Animated.timing(animValue, { toValue: 1, duration: 60, useNativeDriver: true }),
-        Animated.timing(animValue, { toValue: -1, duration: 100, useNativeDriver: true }),
-        Animated.timing(animValue, { toValue: 1, duration: 100, useNativeDriver: true }),
-        Animated.timing(animValue, { toValue: -0.5, duration: 80, useNativeDriver: true }),
-        Animated.timing(animValue, { toValue: 0, duration: 60, useNativeDriver: true }),
+        Animated.timing(animValue, { toValue: 1, duration: 60, useNativeDriver: USE_NATIVE_DRIVER }),
+        Animated.timing(animValue, { toValue: -1, duration: 100, useNativeDriver: USE_NATIVE_DRIVER }),
+        Animated.timing(animValue, { toValue: 1, duration: 100, useNativeDriver: USE_NATIVE_DRIVER }),
+        Animated.timing(animValue, { toValue: -0.5, duration: 80, useNativeDriver: USE_NATIVE_DRIVER }),
+        Animated.timing(animValue, { toValue: 0, duration: 60, useNativeDriver: USE_NATIVE_DRIVER }),
       ]);
       animLoop.current.start();
     } else if (animation === 'celebrate') {
       // Squash, jump up high and bounce
       animLoop.current = Animated.sequence([
-        Animated.timing(animValue, { toValue: -0.3, duration: 150, useNativeDriver: true }), // squash
-        Animated.spring(animValue, { toValue: 1.2, friction: 3, tension: 50, useNativeDriver: true }), // jump
-        Animated.spring(animValue, { toValue: 0, friction: 4, tension: 40, useNativeDriver: true }),
+        Animated.timing(animValue, { toValue: -0.3, duration: 150, useNativeDriver: USE_NATIVE_DRIVER }), // squash
+        Animated.spring(animValue, { toValue: 1.2, friction: 3, tension: 50, useNativeDriver: USE_NATIVE_DRIVER }), // jump
+        Animated.spring(animValue, { toValue: 0, friction: 4, tension: 40, useNativeDriver: USE_NATIVE_DRIVER }),
       ]);
       animLoop.current.start();
     } else if (animation === 'float') {
@@ -168,13 +170,13 @@ export function Snapy({
             toValue: 1,
             duration: 1400,
             easing: Easing.inOut(Easing.quad),
-            useNativeDriver: true,
+            useNativeDriver: USE_NATIVE_DRIVER,
           }),
           Animated.timing(animValue, {
             toValue: -1,
             duration: 1400,
             easing: Easing.inOut(Easing.quad),
-            useNativeDriver: true,
+            useNativeDriver: USE_NATIVE_DRIVER,
           }),
         ])
       );

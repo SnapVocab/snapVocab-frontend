@@ -74,7 +74,7 @@ export function ShopItemCard({ item, onPress, canAfford }: ShopItemCardProps) {
             {item.name}
           </Text>
           <Text 
-            className="font-medium text-[11px] text-neutral-500 font-inter mb-3 leading-relaxed" 
+            className="font-semibold text-[11.5px] text-neutral-600 font-nunito mb-3 leading-relaxed" 
             numberOfLines={2}
             style={{ minHeight: 30 }}
           >

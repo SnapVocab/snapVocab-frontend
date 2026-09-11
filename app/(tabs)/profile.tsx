@@ -29,27 +29,7 @@ import {
   AchievementTrophy3D 
 } from '@/components/snapvocab';
 import { useEconomyState } from '@/lib/economyState';
-
-// ==========================================
-// USER STATS & CONFIG
-// ==========================================
-const USER_PROFILE = {
-  name: 'Alex Nguyen',
-  username: '@alexnguyen',
-  email: 'alex@example.com',
-  joinDate: 'Tháng 3, 2024',
-  level: 12,
-  xp: 2450,
-  targetXp: 3000,
-  streak: 12,
-  longestStreak: 27,
-  learnedWords: 1284,
-  league: {
-    name: 'Giải đấu Bạc',
-    rank: 12,
-    tier: 'silver'
-  }
-};
+import { useProfileState, getProfileInitials } from '@/lib/profileState';
 
 const FEATURED_BADGES = [
   { 
@@ -87,6 +67,7 @@ const FEATURED_BADGES = [
 ];
 
 export default function ProfileScreen() {
+  const [USER_PROFILE] = useProfileState();
   const [economy] = useEconomyState();
   const [showShareModal, setShowShareModal] = useState(false);
   const [copiedLink, setCopiedLink] = useState(false);
@@ -175,9 +156,17 @@ export default function ProfileScreen() {
             )}>
               {/* Inner Avatar Bubble */}
               <View className="w-full h-full bg-primary-500 rounded-full items-center justify-center shadow-inner overflow-hidden">
-                <Text className="font-extrabold text-[30px] text-white font-nunito tracking-wide">
-                  AL
-                </Text>
+                {USER_PROFILE.avatarUri ? (
+                  <Image 
+                    source={{ uri: USER_PROFILE.avatarUri }} 
+                    className="w-full h-full"
+                    resizeMode="cover"
+                  />
+                ) : (
+                  <Text className="font-extrabold text-[30px] text-white font-nunito tracking-wide">
+                    {getProfileInitials(USER_PROFILE.name)}
+                  </Text>
+                )}
               </View>
             </View>
 
@@ -593,8 +582,18 @@ export default function ProfileScreen() {
               {/* User Avatar with Crown */}
               <View className="relative mb-3">
                 <View className="w-20 h-20 rounded-full p-1 border-2 border-warning-400 bg-warning-50/20 items-center justify-center">
-                  <View className="w-full h-full bg-primary-500 rounded-full items-center justify-center">
-                    <Text className="font-extrabold text-[26px] text-white font-nunito">AL</Text>
+                  <View className="w-full h-full bg-primary-500 rounded-full items-center justify-center overflow-hidden">
+                    {USER_PROFILE.avatarUri ? (
+                      <Image 
+                        source={{ uri: USER_PROFILE.avatarUri }} 
+                        className="w-full h-full"
+                        resizeMode="cover"
+                      />
+                    ) : (
+                      <Text className="font-extrabold text-[26px] text-white font-nunito">
+                        {getProfileInitials(USER_PROFILE.name)}
+                      </Text>
+                    )}
                   </View>
                 </View>
                 <View className="absolute -bottom-1 -right-1 bg-reward-500 rounded-full p-1 border-2 border-mascot-navy">

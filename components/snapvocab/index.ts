@@ -17,3 +17,6 @@ export * from './missions/MissionIcon3D';
 
 // High-level Router Abstraction
 export * from './RewardIcon';
+
+// Home Feature 3D Branded Icons
+export * from './home/HomeFeatureIcons';

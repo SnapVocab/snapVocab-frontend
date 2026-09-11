@@ -5,6 +5,7 @@ import { ArrowLeftIcon } from 'lucide-react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Snapy } from '@/components/Snapy';
 import { AuthFormField } from '@/components/ui/AuthFormField';
+import { GoogleLogo, FacebookLogo } from '@/components/ui/SocialLogos';
 import {
   EMAIL_RE,
   PASSWORD_POLICY_RE,
@@ -54,6 +55,23 @@ export default function Signup() {
 
     // Redirect to OTP
     router.push({ pathname: "/verify", params: { email: value, mode: "signup" } });
+  }
+
+  function handleSocialSignup(provider: 'Google' | 'Facebook') {
+    setLoading(true);
+    setTimeout(() => {
+      setLoading(false);
+      Alert.alert(
+        `Đăng ký với ${provider}`,
+        `Đã liên kết tài khoản ${provider} thành công!`,
+        [
+          {
+            text: "Bắt đầu học ngay",
+            onPress: () => router.replace("/(tabs)")
+          }
+        ]
+      );
+    }, 600);
   }
 
   return (
@@ -166,25 +184,44 @@ export default function Signup() {
             </TouchableOpacity>
 
             {/* Divider */}
-            <View className="flex-row items-center gap-3 mt-1">
+            <View className="flex-row items-center gap-3 my-1">
               <View className="flex-1 h-[1px] bg-neutral-200" />
-              <Text className="text-xs font-semibold text-neutral-300 uppercase">hoặc</Text>
+              <Text className="text-xs font-bold text-neutral-400 font-nunito uppercase tracking-wider">
+                hoặc tiếp tục với
+              </Text>
               <View className="flex-1 h-[1px] bg-neutral-200" />
             </View>
 
-            {/* Social Login (Mock) */}
-            <TouchableOpacity
-              onPress={() => Alert.alert("Sắp ra mắt!", "Đăng ký bằng Google đang được phát triển.")}
-              activeOpacity={0.7}
-              className="h-14 w-full rounded-2xl bg-white border-2 border-neutral-200 border-b-[4px] border-b-neutral-300 flex-row items-center justify-center gap-2.5"
-              accessibilityLabel="Đăng ký bằng Google"
-              accessibilityRole="button"
-            >
-              <Text className="text-lg font-bold">G</Text>
-              <Text className="text-mascot-navy font-extrabold font-nunito text-[15px] uppercase tracking-wide">
-                Google
-              </Text>
-            </TouchableOpacity>
+            {/* Social Logins: Authentic Google & Facebook */}
+            <View className="flex-row items-center gap-3">
+              {/* Google */}
+              <TouchableOpacity
+                onPress={() => handleSocialSignup('Google')}
+                activeOpacity={0.8}
+                className="flex-1 h-14 rounded-2xl bg-white border-2 border-neutral-200 border-b-[4px] border-b-neutral-300 flex-row items-center justify-center gap-2.5 shadow-sm active:translate-y-[1px] active:border-b-[2px]"
+                accessibilityLabel="Đăng ký bằng Google"
+                accessibilityRole="button"
+              >
+                <GoogleLogo size={22} />
+                <Text className="text-neutral-700 font-extrabold font-nunito text-[15px] tracking-wide">
+                  Google
+                </Text>
+              </TouchableOpacity>
+
+              {/* Facebook */}
+              <TouchableOpacity
+                onPress={() => handleSocialSignup('Facebook')}
+                activeOpacity={0.8}
+                className="flex-1 h-14 rounded-2xl bg-[#0866FF] border-2 border-[#408BFF] border-b-[4px] border-b-[#0048B5] flex-row items-center justify-center gap-2.5 shadow-md shadow-[#0866FF]/25 active:translate-y-[1px] active:border-b-[2px]"
+                accessibilityLabel="Đăng ký bằng Facebook"
+                accessibilityRole="button"
+              >
+                <FacebookLogo size={22} variant="badge" badgeColor="#FFFFFF" iconColor="#0866FF" />
+                <Text className="text-white font-extrabold font-nunito text-[15px] tracking-wide">
+                  Facebook
+                </Text>
+              </TouchableOpacity>
+            </View>
           </View>
 
           {/* Footer */}

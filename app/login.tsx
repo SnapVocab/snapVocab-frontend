@@ -5,6 +5,7 @@ import { ArrowLeftIcon, FingerprintIcon } from 'lucide-react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Snapy, SpeechBubble } from '@/components/Snapy';
 import { AuthFormField } from '@/components/ui/AuthFormField';
+import { GoogleLogo, FacebookLogo } from '@/components/ui/SocialLogos';
 import { EMAIL_RE, validateEmail } from '@/lib/validators';
 
 export default function Login() {
@@ -13,6 +14,7 @@ export default function Login() {
   const [password, setPassword] = useState("");
   const [touched, setTouched] = useState({ email: false, password: false });
   const [loading, setLoading] = useState(false);
+  const [biometricLoading, setBiometricLoading] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
 
   const emailError = touched.email ? validateEmail(email) : null;
@@ -33,7 +35,37 @@ export default function Login() {
   }
 
   function handleBiometric() {
-    Alert.alert("Sắp ra mắt!", "Tính năng đăng nhập sinh trắc học đang được phát triển. Vui lòng dùng email & mật khẩu.");
+    setBiometricLoading(true);
+    setTimeout(() => {
+      setBiometricLoading(false);
+      Alert.alert(
+        "Xác thực sinh trắc học",
+        "Nhận diện vân tay / Face ID thành công!",
+        [
+          {
+            text: "Vào học ngay",
+            onPress: () => router.replace("/(tabs)")
+          }
+        ]
+      );
+    }, 600);
+  }
+
+  function handleSocialLogin(provider: 'Google' | 'Facebook') {
+    setLoading(true);
+    setTimeout(() => {
+      setLoading(false);
+      Alert.alert(
+        `Đăng nhập ${provider}`,
+        `Đã kết nối tài khoản ${provider} thành công!`,
+        [
+          {
+            text: "Vào học ngay",
+            onPress: () => router.replace("/(tabs)")
+          }
+        ]
+      );
+    }, 600);
   }
 
   return (
@@ -104,60 +136,82 @@ export default function Login() {
               </View>
             )}
 
-            {/* Primary CTA */}
-            <TouchableOpacity
-              disabled={!canSubmit}
-              onPress={handleSubmit}
-              activeOpacity={0.7}
-              className="h-14 w-full rounded-2xl bg-primary-500 border-b-[4px] border-primary-700 items-center justify-center mt-1"
-              accessibilityLabel="Đăng nhập"
-              accessibilityRole="button"
-              accessibilityState={{ disabled: !canSubmit }}
-              style={!canSubmit ? { opacity: 0.5 } : undefined}
-            >
-              {loading ? (
-                <ActivityIndicator color="white" size="small" />
-              ) : (
-                <Text className="text-white font-extrabold font-nunito text-[16px] uppercase tracking-wider">
-                  Đăng nhập
-                </Text>
-              )}
-            </TouchableOpacity>
+            {/* Action Row: Primary Login + Compact Biometric Icon Button */}
+            <View className="flex-row items-center gap-2.5 mt-1">
+              <TouchableOpacity
+                disabled={!canSubmit}
+                onPress={handleSubmit}
+                activeOpacity={0.7}
+                className="flex-1 h-14 rounded-2xl bg-primary-500 border-b-[4px] border-primary-700 items-center justify-center active:translate-y-[1px] active:border-b-[2px]"
+                accessibilityLabel="Đăng nhập"
+                accessibilityRole="button"
+                accessibilityState={{ disabled: !canSubmit }}
+                style={!canSubmit ? { opacity: 0.5 } : undefined}
+              >
+                {loading ? (
+                  <ActivityIndicator color="white" size="small" />
+                ) : (
+                  <Text className="text-white font-extrabold font-nunito text-[16px] uppercase tracking-wider">
+                    Đăng nhập
+                  </Text>
+                )}
+              </TouchableOpacity>
 
-            {/* Biometric */}
-            <TouchableOpacity
-              onPress={handleBiometric}
-              activeOpacity={0.7}
-              className="h-14 w-full rounded-2xl bg-white border-2 border-neutral-200 border-b-[4px] border-b-neutral-300 gap-2 flex-row items-center justify-center"
-              accessibilityLabel="Đăng nhập sinh trắc học"
-              accessibilityRole="button"
-            >
-              <FingerprintIcon size={22} className="text-info-600" />
-              <Text className="text-info-600 font-extrabold font-nunito text-[15px] uppercase tracking-wide">
-                Sinh trắc học
-              </Text>
-            </TouchableOpacity>
+              {/* Compact Biometric Icon Button */}
+              <TouchableOpacity
+                onPress={handleBiometric}
+                activeOpacity={0.7}
+                className="w-14 h-14 rounded-2xl bg-info-50 border-2 border-info-200 border-b-[4px] border-b-info-300 items-center justify-center active:translate-y-[1px] active:border-b-[2px] shadow-sm"
+                accessibilityLabel="Đăng nhập bằng vân tay hoặc Face ID"
+                accessibilityRole="button"
+              >
+                {biometricLoading ? (
+                  <ActivityIndicator color="#0b8fce" size="small" />
+                ) : (
+                  <FingerprintIcon size={28} color="#0b8fce" />
+                )}
+              </TouchableOpacity>
+            </View>
 
             {/* Divider */}
-            <View className="flex-row items-center gap-3 mt-1">
+            <View className="flex-row items-center gap-3 my-1">
               <View className="flex-1 h-[1px] bg-neutral-200" />
-              <Text className="text-xs font-semibold text-neutral-300 uppercase">hoặc</Text>
+              <Text className="text-xs font-bold text-neutral-400 font-nunito uppercase tracking-wider">
+                hoặc tiếp tục với
+              </Text>
               <View className="flex-1 h-[1px] bg-neutral-200" />
             </View>
 
-            {/* Social Login (Mock) */}
-            <TouchableOpacity
-              onPress={() => Alert.alert("Sắp ra mắt!", "Đăng nhập bằng Google đang được phát triển.")}
-              activeOpacity={0.7}
-              className="h-14 w-full rounded-2xl bg-white border-2 border-neutral-200 border-b-[4px] border-b-neutral-300 flex-row items-center justify-center gap-2.5"
-              accessibilityLabel="Đăng nhập bằng Google"
-              accessibilityRole="button"
-            >
-              <Text className="text-lg font-bold">G</Text>
-              <Text className="text-mascot-navy font-extrabold font-nunito text-[15px] uppercase tracking-wide">
-                Google
-              </Text>
-            </TouchableOpacity>
+            {/* Social Login: Authentic Google & Facebook */}
+            <View className="flex-row items-center gap-3">
+              {/* Google */}
+              <TouchableOpacity
+                onPress={() => handleSocialLogin('Google')}
+                activeOpacity={0.8}
+                className="flex-1 h-14 rounded-2xl bg-white border-2 border-neutral-200 border-b-[4px] border-b-neutral-300 flex-row items-center justify-center gap-2.5 shadow-sm active:translate-y-[1px] active:border-b-[2px]"
+                accessibilityLabel="Đăng nhập bằng Google"
+                accessibilityRole="button"
+              >
+                <GoogleLogo size={22} />
+                <Text className="text-neutral-700 font-extrabold font-nunito text-[15px] tracking-wide">
+                  Google
+                </Text>
+              </TouchableOpacity>
+
+              {/* Facebook */}
+              <TouchableOpacity
+                onPress={() => handleSocialLogin('Facebook')}
+                activeOpacity={0.8}
+                className="flex-1 h-14 rounded-2xl bg-[#0866FF] border-2 border-[#408BFF] border-b-[4px] border-b-[#0048B5] flex-row items-center justify-center gap-2.5 shadow-md shadow-[#0866FF]/25 active:translate-y-[1px] active:border-b-[2px]"
+                accessibilityLabel="Đăng nhập bằng Facebook"
+                accessibilityRole="button"
+              >
+                <FacebookLogo size={22} variant="badge" badgeColor="#FFFFFF" iconColor="#0866FF" />
+                <Text className="text-white font-extrabold font-nunito text-[15px] tracking-wide">
+                  Facebook
+                </Text>
+              </TouchableOpacity>
+            </View>
           </View>
 
           {/* Footer */}

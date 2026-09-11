@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, ScrollView, Pressable, TouchableOpacity } from 'react-native';
+import { View, Text, ScrollView, Pressable, TouchableOpacity, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { 
@@ -20,6 +20,33 @@ import {
 import { cn } from '@/lib/utils';
 import { Snapy } from '@/components/Snapy';
 import { StreakFlame3D, Coin3D, XPOrb3D } from '@/components/snapvocab';
+
+// Soft Ambient Shadow tokens cho giao diện thẻ phẳng, có chiều sâu tự nhiên
+const SOFT_CARD_SHADOW = Platform.select({
+  web: {
+    boxShadow: '0 4px 12px rgba(15, 23, 42, 0.05)',
+  },
+  default: {
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.05,
+    shadowRadius: 12,
+    elevation: 2,
+  },
+}) as any;
+
+const SOFT_CARD_SM_SHADOW = Platform.select({
+  web: {
+    boxShadow: '0 2px 8px rgba(15, 23, 42, 0.04)',
+  },
+  default: {
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.04,
+    shadowRadius: 8,
+    elevation: 1.5,
+  },
+}) as any;
 
 // ==========================================
 // MOCK DATA
@@ -157,7 +184,7 @@ export default function StatsScreen() {
           </Text>
           <Pressable 
             onPress={() => router.push('/(tabs)')}
-            className="w-full h-14 bg-primary-500 rounded-2xl border-b-[4px] border-primary-700 active:bg-primary-600 active:translate-y-[2px] active:border-b-[2px] items-center justify-center"
+            className="w-full h-14 bg-primary-500 rounded-2xl border-b-[4px] border-primary-700 active:border-b-0 active:translate-y-1 items-center justify-center"
           >
             <Text className="font-extrabold text-[16px] text-white uppercase font-nunito tracking-wide">
               BẮT ĐẦU HỌC NGAY
@@ -316,7 +343,7 @@ export default function StatsScreen() {
                     )}
                     style={{ 
                       backgroundColor: bgHex,
-                      ...(isSelected ? { transform: [{ scale: 1.1 }], shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.15, elevation: 2 } : {})
+                      ...(isSelected ? (Platform.OS === 'web' ? { transform: [{ scale: 1.1 }], boxShadow: '0 1px 3px rgba(0,0,0,0.15)' } : { transform: [{ scale: 1.1 }], shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.15, elevation: 2 }) : {})
                     }}
                   >
                     <Text className={cn(
@@ -417,7 +444,8 @@ export default function StatsScreen() {
             {/* CTA LEVEL PROGRESS BANNER */}
             <Pressable 
               onPress={() => router.push('/stats/level-progress')}
-              className="w-full bg-primary-50 rounded-2xl border border-primary-200/80 active:bg-primary-100/80 p-3.5 flex-row items-center justify-between shadow-sm shadow-primary-500/10"
+              className="w-full bg-primary-50 rounded-2xl border border-primary-200/80 active:bg-primary-100/80 p-3.5 flex-row items-center justify-between"
+              style={SOFT_CARD_SM_SHADOW}
             >
               <View className="flex-row items-center gap-3 flex-1 mr-3">
                 <View className="w-10 h-10 bg-primary-500 rounded-xl items-center justify-center shadow-sm">
@@ -441,7 +469,8 @@ export default function StatsScreen() {
           <TouchableOpacity 
             activeOpacity={0.85}
             onPress={nextQuote}
-            className="bg-white rounded-3xl p-4 border border-neutral-100 shadow-sm shadow-black/5 mb-5 flex-row items-center gap-3"
+            className="bg-white rounded-3xl p-4 border border-neutral-200/60 mb-5 flex-row items-center gap-3"
+            style={SOFT_CARD_SHADOW}
           >
             <Snapy pose="tu_hao" animation="float" className="w-16 h-16" />
             <View className="flex-1">
@@ -459,7 +488,10 @@ export default function StatsScreen() {
           </TouchableOpacity>
 
           {/* 3. STREAK CARD */}
-          <View className="bg-white rounded-2xl border border-neutral-200/80 p-5 flex-row items-center justify-between mb-5">
+          <View 
+            className="bg-white rounded-3xl border border-neutral-200/60 p-5 flex-row items-center justify-between mb-5"
+            style={SOFT_CARD_SHADOW}
+          >
             <View className="flex-1 mr-2">
               <View className="flex-row items-center gap-2 mb-1">
                 <StreakFlame3D size="sm" animation="pulse" />
@@ -489,7 +521,10 @@ export default function StatsScreen() {
           {/* 4. DAILY GOAL WITH COMPLETED STATE */}
           <View className="mb-5">
             {!isGoalCompleted ? (
-              <View className="bg-white rounded-2xl p-5 border border-neutral-200/80 flex-row items-center justify-between">
+              <View 
+                className="bg-white rounded-3xl p-5 border border-neutral-200/60 flex-row items-center justify-between"
+                style={SOFT_CARD_SHADOW}
+              >
                 <View className="flex-1 pr-4">
                   <View className="flex-row items-center gap-2 mb-1">
                     <TargetIcon size={18} className="text-primary-600" />
@@ -509,13 +544,16 @@ export default function StatsScreen() {
 
                 <Pressable 
                   onPress={() => router.push('/(tabs)/learn')}
-                  className="bg-primary-500 w-11 h-11 rounded-xl items-center justify-center active:scale-[0.98] active:bg-primary-600"
+                  className="bg-primary-500 w-11 h-11 rounded-xl items-center justify-center border-b-[3px] border-primary-700 active:border-b-0 active:translate-y-0.5"
                 >
                   <ChevronRightIcon size={22} className="text-white" />
                 </Pressable>
               </View>
             ) : (
-              <View className="bg-gradient-to-r from-success-50 to-primary-50 rounded-2xl p-5 border-2 border-success-300 shadow-sm flex-row items-center justify-between">
+              <View 
+                className="bg-gradient-to-r from-success-50 to-primary-50 rounded-3xl p-5 border border-success-200 flex-row items-center justify-between"
+                style={SOFT_CARD_SHADOW}
+              >
                 <View className="flex-1 pr-3">
                   <View className="flex-row items-center gap-2 mb-1">
                     <View className="w-7 h-7 bg-success-500 rounded-full items-center justify-center">
@@ -530,7 +568,7 @@ export default function StatsScreen() {
                   {!claimedReward ? (
                     <Pressable
                       onPress={() => setClaimedReward(true)}
-                      className="bg-warning-500 active:bg-warning-600 py-1.5 px-3 rounded-lg self-start flex-row items-center gap-1.5 border-b-2 border-warning-700"
+                      className="bg-warning-500 active:bg-warning-600 py-2 px-3.5 rounded-xl self-start flex-row items-center gap-1.5 border-b-[3px] border-warning-700 active:border-b-0 active:translate-y-0.5"
                     >
                       <Coin3D size="xs" />
                       <Text className="text-[12px] font-extrabold text-mascot-navy font-nunito">Nhận +20 Coin</Text>
@@ -562,7 +600,10 @@ export default function StatsScreen() {
           </View>
 
           {/* 5. FULL 4-GROUP LEARNING STATE MAP */}
-          <View className="bg-white rounded-3xl p-5 border border-neutral-100 shadow-sm shadow-black/5 mb-6">
+          <View 
+            className="bg-white rounded-3xl p-5 border border-neutral-200/60 mb-6"
+            style={SOFT_CARD_SHADOW}
+          >
             <View className="flex-row items-center justify-between mb-4">
               <Text className="font-extrabold text-[18px] text-mascot-navy font-nunito">Tiến độ từ vựng</Text>
               <View className="bg-neutral-100 px-2.5 py-1 rounded-lg">
@@ -686,7 +727,10 @@ export default function StatsScreen() {
           </View>
 
           {/* 6. ACCURACY */}
-          <View className="bg-white rounded-3xl p-5 border border-neutral-100 shadow-sm shadow-black/5 mb-6">
+          <View 
+            className="bg-white rounded-3xl p-5 border border-neutral-200/60 mb-6"
+            style={SOFT_CARD_SHADOW}
+          >
             <Text className="font-extrabold text-[18px] text-mascot-navy font-nunito mb-1">Độ chính xác</Text>
             <Text className="font-medium text-[13px] text-neutral-500 font-inter mb-5">Tỉ lệ trả lời đúng của bạn</Text>
             
@@ -725,7 +769,10 @@ export default function StatsScreen() {
           </View>
 
           {/* 7. INTERACTIVE ACTIVITY TABS (DAILY, WEEKLY, MONTHLY) */}
-          <View className="bg-white rounded-3xl p-5 border border-neutral-100 shadow-sm shadow-black/5 mb-6">
+          <View 
+            className="bg-white rounded-3xl p-5 border border-neutral-200/60 mb-6"
+            style={SOFT_CARD_SHADOW}
+          >
             <View className="flex-row items-center justify-between mb-4">
               <Text className="font-extrabold text-[18px] text-mascot-navy font-nunito">Hoạt động học tập</Text>
               
@@ -743,14 +790,17 @@ export default function StatsScreen() {
                         "px-2.5 py-1 rounded-lg",
                         !isTabActive && "bg-transparent"
                       )}
-                      style={isTabActive ? {
+                      style={isTabActive ? (Platform.OS === 'web' ? {
+                        backgroundColor: '#FFFFFF',
+                        boxShadow: '0 1px 2px rgba(0,0,0,0.08)',
+                      } : {
                         backgroundColor: '#FFFFFF',
                         shadowColor: '#000',
                         shadowOffset: { width: 0, height: 1 },
                         shadowOpacity: 0.08,
                         shadowRadius: 2,
                         elevation: 1
-                      } : undefined}
+                      }) : undefined}
                     >
                       <Text className={cn(
                         "text-[12px] font-bold font-nunito",
@@ -771,7 +821,10 @@ export default function StatsScreen() {
           {/* 8. QUICK STATS 4-GRID */}
           <View className="mb-8">
             <View className="flex-row gap-3">
-              <View className="flex-1 bg-white rounded-2xl p-4 border border-neutral-100 shadow-sm items-center">
+              <View 
+                className="flex-1 bg-white rounded-2xl p-4 border border-neutral-200/60 items-center"
+                style={SOFT_CARD_SM_SHADOW}
+              >
                 <View className="w-10 h-10 rounded-xl bg-warning-50 items-center justify-center mb-1.5">
                   <BookOpenIcon size={20} className="text-warning-600" />
                 </View>
@@ -779,7 +832,10 @@ export default function StatsScreen() {
                 <Text className="font-bold text-[12px] text-neutral-400 font-inter">Lần ôn tập</Text>
               </View>
 
-              <View className="flex-1 bg-white rounded-2xl p-4 border border-neutral-100 shadow-sm items-center">
+              <View 
+                className="flex-1 bg-white rounded-2xl p-4 border border-neutral-200/60 items-center"
+                style={SOFT_CARD_SM_SHADOW}
+              >
                 <View className="w-10 h-10 rounded-xl bg-primary-50 items-center justify-center mb-1.5">
                   <Gamepad2Icon size={20} className="text-primary-600" />
                 </View>
@@ -789,7 +845,10 @@ export default function StatsScreen() {
             </View>
 
             <View className="flex-row gap-3 mt-3">
-              <View className="flex-1 bg-white rounded-2xl p-4 border border-neutral-100 shadow-sm items-center">
+              <View 
+                className="flex-1 bg-white rounded-2xl p-4 border border-neutral-200/60 items-center"
+                style={SOFT_CARD_SM_SHADOW}
+              >
                 <View className="w-10 h-10 rounded-xl bg-info-50 items-center justify-center mb-1.5">
                   <ClockIcon size={20} className="text-info-600" />
                 </View>
@@ -797,7 +856,10 @@ export default function StatsScreen() {
                 <Text className="font-bold text-[12px] text-neutral-400 font-inter">Thời gian học</Text>
               </View>
 
-              <View className="flex-1 bg-white rounded-2xl p-4 border border-neutral-100 shadow-sm items-center">
+              <View 
+                className="flex-1 bg-white rounded-2xl p-4 border border-neutral-200/60 items-center"
+                style={SOFT_CARD_SM_SHADOW}
+              >
                 <View className="w-10 h-10 rounded-xl bg-success-50 items-center justify-center mb-1.5">
                   <CheckCircle2Icon size={20} className="text-success-600" />
                 </View>
