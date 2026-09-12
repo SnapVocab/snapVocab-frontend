@@ -341,3 +341,79 @@ export function PodiumTrophy3D({ size = 44, style }: FeatureIconProps) {
     </View>
   );
 }
+
+/**
+ * QuizChallenge3D: Custom 3D Quiz & Bài test phản xạ cho SnapVocab.
+ * Đặc trưng: Thẻ câu hỏi 3D màu tím Violet với huy hiệu hỏi chấm '?' phát sáng,
+ * các lựa chọn đáp án dạng chip xúc giác kèm dấu tích xanh chính xác.
+ */
+export function QuizChallenge3D({ size = 44, style }: FeatureIconProps) {
+  return (
+    <View style={[{ width: size, height: size }, style]}>
+      <Svg width={size} height={size} viewBox="0 0 44 44" fill="none">
+        <Defs>
+          <RadialGradient id="quizDropShadow" cx="50%" cy="50%" r="50%">
+            <Stop offset="0%" stopColor="#4C1D95" stopOpacity="0.25" />
+            <Stop offset="100%" stopColor="#4C1D95" stopOpacity="0" />
+          </RadialGradient>
+
+          <LinearGradient id="quizCardGrad" x1="0" y1="0" x2="0" y2="1">
+            <Stop offset="0%" stopColor="#A855F7" />
+            <Stop offset="40%" stopColor="#8B5CF6" />
+            <Stop offset="100%" stopColor="#6D28D9" />
+          </LinearGradient>
+
+          <LinearGradient id="questionBadgeGrad" x1="0" y1="0" x2="1" y2="1">
+            <Stop offset="0%" stopColor="#FEF08A" />
+            <Stop offset="50%" stopColor="#FACC15" />
+            <Stop offset="100%" stopColor="#EAB308" />
+          </LinearGradient>
+
+          <LinearGradient id="optionCorrectGrad" x1="0" y1="0" x2="1" y2="0">
+            <Stop offset="0%" stopColor="#DCFCE7" />
+            <Stop offset="100%" stopColor="#BBF7D0" />
+          </LinearGradient>
+        </Defs>
+
+        {/* Drop shadow đáy */}
+        <Ellipse cx="22" cy="40" rx="16" ry="3.5" fill="url(#quizDropShadow)" />
+
+        {/* Thân thẻ Quiz 3D chính */}
+        <Rect x="6" y="6" width="32" height="32" rx="7" fill="url(#quizCardGrad)" />
+        {/* Đường viền đáy 3D dập nổi */}
+        <Path d="M6 31 C6 35 9 38 13 38 L31 38 C35 38 38 35 38 31 L38 32 C38 36 35 39 31 39 L13 39 C9 39 6 36 6 32 Z" fill="#4C1D95" />
+
+        {/* Huy hiệu tròn câu hỏi '?' nổi ở góc trên trái */}
+        <Circle cx="15" cy="15" r="6.5" fill="url(#questionBadgeGrad)" stroke="#CA8A04" strokeWidth="0.8" />
+        <Path
+          d="M13.5 13.5 C13.5 12.5 14.2 11.8 15.2 11.8 C16.2 11.8 16.8 12.4 16.8 13.2 C16.8 14.1 16 14.6 15.4 15.1 C15.1 15.4 15 15.7 15 16.2 M15 18 H15.1"
+          stroke="#713F12"
+          strokeWidth="1.5"
+          strokeLinecap="round"
+        />
+
+        {/* Biểu tượng tia chớp nhỏ góc phải */}
+        <Path d="M29 9 L26 14 H30 L27 19 L32 13 H28 Z" fill="#FDE047" />
+
+        {/* Lựa chọn đáp án 1 (Chính xác - có checkmark xanh) */}
+        <G transform="translate(10, 23)">
+          <Rect x="0" y="0" width="24" height="6.5" rx="3" fill="url(#optionCorrectGrad)" stroke="#22C55E" strokeWidth="0.8" />
+          <Circle cx="3.5" cy="3.25" r="1.8" fill="#16A34A" />
+          <Path d="M2.5 3.25 L3.2 4 L4.5 2.5" stroke="#FFFFFF" strokeWidth="0.7" strokeLinecap="round" strokeLinejoin="round" />
+          <Path d="M7 3.25 H20" stroke="#15803D" strokeWidth="1.2" strokeLinecap="round" />
+        </G>
+
+        {/* Lựa chọn đáp án 2 */}
+        <G transform="translate(10, 31)">
+          <Rect x="0" y="0" width="24" height="5.5" rx="2.5" fill="#EDE9FE" opacity="0.9" />
+          <Circle cx="3.5" cy="2.75" r="1.5" fill="#8B5CF6" />
+          <Path d="M7 2.75 H17" stroke="#6D28D9" strokeWidth="1" strokeLinecap="round" opacity="0.6" />
+        </G>
+
+        {/* Ánh lấp lánh (Sparkle) */}
+        <Path d="M37 6 L38 8 L40 9 L38 10 L37 12 L36 10 L34 9 L36 8 Z" fill="#FDE047" />
+      </Svg>
+    </View>
+  );
+}
+

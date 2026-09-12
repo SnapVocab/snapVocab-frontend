@@ -1,8 +1,13 @@
 import { Tabs } from 'expo-router';
 import { HomeIcon, UserIcon, BookOpenIcon, CameraIcon, StoreIcon } from 'lucide-react-native';
 import { Platform, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function TabsLayout() {
+  const insets = useSafeAreaInsets();
+  const bottomInset = insets.bottom > 0 ? insets.bottom : (Platform.OS === 'ios' ? 24 : 8);
+  const tabHeight = 56 + bottomInset;
+
   return (
     <Tabs
       screenOptions={{
@@ -13,9 +18,9 @@ export default function TabsLayout() {
           backgroundColor: '#FFFFFF',
           borderTopColor: '#E5E7EB', // neutral-200/70
           borderTopWidth: 1,
-          height: Platform.OS === 'ios' ? 88 : 64,
-          paddingBottom: Platform.OS === 'ios' ? 28 : 8,
-          paddingTop: 8,
+          height: tabHeight,
+          paddingBottom: bottomInset,
+          paddingTop: 6,
           elevation: 0,
           shadowOpacity: 0,
         },

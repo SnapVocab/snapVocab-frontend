@@ -40,8 +40,13 @@ module.exports = {
           900: '#0d0e1a',
         },
         reward: {
+          50: '#fff9e6',
+          100: '#ffefb8',
+          200: '#fde68a',
+          300: '#ffda6b',
           500: '#ffc42e',
           600: '#e5a800',
+          700: '#b37f00',
         },
         warning: {
           50: '#fffbeb',
@@ -92,6 +97,7 @@ module.exports = {
         danger: {
           50: '#fef2f2',
           100: '#fee2e2',
+          400: '#f87171',
           500: '#ef4444',
           600: '#dc2626',
           700: '#b91c1c',
@@ -155,6 +161,10 @@ module.exports = {
         '13': '3.25rem', // 52px
         '18': '4.5rem',  // 72px
         '22': '5.5rem',  // 88px
+      },
+      fontFamily: {
+        nunito: ['Nunito', 'system-ui', 'sans-serif'],
+        inter: ['Inter', 'system-ui', 'sans-serif'],
       },
     },
   },

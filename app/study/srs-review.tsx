@@ -40,7 +40,7 @@ interface ReviewCard {
 const MOCK_DECK = {
   name: 'English Basics',
   overdue: 3,
-  due: 17
+  due: 12
 };
 
 const INITIAL_CARDS: ReviewCard[] = [
