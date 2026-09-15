@@ -26,8 +26,11 @@ import {
   StreakFlame3D, 
   Coin3D, 
   XPOrb3D, 
-  AchievementTrophy3D 
+  AchievementTrophy3D,
+  AvatarFrame
 } from '@/components/snapvocab';
+import { AvatarFrameShowcaseModal } from '@/components/shop/AvatarFrameShowcaseModal';
+
 import { useEconomyState } from '@/lib/economyState';
 import { useProfileState, getProfileInitials } from '@/lib/profileState';
 
@@ -70,6 +73,7 @@ export default function ProfileScreen() {
   const [USER_PROFILE] = useProfileState();
   const [economy] = useEconomyState();
   const [showShareModal, setShowShareModal] = useState(false);
+  const [showFrameShowcase, setShowFrameShowcase] = useState(false);
   const [copiedLink, setCopiedLink] = useState(false);
 
   // Tìm khung avatar đang trang bị từ kho đồ
@@ -146,16 +150,18 @@ export default function ProfileScreen() {
         <View className="bg-white rounded-3xl p-5 border border-neutral-200/80 shadow-sm shadow-black/5 mb-4 items-center">
           
           {/* Avatar with Equipped Frame */}
-          <View className="relative mb-3.5 items-center justify-center">
-            {/* Outer Frame Glow / Decorated Ring */}
-            <View className={cn(
-              "w-24 h-24 rounded-full items-center justify-center p-1.5 border-2",
-              equippedFrame 
-                ? "border-warning-400 bg-warning-50/50 shadow-md shadow-warning-500/20" 
-                : "border-primary-400 bg-primary-50/50"
-            )}>
-              {/* Inner Avatar Bubble */}
-              <View className="w-full h-full bg-primary-500 rounded-full items-center justify-center shadow-inner overflow-hidden">
+          <Pressable 
+            onPress={() => setShowFrameShowcase(true)}
+            className="relative mb-3 items-center justify-center active:scale-95 transition-all"
+            accessibilityLabel="Tùy chỉnh khung ảnh đại diện"
+          >
+            <AvatarFrame
+              frameId={equippedFrame?.frameId || 'frame_golden_wordsmith'}
+              size={112}
+              animated={true}
+              showGlow={true}
+            >
+              <View className="w-full h-full bg-primary-500 rounded-full items-center justify-center overflow-hidden">
                 {USER_PROFILE.avatarUri ? (
                   <Image 
                     source={{ uri: USER_PROFILE.avatarUri }} 
@@ -163,27 +169,21 @@ export default function ProfileScreen() {
                     resizeMode="cover"
                   />
                 ) : (
-                  <Text className="font-extrabold text-[30px] text-white font-nunito tracking-wide">
+                  <Text className="font-extrabold text-[28px] text-white font-nunito tracking-wide">
                     {getProfileInitials(USER_PROFILE.name)}
                   </Text>
                 )}
               </View>
-            </View>
+            </AvatarFrame>
 
-            {/* Frame Crown / Badge Indicator */}
-            <View className="absolute -bottom-1 -right-1 bg-reward-500 rounded-full p-1.5 border-2 border-white shadow-sm">
-              <CrownIcon size={14} className="text-mascot-navy" fill="#1B1B3A" />
+            {/* Equipped Frame Name Pill / Tap to customize */}
+            <View className="absolute -bottom-2 bg-mascot-navy px-3 py-0.5 rounded-full border border-white/80 shadow-md flex-row items-center gap-1.5">
+              <SparklesIcon size={11} color="#FBBF24" />
+              <Text className="font-bold text-[10px] text-white font-inter">
+                {equippedFrame ? equippedFrame.name : 'Khung avatar'}
+              </Text>
             </View>
-
-            {/* Equipped Frame Name Pill */}
-            {equippedFrame && (
-              <View className="absolute -top-2.5 bg-mascot-navy px-2.5 py-0.5 rounded-full border border-white shadow-sm">
-                <Text className="font-bold text-[10px] text-white font-inter">
-                  {equippedFrame.name}
-                </Text>
-              </View>
-            )}
-          </View>
+          </Pressable>
 
           {/* User Names & Meta */}
           <Text className="font-extrabold text-[22px] text-mascot-navy font-nunito mb-0.5 text-center">
@@ -579,9 +579,14 @@ export default function ProfileScreen() {
                 </Text>
               </View>
 
-              {/* User Avatar with Crown */}
-              <View className="relative mb-3">
-                <View className="w-20 h-20 rounded-full p-1 border-2 border-warning-400 bg-warning-50/20 items-center justify-center">
+              {/* User Avatar with Frame */}
+              <View className="relative mb-3 items-center justify-center">
+                <AvatarFrame
+                  frameId={equippedFrame?.frameId || 'frame_golden_wordsmith'}
+                  size={96}
+                  animated={false}
+                  showGlow={true}
+                >
                   <View className="w-full h-full bg-primary-500 rounded-full items-center justify-center overflow-hidden">
                     {USER_PROFILE.avatarUri ? (
                       <Image 
@@ -590,15 +595,12 @@ export default function ProfileScreen() {
                         resizeMode="cover"
                       />
                     ) : (
-                      <Text className="font-extrabold text-[26px] text-white font-nunito">
+                      <Text className="font-extrabold text-[24px] text-white font-nunito">
                         {getProfileInitials(USER_PROFILE.name)}
                       </Text>
                     )}
                   </View>
-                </View>
-                <View className="absolute -bottom-1 -right-1 bg-reward-500 rounded-full p-1 border-2 border-mascot-navy">
-                  <CrownIcon size={12} className="text-mascot-navy" />
-                </View>
+                </AvatarFrame>
               </View>
 
               <Text className="font-extrabold text-[20px] text-white font-nunito mb-0.5">
@@ -686,6 +688,12 @@ export default function ProfileScreen() {
           </View>
         </View>
       </Modal>
+ 
+      {/* Avatar Frame Showcase & Testing Modal */}
+      <AvatarFrameShowcaseModal
+        visible={showFrameShowcase}
+        onClose={() => setShowFrameShowcase(false)}
+      />
 
     </SafeAreaView>
   );

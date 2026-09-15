@@ -8,10 +8,13 @@ import {
   CrownIcon,
   ZapIcon,
   CheckIcon,
-  ClockIcon
+  ClockIcon,
+  SparklesIcon
 } from 'lucide-react-native';
 import { cn } from '@/lib/utils';
 import { Snapy } from '@/components/Snapy';
+import { AvatarFrame } from '@/components/snapvocab';
+import { AvatarFrameShowcaseModal } from '@/components/shop/AvatarFrameShowcaseModal';
 import { useEconomyState, InventoryItem as StoreInventoryItem } from '@/lib/economyState';
 
 type ItemCategory = 'all' | 'frame' | 'theme' | 'booster';
@@ -27,6 +30,7 @@ export default function InventoryScreen() {
   const [economy, economyStore] = useEconomyState();
   const [activeCategory, setActiveCategory] = useState<ItemCategory>('all');
   const [processingId, setProcessingId] = useState<string | null>(null);
+  const [showShowcase, setShowShowcase] = useState<boolean>(false);
 
   const items = economy.inventory;
 
@@ -86,7 +90,15 @@ export default function InventoryScreen() {
           )}
 
           {/* Image Artwork Container */}
-          {item.imageSource ? (
+          {item.category === 'frame' ? (
+            <AvatarFrame
+              frameId={item.frameId || item.id}
+              size={68}
+              animated={isEquipped}
+              showGlow={isEquipped}
+              avatarSource={require('../../assets/images/snapy-happy.png')}
+            />
+          ) : item.imageSource ? (
             <View style={{ width: 68, height: 68 }} className="items-center justify-center">
               <Image 
                 source={item.imageSource} 
@@ -230,6 +242,32 @@ export default function InventoryScreen() {
           </View>
         ) : (
           <>
+            {/* AVATAR FRAME SHOWCASE BANNER */}
+            {(activeCategory === 'all' || activeCategory === 'frame') && (
+              <Pressable
+                onPress={() => setShowShowcase(true)}
+                className="w-full mb-4 bg-gradient-to-r from-purple-900 to-indigo-900 bg-purple-900 p-4 rounded-2xl border-2 border-b-4 border-purple-500 flex-row items-center justify-between active:scale-[0.99] transition-all"
+              >
+                <View className="flex-1 pr-2">
+                  <View className="flex-row items-center gap-1.5 mb-0.5">
+                    <SparklesIcon size={14} color="#FDE047" />
+                    <Text className="text-[11px] font-extrabold text-amber-300 uppercase tracking-wider">
+                      Phòng Thử Khung Động
+                    </Text>
+                  </View>
+                  <Text className="font-extrabold text-[15px] text-white font-nunito">
+                    Trải nghiệm 10 Khung Avatar Động
+                  </Text>
+                  <Text className="font-medium text-[11.5px] text-purple-200">
+                    Xem trước mọi khung hình ảnh động với avatar của bạn
+                  </Text>
+                </View>
+                <View className="bg-white/15 px-3 py-1.5 rounded-xl border border-white/20">
+                  <Text className="text-[11px] font-extrabold text-white">MỞ NGAY</Text>
+                </View>
+              </Pressable>
+            )}
+
             <View className="flex-row flex-wrap justify-between">
               {filteredItems.map(renderItemCard)}
             </View>
@@ -244,6 +282,15 @@ export default function InventoryScreen() {
         )}
       </ScrollView>
 
+      {/* Interactive Avatar Frame Showcase Modal */}
+      <AvatarFrameShowcaseModal
+        visible={showShowcase}
+        onClose={() => setShowShowcase(false)}
+        equippedFrameId={economy.inventory.find(i => i.category === 'frame' && i.state === 'equipped')?.frameId || null}
+        onEquip={(fId) => {
+          economyStore.equipFrame(fId);
+        }}
+      />
     </SafeAreaView>
   );
 }

@@ -20,3 +20,7 @@ export * from './RewardIcon';
 
 // Home Feature 3D Branded Icons
 export * from './home/HomeFeatureIcons';
+
+// Branded Avatar Frames
+export * from './frames/AvatarFrame';
+export * from './frames/avatarFrameCatalog';

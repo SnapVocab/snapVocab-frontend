@@ -8,6 +8,7 @@ export type ItemState = 'equipped' | 'inactive' | 'expired';
 
 export interface InventoryItem {
   id: string;
+  frameId?: string;
   name: string;
   category: ItemCategory;
   categoryName: string;
@@ -44,22 +45,54 @@ const INITIAL_STATE: EconomyState = {
   coins: 2450,
   inventory: [
     {
-      id: 'i1',
-      name: 'Khung Học Giả',
+      id: 'frame_golden_wordsmith',
+      frameId: 'frame_golden_wordsmith',
+      name: 'Bậc Thầy Hoàng Kim',
       category: 'frame',
       categoryName: 'Avatar Frame',
       state: 'equipped',
-      imageSource: require('../assets/images/shop/badge1_clean.png'),
-      artworkColor: 'text-info-500 bg-info-50 border-info-200'
+      imageSource: require('../assets/images/frames/frame_golden_wordsmith.png'),
+      artworkColor: 'text-yellow-600 bg-yellow-50 border-yellow-200'
     },
     {
-      id: 'i2',
-      name: 'Khung Cú Đêm',
+      id: 'frame_fire_streak',
+      frameId: 'frame_fire_streak',
+      name: 'Ngọn Lửa Bất Diệt',
       category: 'frame',
       categoryName: 'Avatar Frame',
       state: 'inactive',
-      imageSource: require('../assets/images/shop/badge2_clean.png'),
-      artworkColor: 'text-mascot-navy bg-mascot-50 border-mascot-200'
+      imageSource: require('../assets/images/frames/frame_fire_streak.png'),
+      artworkColor: 'text-orange-600 bg-orange-50 border-orange-200'
+    },
+    {
+      id: 'frame_bronze_learner',
+      frameId: 'frame_bronze_learner',
+      name: 'Khung Đồng Mở Lối',
+      category: 'frame',
+      categoryName: 'Avatar Frame',
+      state: 'inactive',
+      imageSource: require('../assets/images/frames/frame_bronze_learner.png'),
+      artworkColor: 'text-amber-700 bg-amber-50 border-amber-200'
+    },
+    {
+      id: 'frame_silver_scholar',
+      frameId: 'frame_silver_scholar',
+      name: 'Học Giả Bạc',
+      category: 'frame',
+      categoryName: 'Avatar Frame',
+      state: 'inactive',
+      imageSource: require('../assets/images/frames/frame_silver_scholar.png'),
+      artworkColor: 'text-sky-600 bg-sky-50 border-sky-200'
+    },
+    {
+      id: 'frame_night_owl',
+      frameId: 'frame_night_owl',
+      name: 'Cú Đêm Chăm Học',
+      category: 'frame',
+      categoryName: 'Avatar Frame',
+      state: 'inactive',
+      imageSource: require('../assets/images/frames/frame_night_owl.png'),
+      artworkColor: 'text-purple-600 bg-purple-50 border-purple-200'
     },
     {
       id: 'item_xp_booster',
@@ -134,7 +167,7 @@ const INITIAL_STATE: EconomyState = {
 // ==========================================
 // PERSISTENCE HELPER (WEB / LOCALSTORAGE)
 // ==========================================
-const STORAGE_KEY = 'snapvocab_economy_v1';
+const STORAGE_KEY = 'snapvocab_economy_v3';
 
 function loadPersistedState(): EconomyState {
   if (typeof window !== 'undefined' && window.localStorage) {
@@ -223,6 +256,7 @@ export const economyStore = {
       // Add new item
       updatedInventory.push({
         id: item.id,
+        frameId: item.category === 'frame' ? item.id : undefined,
         name: item.name,
         category: item.category,
         categoryName: item.categoryName || (item.category === 'frame' ? 'Avatar Frame' : item.category === 'theme' ? 'Giao diện' : 'Booster'),
@@ -270,6 +304,38 @@ export const economyStore = {
       })
     };
     notify();
+  },
+
+  equipFrame(frameId: string) {
+    const existing = state.inventory.find(i => (i.frameId === frameId || i.id === frameId) && i.category === 'frame');
+    if (existing) {
+      state = {
+        ...state,
+        inventory: state.inventory.map(item => {
+          if (item.category === 'frame') {
+            return { ...item, state: item.id === existing.id ? 'equipped' : 'inactive' };
+          }
+          return item;
+        })
+      };
+      notify();
+    } else {
+      state = {
+        ...state,
+        inventory: [
+          ...state.inventory.map(item => item.category === 'frame' ? { ...item, state: 'inactive' as const } : item),
+          {
+            id: frameId,
+            frameId: frameId,
+            name: frameId,
+            category: 'frame',
+            categoryName: 'Avatar Frame',
+            state: 'equipped',
+          }
+        ]
+      };
+      notify();
+    }
   }
 };
 

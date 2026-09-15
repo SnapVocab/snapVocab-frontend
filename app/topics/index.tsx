@@ -19,8 +19,23 @@ import { Snapy } from '@/components/Snapy';
 // ==========================================
 // MOCK DATA
 // ==========================================
-type ChildTopic = { id: string; title: string; wordCount: number; progress: number; };
-type ParentTopic = { id: string; title: string; wordCount: number; progress: number; children: ChildTopic[]; };
+type ChildTopic = { 
+  id: string; 
+  title: string; 
+  wordCount: number; 
+  progress: number; 
+  contentTypeSummary?: string; 
+};
+
+type ParentTopic = { 
+  id: string; 
+  title: string; 
+  wordCount: number; 
+  progress: number; 
+  contentTypeSummary?: string; 
+  children: ChildTopic[]; 
+};
+
 type Collection = { id: string; title: string; emoji: string; topicCount: number; topics: ParentTopic[]; };
 
 const MOCK_COLLECTIONS: Collection[] = [
@@ -31,32 +46,31 @@ const MOCK_COLLECTIONS: Collection[] = [
     topicCount: 3,
     topics: [
       {
-        id: 't1',
+        id: 'airport-vocabulary',
         title: 'Sân bay',
         wordCount: 72,
         progress: 42,
+        contentTypeSummary: '72 mục · Từ vựng · Audio · Ví dụ',
         children: [
-          { id: 't1_1', title: 'Check-in', wordCount: 18, progress: 60 },
-          { id: 't1_2', title: 'An ninh sân bay', wordCount: 22, progress: 35 },
-          { id: 't1_3', title: 'Lên máy bay', wordCount: 32, progress: 0 },
+          { id: 'airport-checkin', title: 'Check-in & Thủ tục', wordCount: 18, progress: 60, contentTypeSummary: '18 mục · Từ vựng · Audio' },
+          { id: 'airport-security', title: 'An ninh sân bay', wordCount: 22, progress: 35, contentTypeSummary: '22 mục · Từ vựng · Audio' },
+          { id: 'airport-boarding', title: 'Lên máy bay', wordCount: 32, progress: 0, contentTypeSummary: '32 mục · Từ vựng · Audio' },
         ]
       },
       {
-        id: 't2',
-        title: 'Khách sạn',
-        wordCount: 45,
-        progress: 15,
-        children: [
-          { id: 't2_1', title: 'Nhận phòng', wordCount: 15, progress: 30 },
-          { id: 't2_2', title: 'Tiện nghi phòng', wordCount: 20, progress: 10 },
-          { id: 't2_3', title: 'Trả phòng & Thanh toán', wordCount: 10, progress: 0 },
-        ]
-      },
-      {
-        id: 't3',
-        title: 'Chuẩn bị chuyến đi',
+        id: 'restaurant-dialogue',
+        title: 'Hội thoại nhà hàng',
         wordCount: 20,
+        progress: 20,
+        contentTypeSummary: '20 bài · Luyện nghe · Transcript',
+        children: []
+      },
+      {
+        id: 'airport-signs',
+        title: 'Biển báo sân bay',
+        wordCount: 25,
         progress: 80,
+        contentTypeSummary: '25 mục · Biển báo · Hình ảnh · Audio',
         children: []
       }
     ]
@@ -68,17 +82,19 @@ const MOCK_COLLECTIONS: Collection[] = [
     topicCount: 2,
     topics: [
       {
-        id: 't4',
+        id: 'job-interview',
         title: 'Phỏng vấn xin việc',
         wordCount: 30,
         progress: 10,
+        contentTypeSummary: '30 mục · Mẫu câu · Luyện nói',
         children: []
       },
       {
-        id: 't5',
+        id: 'meetings-presentations',
         title: 'Họp và Thuyết trình',
         wordCount: 25,
         progress: 0,
+        contentTypeSummary: '25 bài · Ngữ cảnh công sở',
         children: []
       }
     ]
@@ -90,10 +106,11 @@ const MOCK_COLLECTIONS: Collection[] = [
     topicCount: 1,
     topics: [
       {
-        id: 't6',
+        id: 'environment-ielts',
         title: 'Môi trường & Biến đổi khí hậu',
         wordCount: 28,
         progress: 5,
+        contentTypeSummary: '28 mục · Từ vựng học thuật',
         children: []
       }
     ]
@@ -207,13 +224,13 @@ export default function TopicsScreen() {
                 <Text className="font-extrabold text-[12px] text-primary-600 uppercase tracking-widest font-nunito">ĐỀ XUẤT NỔI BẬT</Text>
               </View>
               
-              <Text className="font-extrabold text-[22px] text-mascot-navy font-nunito mb-1">Chuẩn bị chuyến đi</Text>
+              <Text className="font-extrabold text-[22px] text-mascot-navy font-nunito mb-1">Biển báo sân bay</Text>
               <Text className="font-medium text-[14px] text-neutral-500 font-inter mb-4">
-                20 từ vựng cốt lõi · Tiếng Anh du lịch thực tế
+                25 mục · Biển báo · Hình ảnh · Audio trực quan
               </Text>
               
               <Pressable 
-                onPress={() => handleNavigateTopic('t3')}
+                onPress={() => handleNavigateTopic('airport-signs')}
                 className="h-12 bg-primary-500 rounded-xl border-b-[4px] border-primary-700 active:bg-primary-600 active:translate-y-[2px] active:border-b-[2px] transition-all flex-row items-center justify-center w-full max-w-[200px]"
               >
                 <Text className="text-white font-extrabold text-[14px] uppercase font-nunito tracking-[0.04em]">KHÁM PHÁ NGAY</Text>
@@ -300,9 +317,14 @@ export default function TopicsScreen() {
                                 className="px-5 py-4 bg-white active:bg-neutral-50 flex-row items-center justify-between"
                               >
                                 <View className="flex-1 pr-4">
-                                  <Text className="font-extrabold text-[16px] text-mascot-navy font-nunito mb-1.5">{topic.title}</Text>
+                                  <Text className="font-extrabold text-[16px] text-mascot-navy font-nunito mb-0.5">{topic.title}</Text>
+                                  {topic.contentTypeSummary ? (
+                                    <Text className="font-semibold text-[12px] text-primary-700 font-inter mb-1.5">
+                                      {topic.contentTypeSummary}
+                                    </Text>
+                                  ) : null}
                                   <View className="flex-row items-center gap-3">
-                                    <Text className="font-medium text-[13px] text-neutral-500 font-inter">{topic.wordCount} từ</Text>
+                                    <Text className="font-medium text-[13px] text-neutral-500 font-inter">{topic.wordCount} mục</Text>
                                     
                                     {topic.progress > 0 ? (
                                       <View className="flex-1 flex-row items-center gap-2 max-w-[120px]">
@@ -350,7 +372,7 @@ export default function TopicsScreen() {
                                     <View className="flex-row items-center gap-2">
                                       <BookOpenIcon size={16} className="text-primary-600" />
                                       <Text className="font-bold text-[13px] text-primary-700 font-inter">
-                                        Xem toàn bộ từ vựng "{topic.title}" ({topic.wordCount} từ)
+                                        Xem toàn bộ mục của "{topic.title}" ({topic.wordCount} mục)
                                       </Text>
                                     </View>
                                     <ArrowRightIcon size={14} className="text-primary-600" />
@@ -367,7 +389,9 @@ export default function TopicsScreen() {
                                     >
                                       <View className="flex-1 pr-4">
                                         <Text className="font-bold text-[15px] text-mascot-navy font-inter mb-0.5">{child.title}</Text>
-                                        <Text className="font-medium text-[13px] text-neutral-400 font-inter">{child.wordCount} từ vựng</Text>
+                                        <Text className="font-medium text-[12px] text-primary-600 font-inter">
+                                          {child.contentTypeSummary || `${child.wordCount} mục`}
+                                        </Text>
                                       </View>
                                       
                                       <View className="flex-row items-center gap-3">

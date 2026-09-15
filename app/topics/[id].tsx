@@ -1,47 +1,38 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import { View, Text, ScrollView, Pressable, Animated, Modal, TextInput } from 'react-native';
+import React, { useState, useMemo } from 'react';
+import { View, Text, ScrollView, Pressable, Animated, Modal, Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, useLocalSearchParams } from 'expo-router';
 import { 
   ChevronLeftIcon, 
   Volume2Icon, 
   CheckCircle2Icon,
-  FoldersIcon,
   RefreshCwIcon,
   XIcon,
   CheckIcon,
   PlusIcon,
-  LayersIcon,
-  BookmarkIcon,
-  GraduationCapIcon
+  GraduationCapIcon,
+  BookOpenIcon,
+  SparklesIcon,
+  ArrowRightIcon,
+  LayersIcon
 } from 'lucide-react-native';
 import { cn } from '@/lib/utils';
 import { Snapy } from '@/components/Snapy';
+import {
+  getMockTopicBundle,
+  resolveAttributeValue,
+  resolveGroupInstances,
+  isGroupInstance,
+  TopicItemData,
+  TopicSchemaData,
+  TopicGroupSchemaDTO,
+  TopicAttributeSchemaDTO,
+  EavGroupInstance,
+} from '@/lib/topic-eav';
 
 // ==========================================
 // TYPES
 // ==========================================
-type TopicWord = {
-  id: string;
-  word: string;
-  ipa: string;
-  meaning: string;
-  partOfSpeech?: string;
-  example?: string;
-  hasAudio: boolean;
-  initialSaved?: boolean;
-};
-
-type TopicDetail = {
-  id: string;
-  title: string;
-  emoji: string;
-  description: string;
-  totalWords: number;
-  progress: number;
-  words: TopicWord[];
-};
-
 type DeckOption = {
   id: string;
   name: string;
@@ -50,9 +41,6 @@ type DeckOption = {
   template: string;
 };
 
-// ==========================================
-// MOCK DECKS
-// ==========================================
 const MOCK_DECKS: DeckOption[] = [
   { id: 'd2', name: 'Travel English', emoji: '✈️', cardCount: 86, template: 'LISTENING' },
   { id: 'd1', name: 'English Basics', emoji: '📚', cardCount: 42, template: 'CLASSIC' },
@@ -61,167 +49,33 @@ const MOCK_DECKS: DeckOption[] = [
   { id: 'd5', name: 'IELTS Core', emoji: '🎯', cardCount: 120, template: 'SRS' },
 ];
 
-// ==========================================
-// MOCK TOPIC DATABASE
-// ==========================================
-const TOPIC_DATABASE: Record<string, TopicDetail> = {
-  // Sân bay - Tổng quan
-  't1': {
-    id: 't1',
-    title: 'Sân bay (Tổng quan)',
-    emoji: '✈️',
-    description: 'Trọn bộ từ vựng thiết yếu nhất cho mọi thủ tục tại sân bay quốc tế.',
-    totalWords: 72,
-    progress: 42,
-    words: [
-      { id: 'w1_1', word: 'boarding pass', ipa: '/ˈbɔːrdɪŋ pæs/', meaning: 'thẻ lên máy bay', partOfSpeech: 'noun', example: 'Please show your boarding pass at the gate.', hasAudio: true, initialSaved: false },
-      { id: 'w1_2', word: 'terminal', ipa: '/ˈtɜːrmɪnəl/', meaning: 'nhà ga sân bay', partOfSpeech: 'noun', example: 'International flights depart from Terminal 2.', hasAudio: true, initialSaved: true },
-      { id: 'w1_3', word: 'luggage', ipa: '/ˈlʌɡɪdʒ/', meaning: 'hành lý', partOfSpeech: 'noun', example: 'You can collect your luggage at baggage claim.', hasAudio: true, initialSaved: false },
-      { id: 'w1_4', word: 'customs', ipa: '/ˈkʌstəmz/', meaning: 'hải quan', partOfSpeech: 'noun', example: 'He had to declare his goods at customs.', hasAudio: false, initialSaved: false },
-      { id: 'w1_5', word: 'departure', ipa: '/dɪˈpɑːrtʃər/', meaning: 'chuyến bay khởi hành', partOfSpeech: 'noun', example: 'Check the departure board for your flight status.', hasAudio: true, initialSaved: false },
-      { id: 'w1_6', word: 'carousel', ipa: '/ˌkær.əˈsel/', meaning: 'băng chuyền hành lý', partOfSpeech: 'noun', example: 'Bags will arrive at carousel 4.', hasAudio: true, initialSaved: false },
-    ]
-  },
-  // Check-in
-  't1_1': {
-    id: 't1_1',
-    title: 'Check-in & Thủ tục',
-    emoji: '🎫',
-    description: 'Các từ vựng và mẫu câu khi làm thủ tục vé, chọn ghế và gửi hành lý.',
-    totalWords: 18,
-    progress: 60,
-    words: [
-      { id: 'w1_1', word: 'boarding pass', ipa: '/ˈbɔːrdɪŋ pæs/', meaning: 'thẻ lên máy bay', partOfSpeech: 'noun', example: 'Please present your boarding pass and passport.', hasAudio: true, initialSaved: false },
-      { id: 'w1_2', word: 'passport', ipa: '/ˈpæspɔːrt/', meaning: 'hộ chiếu', partOfSpeech: 'noun', example: 'Ensure your passport is valid for at least six months.', hasAudio: true, initialSaved: true },
-      { id: 'w1_7', word: 'check-in counter', ipa: '/ˈtʃek ɪn ˈkaʊntər/', meaning: 'quầy làm thủ tục', partOfSpeech: 'noun', example: 'Go directly to counter B for self check-in.', hasAudio: true, initialSaved: false },
-      { id: 'w1_8', word: 'baggage drop', ipa: '/ˈbæɡɪdʒ drɑːp/', meaning: 'nơi ký gửi hành lý', partOfSpeech: 'noun', example: 'Drop your bags at the baggage drop counter.', hasAudio: true, initialSaved: false },
-      { id: 'w1_9', word: 'carry-on', ipa: '/ˈkæri ɑːn/', meaning: 'hành lý xách tay', partOfSpeech: 'noun', example: 'Only one carry-on bag is allowed per person.', hasAudio: true, initialSaved: false },
-      { id: 'w1_10', word: 'excess baggage', ipa: '/ɪkˈses ˈbæɡɪdʒ/', meaning: 'hành lý quá cước', partOfSpeech: 'noun', example: 'You need to pay a fee for excess baggage.', hasAudio: false, initialSaved: false },
-    ]
-  },
-  // An ninh sân bay
-  't1_2': {
-    id: 't1_2',
-    title: 'An ninh sân bay',
-    emoji: '🛡️',
-    description: 'Từ vựng khu vực soi chiếu an ninh, cổng an toàn và quy định kiểm tra.',
-    totalWords: 22,
-    progress: 35,
-    words: [
-      { id: 'w2_1', word: 'security checkpoint', ipa: '/sɪˈkjʊrəti ˈtʃekpɔɪnt/', meaning: 'trạm kiểm soát an ninh', partOfSpeech: 'noun', example: 'Have your documents ready before security.', hasAudio: true, initialSaved: false },
-      { id: 'w2_2', word: 'metal detector', ipa: '/ˈmetl dɪˈtektər/', meaning: 'máy dò kim loại', partOfSpeech: 'noun', example: 'Please step through the metal detector.', hasAudio: true, initialSaved: false },
-      { id: 'w2_3', word: 'liquid restriction', ipa: '/ˈlɪkwɪd rɪˈstrɪkʃn/', meaning: 'giới hạn chất lỏng', partOfSpeech: 'noun', example: 'Liquids must be in containers under 100ml.', hasAudio: true, initialSaved: false },
-      { id: 'w2_4', word: 'tray', ipa: '/treɪ/', meaning: 'khay đựng đồ soi chiếu', partOfSpeech: 'noun', example: 'Place your laptop and phone into the plastic tray.', hasAudio: true, initialSaved: true },
-      { id: 'w2_5', word: 'prohibited items', ipa: '/prəˈhɪbɪtɪd ˈaɪtəmz/', meaning: 'vật dụng bị cấm', partOfSpeech: 'noun', example: 'Sharp objects are prohibited in carry-on bags.', hasAudio: true, initialSaved: false },
-    ]
-  },
-  // Lên máy bay
-  't1_3': {
-    id: 't1_3',
-    title: 'Lên máy bay',
-    emoji: '🛫',
-    description: 'Từ vựng cổng ra máy bay, khoang hành khách và hướng dẫn tiếp viên.',
-    totalWords: 32,
-    progress: 0,
-    words: [
-      { id: 'w3_1', word: 'boarding gate', ipa: '/ˈbɔːrdɪŋ ɡeɪt/', meaning: 'cổng lên máy bay', partOfSpeech: 'noun', example: 'Flight VN123 is now boarding at Gate 12.', hasAudio: true, initialSaved: false },
-      { id: 'w3_2', word: 'flight attendant', ipa: '/flaɪt əˈtendənt/', meaning: 'tiếp viên hàng không', partOfSpeech: 'noun', example: 'The flight attendant demonstrated safety instructions.', hasAudio: true, initialSaved: false },
-      { id: 'w3_3', word: 'overhead bin', ipa: '/ˌoʊvərhed ˈbɪn/', meaning: 'ngăn để đồ trên đầu', partOfSpeech: 'noun', example: 'Place your bag in the overhead bin.', hasAudio: true, initialSaved: false },
-      { id: 'w3_4', word: 'seat belt', ipa: '/ˈsiːt belt/', meaning: 'dây an toàn', partOfSpeech: 'noun', example: 'Fasten your seat belt during turbulence.', hasAudio: true, initialSaved: false },
-      { id: 'w3_5', word: 'aisle seat', ipa: '/aɪl siːt/', meaning: 'ghế cạnh lối đi', partOfSpeech: 'noun', example: 'I prefer an aisle seat for easy movement.', hasAudio: true, initialSaved: false },
-    ]
-  },
-  // Khách sạn
-  't2': {
-    id: 't2',
-    title: 'Khách sạn (Tổng quan)',
-    emoji: '🏨',
-    description: 'Từ vựng đặt phòng, tiện nghi và lưu trú khách sạn.',
-    totalWords: 45,
-    progress: 15,
-    words: [
-      { id: 'w4_1', word: 'reservation', ipa: '/ˌrezərˈveɪʃn/', meaning: 'đặt phòng trước', partOfSpeech: 'noun', example: 'I have a reservation under the name John Smith.', hasAudio: true, initialSaved: true },
-      { id: 'w4_2', word: 'reception', ipa: '/rɪˈsepʃn/', meaning: 'quầy lễ tân', partOfSpeech: 'noun', example: 'The reception is open 24 hours a day.', hasAudio: true, initialSaved: false },
-      { id: 'w4_3', word: 'complimentary breakfast', ipa: '/ˌkɑːmplɪˈmentri ˈbrekfəst/', meaning: 'bữa sáng miễn phí', partOfSpeech: 'noun', example: 'The hotel offers complimentary buffet breakfast.', hasAudio: true, initialSaved: false },
-      { id: 'w4_4', word: 'housekeeping', ipa: '/ˈhaʊskiːpɪŋ/', meaning: 'dịch vụ dọn phòng', partOfSpeech: 'noun', example: 'Housekeeping cleans the room every morning.', hasAudio: true, initialSaved: false },
-    ]
-  },
-  // Chuẩn bị chuyến đi
-  't3': {
-    id: 't3',
-    title: 'Chuẩn bị chuyến đi',
-    emoji: '🎒',
-    description: 'Hành trang du lịch, lập kế hoạch và đổi tiền tệ.',
-    totalWords: 20,
-    progress: 80,
-    words: [
-      { id: 'w5_1', word: 'itinerary', ipa: '/aɪˈtɪnəreri/', meaning: 'lịch trình chi tiết', partOfSpeech: 'noun', example: 'We prepared a detailed travel itinerary.', hasAudio: true, initialSaved: true },
-      { id: 'w5_2', word: 'travel insurance', ipa: '/ˈtrævl ɪnʃʊrəns/', meaning: 'bảo hiểm du lịch', partOfSpeech: 'noun', example: 'Never travel abroad without travel insurance.', hasAudio: true, initialSaved: false },
-      { id: 'w5_3', word: 'currency exchange', ipa: '/ˈkɜːrənsi ɪkstʃeɪndʒ/', meaning: 'đổi ngoại tệ', partOfSpeech: 'noun', example: 'You can find currency exchange at the airport.', hasAudio: true, initialSaved: false },
-      { id: 'w5_4', word: 'power adapter', ipa: '/ˈpaʊər ədæptər/', meaning: 'đầu cắm chuyển đổi', partOfSpeech: 'noun', example: 'Bring a universal adapter for your devices.', hasAudio: true, initialSaved: false },
-    ]
-  },
-  // Phỏng vấn xin việc
-  't4': {
-    id: 't4',
-    title: 'Phỏng vấn xin việc',
-    emoji: '💼',
-    description: 'Từ vựng đàm phán lương, phỏng vấn nhân sự và giới thiệu năng lực.',
-    totalWords: 30,
-    progress: 10,
-    words: [
-      { id: 'w6_1', word: 'curriculum vitae', ipa: '/kəˌrɪkjələm ˈviːtaɪ/', meaning: 'hồ sơ xin việc (CV)', partOfSpeech: 'noun', example: 'Please attach your updated CV.', hasAudio: true, initialSaved: false },
-      { id: 'w6_2', word: 'interviewer', ipa: '/ˈɪntərvjuːər/', meaning: 'người phỏng vấn', partOfSpeech: 'noun', example: 'The interviewer asked about my previous project experience.', hasAudio: true, initialSaved: false },
-      { id: 'w6_3', word: 'probation period', ipa: '/proʊˈbeɪʃn ˈpɪriəd/', meaning: 'thời gian thử việc', partOfSpeech: 'noun', example: 'The standard probation period is two months.', hasAudio: true, initialSaved: false },
-      { id: 'w6_4', word: 'remuneration', ipa: '/rɪˌmjuːnəˈreɪʃn/', meaning: 'chế độ đãi ngộ / lương thưởng', partOfSpeech: 'noun', example: 'Competitive remuneration package with bonuses.', hasAudio: true, initialSaved: false },
-    ]
-  }
-};
-
 export default function TopicDetailScreen() {
   const params = useLocalSearchParams();
-  const topicId = (params.id as string) || 't1_1';
+  const topicId = (params.id as string) || 'airport-vocabulary';
 
-  // Lấy dữ liệu topic tương ứng hoặc dùng fallback
-  const topicData: TopicDetail = useMemo(() => {
-    if (TOPIC_DATABASE[topicId]) {
-      return TOPIC_DATABASE[topicId];
-    }
-    return {
-      id: topicId,
-      title: `Chủ đề #${topicId}`,
-      emoji: '📖',
-      description: 'Danh sách các từ vựng học tập cho chủ đề này.',
-      totalWords: 15,
-      progress: 0,
-      words: [
-        { id: `${topicId}_1`, word: 'vocabulary', ipa: '/vəˈkæbjəleri/', meaning: 'từ vựng', hasAudio: true, initialSaved: false },
-        { id: `${topicId}_2`, word: 'pronunciation', ipa: '/prəˌnʌnsiˈeɪʃn/', meaning: 'cách phát âm', hasAudio: true, initialSaved: false },
-        { id: `${topicId}_3`, word: 'fluent', ipa: '/ˈfluːənt/', meaning: 'trôi chảy, lưu loát', hasAudio: true, initialSaved: false },
-      ]
-    };
-  }, [topicId]);
+  // Lấy dữ liệu topic + schema + items từ EAV Bundle
+  const bundle = useMemo(() => getMockTopicBundle(topicId), [topicId]);
+  const { topic, response } = bundle;
+  const { schema, data: items } = response;
 
-  // Deck State
+  // Deck State & Persistent Saved Items per Deck ID (Keyed by topicItemId: number)
   const [selectedDeck, setSelectedDeck] = useState<DeckOption>(MOCK_DECKS[0]);
   const [isDeckModalOpen, setIsDeckModalOpen] = useState(false);
 
-  // Persistent Saved Words Map per Deck ID
-  const [savedByDeck, setSavedByDeck] = useState<Record<string, Set<string>>>(() => {
-    const initialMap: Record<string, Set<string>> = {
-      'd1': new Set(['w1_2', 'w2_4', 'w4_1', 'w5_1']),
-      'd2': new Set(['w1_1', 'w1_2']),
-    };
-    return initialMap;
-  });
+  const [savedByDeck, setSavedByDeck] = useState<Record<string, Set<number>>>(() => ({
+    'd1': new Set([1002, 1004]),
+    'd2': new Set([1001, 1002]),
+  }));
 
-  // Current deck's saved words set
   const currentDeckSavedSet = useMemo(() => {
-    return savedByDeck[selectedDeck.id] || new Set<string>();
+    return savedByDeck[selectedDeck.id] || new Set<number>();
   }, [savedByDeck, selectedDeck.id]);
 
+  // Modal Chi tiết Item (Dynamic EAV Inspector Modal)
+  const [selectedItemForDetail, setSelectedItemForDetail] = useState<TopicItemData | null>(null);
+
   // Audio Play State
-  const [playingWord, setPlayingWord] = useState<string | null>(null);
+  const [playingItemId, setPlayingItemId] = useState<number | null>(null);
 
   // Toast Notification State
   const [toastMsg, setToastMsg] = useState<string | null>(null);
@@ -235,74 +89,73 @@ export default function TopicDetailScreen() {
     Animated.sequence([
       Animated.timing(toastAnim, { toValue: 1, duration: 250, useNativeDriver: true }),
       Animated.delay(3000),
-      Animated.timing(toastAnim, { toValue: 0, duration: 250, useNativeDriver: true })
+      Animated.timing(toastAnim, { toValue: 0, duration: 250, useNativeDriver: true }),
     ]).start(() => {
       setToastMsg(null);
       setToastAction(null);
     });
   };
 
-  // Play Audio with Web Speech API or Fallback
-  const playAudio = (word: string) => {
-    setPlayingWord(word);
+  // Play Audio (Tương tác Mock có fallback Web Speech API trên web)
+  const playAudio = (itemId: number, textToSpeak?: string) => {
+    setPlayingItemId(itemId);
 
-    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+    if (typeof window !== 'undefined' && 'speechSynthesis' in window && textToSpeak) {
       try {
         window.speechSynthesis.cancel();
-        const utterance = new SpeechSynthesisUtterance(word);
+        const utterance = new SpeechSynthesisUtterance(textToSpeak);
         utterance.lang = 'en-US';
         utterance.rate = 0.9;
-        utterance.onstart = () => setPlayingWord(word);
-        utterance.onend = () => setPlayingWord(null);
-        utterance.onerror = () => setPlayingWord(null);
+        utterance.onend = () => setPlayingItemId(null);
+        utterance.onerror = () => setPlayingItemId(null);
         window.speechSynthesis.speak(utterance);
       } catch {
-        setTimeout(() => setPlayingWord(null), 1200);
+        setTimeout(() => setPlayingItemId(null), 1200);
       }
     } else {
-      setTimeout(() => setPlayingWord(null), 1200);
+      setTimeout(() => setPlayingItemId(null), 1200);
     }
   };
 
-  // Save a single word to currently active deck
-  const handleSaveWord = (wordId: string) => {
-    if (currentDeckSavedSet.has(wordId)) return;
+  // Save single item
+  const handleSaveItem = (itemId: number) => {
+    if (currentDeckSavedSet.has(itemId)) return;
 
     setSavedByDeck(prev => {
       const nextDeckSet = new Set(prev[selectedDeck.id] || []);
-      nextDeckSet.add(wordId);
+      nextDeckSet.add(itemId);
       return {
         ...prev,
-        [selectedDeck.id]: nextDeckSet
+        [selectedDeck.id]: nextDeckSet,
       };
     });
 
     showToast(`Đã lưu vào bộ thẻ "${selectedDeck.name}"`, () => setIsDeckModalOpen(true));
   };
 
-  // Save all eligible words to currently active deck
+  // Save all items
   const handleSaveAll = () => {
-    const eligibleWords = topicData.words.filter(w => !currentDeckSavedSet.has(w.id));
+    const eligibleItems = items.filter(it => !currentDeckSavedSet.has(it.topicItemId));
 
-    if (eligibleWords.length === 0) {
-      showToast('Tất cả từ đã có trong bộ thẻ này');
+    if (eligibleItems.length === 0) {
+      showToast('Tất cả mục đã có trong bộ thẻ này');
       return;
     }
 
     setSavedByDeck(prev => {
       const nextDeckSet = new Set(prev[selectedDeck.id] || []);
-      eligibleWords.forEach(w => nextDeckSet.add(w.id));
+      eligibleItems.forEach(it => nextDeckSet.add(it.topicItemId));
       return {
         ...prev,
-        [selectedDeck.id]: nextDeckSet
+        [selectedDeck.id]: nextDeckSet,
       };
     });
 
-    const skippedCount = topicData.words.length - eligibleWords.length;
+    const skippedCount = items.length - eligibleItems.length;
     if (skippedCount > 0) {
-      showToast(`Đã lưu ${eligibleWords.length} từ · Bỏ qua ${skippedCount} từ đã có`, () => setIsDeckModalOpen(true));
+      showToast(`Đã lưu ${eligibleItems.length} mục · Bỏ qua ${skippedCount} mục đã có`, () => setIsDeckModalOpen(true));
     } else {
-      showToast(`Đã lưu toàn bộ ${eligibleWords.length} từ vào "${selectedDeck.name}"`, () => setIsDeckModalOpen(true));
+      showToast(`Đã lưu toàn bộ ${eligibleItems.length} mục vào "${selectedDeck.name}"`, () => setIsDeckModalOpen(true));
     }
   };
 
@@ -312,11 +165,27 @@ export default function TopicDetailScreen() {
     showToast(`Đã chọn bộ thẻ đích: "${deck.name}"`);
   };
 
-  const eligibleCount = topicData.words.filter(w => !currentDeckSavedSet.has(w.id)).length;
+  const eligibleCount = items.filter(it => !currentDeckSavedSet.has(it.topicItemId)).length;
+
+  // Sắp xếp các groups theo schema group.position
+  const sortedGroups = useMemo(() => {
+    if (!schema?.groups) return [];
+    return [...schema.groups].sort((a, b) => a.position - b.position);
+  }, [schema]);
+
+  // Primary single group (thường là group đầu tiên, ví dụ 'main')
+  const primaryGroup = useMemo(() => {
+    return sortedGroups.find(g => !g.multiple) || sortedGroups[0];
+  }, [sortedGroups]);
+
+  // Multiple groups (ví dụ 'examples', 'dialogue_lines', 'locations')
+  const multipleGroups = useMemo(() => {
+    return sortedGroups.filter(g => g.multiple);
+  }, [sortedGroups]);
 
   return (
     <SafeAreaView className="flex-1 bg-[#F7F8FA]" edges={['top']}>
-      {/* FLOATING TOAST NOTIFICATION VỚI NÚT ĐỔI DECK TƯƠNG TÁC */}
+      {/* FLOATING TOAST NOTIFICATION */}
       {toastMsg && (
         <Animated.View 
           style={{
@@ -324,9 +193,9 @@ export default function TopicDetailScreen() {
             transform: [{ 
               translateY: toastAnim.interpolate({
                 inputRange: [0, 1],
-                outputRange: [-25, 0]
-              }) 
-            }]
+                outputRange: [-25, 0],
+              }),
+            }],
           }}
           className="absolute top-14 left-4 right-4 z-50 bg-mascot-navy px-4 py-3.5 rounded-2xl shadow-xl flex-row items-center justify-between"
         >
@@ -340,9 +209,7 @@ export default function TopicDetailScreen() {
           </View>
           {toastAction && (
             <Pressable 
-              onPress={() => {
-                toastAction();
-              }}
+              onPress={toastAction}
               className="bg-white/20 px-3 py-1.5 rounded-xl active:bg-white/30"
             >
               <Text className="text-primary-300 text-[12px] font-extrabold font-nunito uppercase tracking-wide">
@@ -362,15 +229,13 @@ export default function TopicDetailScreen() {
           <ChevronLeftIcon size={28} className="text-mascot-navy" />
         </Pressable>
         <Text className="flex-1 text-center font-extrabold text-[18px] text-mascot-navy font-nunito mr-2" numberOfLines={1}>
-          {topicData.emoji} {topicData.title}
+          {topic.emoji} {topic.title}
         </Text>
         <Pressable 
-          onPress={() => {
-            showToast('Chế độ học Flashcard chủ đề đang được chuẩn bị!');
-          }}
+          onPress={() => router.push(`/study/flashcard?topicId=${topic.id}` as any)}
           className="w-10 h-10 items-center justify-center rounded-full active:bg-primary-50"
         >
-          <GraduationCapIcon size={22} className="text-primary-600" />
+          <GraduationCapIcon size={24} className="text-primary-600" />
         </Pressable>
       </View>
 
@@ -381,34 +246,55 @@ export default function TopicDetailScreen() {
         {/* 2. TOPIC BANNER */}
         <View className="bg-white px-5 pt-4 pb-6 border-b border-neutral-100 mb-3">
           <View className="flex-row items-center gap-2.5 mb-1.5">
-            <Text className="text-[28px]">{topicData.emoji}</Text>
+            <Text className="text-[28px]">{topic.emoji}</Text>
             <Text className="font-extrabold text-[24px] text-mascot-navy font-nunito flex-1">
-              {topicData.title}
+              {topic.title}
             </Text>
           </View>
           
-          <Text className="font-medium text-[15px] text-neutral-500 font-inter leading-relaxed mb-4">
-            {topicData.description}
+          <Text className="font-medium text-[15px] text-neutral-500 font-inter leading-relaxed mb-3">
+            {topic.description}
           </Text>
+
+          {/* Cấu trúc nội dung Badge (EAV Summary) */}
+          <View className="flex-row items-center gap-2 mb-4">
+            <View className="bg-primary-50 px-3 py-1 rounded-xl border border-primary-100 flex-row items-center gap-1.5">
+              <LayersIcon size={13} className="text-primary-600" />
+              <Text className="font-bold text-[12px] text-primary-700 font-nunito">
+                {topic.contentTypeSummary}
+              </Text>
+            </View>
+          </View>
           
           <View className="flex-row items-center justify-between pt-2 border-t border-neutral-100">
             <Text className="font-bold text-[14px] text-neutral-400 font-inter">
-              {topicData.words.length} từ vựng hiển thị · {topicData.totalWords} từ trong chủ đề
+              {items.length} mục hiển thị · {topic.totalWords} mục trong chủ đề
             </Text>
-            {topicData.progress > 0 && (
+            {topic.progress > 0 && (
               <View className="flex-row items-center gap-2">
                 <Text className="font-extrabold text-[14px] text-primary-600 font-nunito">
-                  {topicData.progress}% hoàn thành
+                  {topic.progress}%
                 </Text>
                 <View className="w-16 h-2 bg-neutral-100 rounded-full overflow-hidden">
                   <View 
                     className="h-full bg-primary-500 rounded-full" 
-                    style={{ width: `${topicData.progress}%` }}
+                    style={{ width: `${topic.progress}%` }}
                   />
                 </View>
               </View>
             )}
           </View>
+
+          {/* NÚT CTA HỌC THẺ CHỦ ĐỀ CHÍNH THỨC */}
+          <Pressable 
+            onPress={() => router.push(`/study/flashcard?topicId=${topic.id}` as any)}
+            className="mt-4 w-full h-13 bg-primary-500 rounded-2xl border-b-[4px] border-primary-700 active:bg-primary-600 active:translate-y-[2px] active:border-b-[2px] transition-all flex-row items-center justify-center gap-2 shadow-sm shadow-primary-500/25 py-3"
+          >
+            <GraduationCapIcon size={20} color="#FFFFFF" />
+            <Text className="font-extrabold text-[15px] text-white uppercase font-nunito tracking-wide">
+              Học bằng Flashcard
+            </Text>
+          </Pressable>
         </View>
 
         {/* 3. DECK ĐÍCH SELECTOR CARD */}
@@ -437,91 +323,160 @@ export default function TopicDetailScreen() {
           </View>
         </View>
 
-        {/* 4. DANH SÁCH TỪ VỰNG TRONG CHỦ ĐỀ */}
+        {/* 4. DANH SÁCH MỤC DỮ LIỆU ĐỘNG (RENDER THEO SCHEMA EAV) */}
         <View className="px-4">
           <View className="flex-row items-center justify-between mb-3 px-1">
-            <Text className="font-extrabold text-[16px] text-mascot-navy font-nunito">Danh sách từ vựng</Text>
+            <Text className="font-extrabold text-[16px] text-mascot-navy font-nunito">
+              Danh sách mục học ({items.length})
+            </Text>
             <Text className="font-medium text-[13px] text-neutral-400 font-inter">
-              Đã lưu {currentDeckSavedSet.size} từ trong Deck
+              Đã lưu {currentDeckSavedSet.size} mục
             </Text>
           </View>
           
-          {topicData.words.length === 0 ? (
+          {items.length === 0 ? (
             <View className="items-center justify-center py-12 bg-white rounded-3xl p-6 border border-neutral-100">
               <Snapy pose="doc_sach" animation="idle" className="w-28 h-28 mb-4" />
-              <Text className="font-extrabold text-[16px] text-mascot-navy font-nunito mb-1">Chủ đề chưa có từ vựng</Text>
+              <Text className="font-extrabold text-[16px] text-mascot-navy font-nunito mb-1">Chủ đề chưa có dữ liệu</Text>
               <Text className="font-medium text-[14px] text-neutral-400 font-inter text-center">
                 Dữ liệu của chủ đề này đang được cập nhật thêm.
               </Text>
             </View>
           ) : (
             <View className="gap-3.5">
-              {topicData.words.map(item => {
-                const isSaved = currentDeckSavedSet.has(item.id);
-                const isSpeaking = playingWord === item.word;
+              {items.map(item => {
+                const isSaved = currentDeckSavedSet.has(item.topicItemId);
+                const isSpeaking = playingItemId === item.topicItemId;
+
+                // 1. Trích xuất thuộc tính chính từ primary group theo attribute.position
+                const primaryAttrs = primaryGroup ? [...primaryGroup.attributes].sort((a, b) => a.position - b.position) : [];
                 
+                // Thuộc tính tiêu đề (thuộc tính text đầu tiên có required hoặc có tên phổ biến)
+                const titleAttr = primaryAttrs.find(a => a.dataType === 'TEXT' && (a.required || a.name === 'word' || a.name === 'phrase' || a.name === 'sign_name')) || primaryAttrs[0];
+                const titleValue = titleAttr ? String(resolveAttributeValue(item, `${primaryGroup?.name}.${titleAttr.name}`, schema) ?? '') : '';
+
+                // Thuộc tính phụ / phiên âm / role
+                const subtitleAttr = primaryAttrs.find(a => a !== titleAttr && a.dataType === 'TEXT' && (a.name === 'ipa' || a.name === 'role' || a.name === 'warning_level'));
+                const subtitleValue = subtitleAttr ? String(resolveAttributeValue(item, `${primaryGroup?.name}.${subtitleAttr.name}`, schema) ?? '') : '';
+
+                // Thuộc tính nghĩa / giải thích
+                const meaningAttr = primaryAttrs.find(a => a.name === 'meaning' || (a.dataType === 'TEXT' && a !== titleAttr && a !== subtitleAttr));
+                const meaningValue = meaningAttr ? String(resolveAttributeValue(item, `${primaryGroup?.name}.${meaningAttr.name}`, schema) ?? '') : '';
+
+                // Thuộc tính badge loại (partOfSpeech, role, warning_level)
+                const badgeAttr = primaryAttrs.find(a => a.name === 'partOfSpeech' || a.name === 'role' || a.name === 'warning_level');
+                const badgeValue = badgeAttr ? String(resolveAttributeValue(item, `${primaryGroup?.name}.${badgeAttr.name}`, schema) ?? '') : '';
+
+                // Thuộc tính Audio
+                const audioAttr = primaryAttrs.find(a => a.dataType === 'AUDIO');
+                const hasAudio = !!audioAttr;
+
+                // Thuộc tính Ảnh
+                const imageAttr = primaryAttrs.find(a => a.dataType === 'IMAGE');
+                const imageUrl = imageAttr ? String(resolveAttributeValue(item, `${primaryGroup?.name}.${imageAttr.name}`, schema) ?? '') : '';
+
+                // 2. Trích xuất nhóm lặp (ví dụ câu ví dụ, hội thoại)
+                const firstMultiGroup = multipleGroups[0];
+                const multiInstances = firstMultiGroup ? resolveGroupInstances(item, firstMultiGroup.name) : [];
+                const firstInstance = multiInstances[0];
+
                 return (
                   <Pressable 
-                    key={item.id}
-                    onPress={() => {
-                      // Navigate to MH-DICT-02 Word Detail
-                      router.push(`/dictionary/${encodeURIComponent(item.word.toLowerCase().trim())}` as any);
-                    }}
+                    key={item.topicItemId}
+                    onPress={() => setSelectedItemForDetail(item)}
                     className="bg-white rounded-[22px] p-5 border-2 border-neutral-100 border-b-[4px] shadow-sm shadow-black/5 active:bg-neutral-50/80 active:translate-y-[2px] active:border-b-[2px] transition-all"
                   >
+                    {/* HÀNG TRÊN: TIÊU ĐỀ + PHÁT ÂM / AUDIO + ẢNH THUMBNAIL */}
                     <View className="flex-row items-start justify-between mb-2">
-                      <View className="flex-1 pr-2">
-                        <View className="flex-row items-center gap-2">
-                          <Text className="font-extrabold text-[22px] text-mascot-navy font-nunito">
-                            {item.word}
+                      <View className="flex-1 pr-3">
+                        <View className="flex-row items-center gap-2 flex-wrap">
+                          <Text className="font-extrabold text-[20px] text-mascot-navy font-nunito">
+                            {titleValue || `Mục #${item.topicItemId}`}
                           </Text>
-                          {item.partOfSpeech && (
+                          {badgeValue ? (
                             <View className="bg-neutral-100 px-2 py-0.5 rounded-md">
                               <Text className="font-bold text-[11px] text-neutral-500 font-inter uppercase">
-                                {item.partOfSpeech}
+                                {badgeValue}
                               </Text>
                             </View>
-                          )}
+                          ) : null}
                         </View>
-                        {item.ipa ? (
-                          <Text className="font-medium text-[14px] text-neutral-400 font-inter mt-0.5">{item.ipa}</Text>
-                        ) : (
-                          <Text className="font-medium text-[13px] text-neutral-300 font-inter italic mt-0.5">Chưa có phiên âm</Text>
+
+                        {subtitleValue ? (
+                          <Text className="font-medium text-[14px] text-neutral-400 font-inter mt-0.5">
+                            {subtitleValue}
+                          </Text>
+                        ) : null}
+                      </View>
+
+                      <View className="flex-row items-center gap-2">
+                        {imageUrl ? (
+                          <Image 
+                            source={{ uri: imageUrl }}
+                            className="w-11 h-11 rounded-xl bg-neutral-100 border border-neutral-200"
+                            resizeMode="cover"
+                          />
+                        ) : null}
+
+                        {hasAudio && (
+                          <Pressable 
+                            onPress={(e) => {
+                              e.stopPropagation();
+                              playAudio(item.topicItemId, titleValue);
+                            }}
+                            className={cn(
+                              "w-10 h-10 rounded-xl items-center justify-center border transition-all",
+                              isSpeaking 
+                                ? "bg-info-100 border-info-300 scale-105" 
+                                : "bg-info-50 border-info-200 active:bg-info-100 active:scale-95"
+                            )}
+                          >
+                            <Volume2Icon size={19} className={isSpeaking ? "text-info-700" : "text-info-600"} />
+                          </Pressable>
                         )}
                       </View>
-                      
-                      {item.hasAudio && (
-                        <Pressable 
-                          onPress={(e) => {
-                            e.stopPropagation();
-                            playAudio(item.word);
-                          }}
-                          className={cn(
-                            "w-10 h-10 rounded-xl items-center justify-center border transition-all",
-                            isSpeaking 
-                              ? "bg-info-100 border-info-300 scale-105" 
-                              : "bg-info-50 border-info-200 active:bg-info-100 active:scale-95"
-                          )}
-                        >
-                          <Volume2Icon size={19} className={isSpeaking ? "text-info-700" : "text-info-600"} />
-                        </Pressable>
-                      )}
                     </View>
                     
-                    <Text className="font-bold text-[15px] text-neutral-700 font-inter mb-2">
-                      {item.meaning}
-                    </Text>
+                    {/* NGHĨA / DIỄN GIẢI CHÍNH */}
+                    {meaningValue ? (
+                      <Text className="font-bold text-[15px] text-neutral-700 font-inter mb-2">
+                        {meaningValue}
+                      </Text>
+                    ) : null}
 
-                    {item.example && (
-                      <Text className="font-normal text-[13px] text-neutral-400 font-inter italic mb-3">
-                        "{item.example}"
-                      </Text>
-                    )}
+                    {/* DỮ LIỆU NHÓM LẶP (MULTIPLE GROUP PREVIEW) */}
+                    {firstInstance ? (
+                      <View className="bg-neutral-50 rounded-xl p-3 border border-neutral-100 mb-3">
+                        <View className="flex-row items-center justify-between mb-1">
+                          <Text className="font-bold text-[11px] text-neutral-400 font-inter uppercase tracking-wider">
+                            {firstMultiGroup?.label || 'Dữ liệu liên quan'}
+                          </Text>
+                          {multiInstances.length > 1 && (
+                            <Text className="font-semibold text-[11px] text-primary-600 font-inter">
+                              +{multiInstances.length - 1} mục khác
+                            </Text>
+                          )}
+                        </View>
+                        {/* Hiển thị các trường trong instance đầu tiên */}
+                        <Text className="font-medium text-[13px] text-neutral-700 font-inter italic" numberOfLines={2}>
+                          "{firstInstance.sentence || firstInstance.line || firstInstance.instruction || Object.values(firstInstance)[0]}"
+                        </Text>
+                        {(firstInstance.translation || firstInstance.vietnamese) && (
+                          <Text className="font-normal text-[12px] text-neutral-400 font-inter mt-0.5" numberOfLines={1}>
+                            {String(firstInstance.translation || firstInstance.vietnamese)}
+                          </Text>
+                        )}
+                      </View>
+                    ) : null}
                     
+                    {/* HÀNG DƯỚI: NÚT CHI TIẾT & LƯU VÀO DECK */}
                     <View className="flex-row items-center justify-between pt-2 border-t border-neutral-100">
-                      <Text className="font-medium text-[12px] text-neutral-400 font-inter">
-                        Chạm để xem chi tiết từ
-                      </Text>
+                      <View className="flex-row items-center gap-1">
+                        <SparklesIcon size={13} className="text-primary-600" />
+                        <Text className="font-semibold text-[12px] text-primary-600 font-inter">
+                          Chạm để xem chi tiết
+                        </Text>
+                      </View>
                       
                       {isSaved ? (
                         <View className="flex-row items-center gap-1.5 px-3.5 py-1.5 bg-neutral-100 rounded-xl">
@@ -532,12 +487,12 @@ export default function TopicDetailScreen() {
                         <Pressable 
                           onPress={(e) => {
                             e.stopPropagation();
-                            handleSaveWord(item.id);
+                            handleSaveItem(item.topicItemId);
                           }}
                           className="px-5 py-2 bg-primary-500 rounded-xl border-b-[3px] border-primary-700 active:bg-primary-600 active:translate-y-[2px] active:border-b-[1px] transition-all shadow-sm shadow-primary-500/20"
                         >
                           <Text className="font-extrabold text-[13px] text-white uppercase font-nunito tracking-wide">
-                            + Lưu từ
+                            + Lưu mục
                           </Text>
                         </Pressable>
                       )}
@@ -563,17 +518,261 @@ export default function TopicDetailScreen() {
           )}
         >
           <Text className={cn(
-            "font-extrabold text-[16px] uppercase font-nunito tracking-[0.04em]",
+            "font-extrabold text-[15px] uppercase font-nunito tracking-[0.04em]",
             eligibleCount > 0 ? "text-white" : "text-neutral-400"
           )}>
             {eligibleCount > 0 
-              ? `Lưu tất cả · ${eligibleCount} từ vào "${selectedDeck.name}"` 
-              : "Đã lưu toàn bộ từ trong Deck này ✓"}
+              ? `Lưu tất cả · ${eligibleCount} mục vào "${selectedDeck.name}"` 
+              : "Đã lưu toàn bộ mục trong Deck này ✓"}
           </Text>
         </Pressable>
       </View>
 
-      {/* 6. MODAL BOTTOM SHEET: CHỌN BỘ THẺ (DECK PICKER) */}
+      {/* 6. MODAL CHI TIẾT ITEM (DYNAMIC EAV INSPECTOR MODAL) */}
+      <Modal
+        visible={!!selectedItemForDetail}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setSelectedItemForDetail(null)}
+      >
+        <Pressable 
+          onPress={() => setSelectedItemForDetail(null)}
+          className="flex-1 bg-black/50 justify-end"
+        >
+          <Pressable 
+            onPress={e => e.stopPropagation()} 
+            className="bg-white rounded-t-[36px] p-6 pb-10 border-t-2 border-neutral-100 shadow-2xl max-h-[88%]"
+          >
+            {selectedItemForDetail && (() => {
+              const item = selectedItemForDetail;
+              const isSaved = currentDeckSavedSet.has(item.topicItemId);
+
+              // Kiểm tra xem template có cấu hình tra từ điển không
+              const dictLookupRef = topic.defaultTemplate.dictionaryLookupAttr;
+              const dictWord = dictLookupRef ? resolveAttributeValue(item, dictLookupRef, schema) : null;
+              const canLookupDict = typeof dictWord === 'string' && dictWord.trim().length > 0;
+
+              return (
+                <View className="flex-1">
+                  {/* Modal Top Header */}
+                  <View className="flex-row items-center justify-between pb-3 border-b border-neutral-100 mb-4">
+                    <View className="flex-1 pr-2">
+                      <Text className="font-bold text-[11px] text-neutral-400 font-inter uppercase tracking-wider">
+                        Chi tiết mục học (EAV)
+                      </Text>
+                      <Text className="font-extrabold text-[20px] text-mascot-navy font-nunito" numberOfLines={1}>
+                        Mục #{item.topicItemId}
+                      </Text>
+                    </View>
+                    <Pressable 
+                      onPress={() => setSelectedItemForDetail(null)}
+                      className="w-9 h-9 rounded-full bg-neutral-100 items-center justify-center active:bg-neutral-200"
+                    >
+                      <XIcon size={18} className="text-neutral-500" />
+                    </Pressable>
+                  </View>
+
+                  {/* Dynamic Content Inspector by Schema Groups */}
+                  <ScrollView showsVerticalScrollIndicator={false} className="flex-1">
+                    <View className="gap-5">
+                      {sortedGroups.map(group => {
+                        const isMultiple = group.multiple;
+
+                        if (!isMultiple) {
+                          // Nhóm đơn (Single Group Instance)
+                          const sortedAttributes = [...group.attributes].sort((a, b) => a.position - b.position);
+
+                          return (
+                            <View key={group.groupId} className="bg-neutral-50/80 rounded-2xl p-4 border border-neutral-100">
+                              <Text className="font-extrabold text-[14px] text-mascot-navy font-nunito mb-3 flex-row items-center">
+                                {group.label}
+                              </Text>
+
+                              <View className="gap-3">
+                                {sortedAttributes.map(attr => {
+                                  const rawVal = resolveAttributeValue(item, `${group.name}.${attr.name}`, schema);
+                                  if (rawVal === undefined || rawVal === null || rawVal === '') return null;
+
+                                  // 1. Dữ liệu dạng IMAGE
+                                  if (attr.dataType === 'IMAGE') {
+                                    return (
+                                      <View key={attr.attributeId} className="mb-2">
+                                        <Text className="font-bold text-[11px] text-neutral-400 font-inter uppercase mb-1.5">
+                                          {attr.label}
+                                        </Text>
+                                        <View className="w-full h-44 rounded-2xl overflow-hidden bg-neutral-200 border border-neutral-200">
+                                          <Image 
+                                            source={{ uri: String(rawVal) }}
+                                            className="w-full h-full"
+                                            resizeMode="cover"
+                                          />
+                                        </View>
+                                      </View>
+                                    );
+                                  }
+
+                                  // 2. Dữ liệu dạng AUDIO
+                                  if (attr.dataType === 'AUDIO') {
+                                    const textToSpeak = String(resolveAttributeValue(item, `${group.name}.word`, schema) || resolveAttributeValue(item, `${group.name}.phrase`, schema) || resolveAttributeValue(item, `${group.name}.sign_name`, schema) || '');
+                                    const isSpeaking = playingItemId === item.topicItemId;
+
+                                    return (
+                                      <View key={attr.attributeId} className="flex-row items-center justify-between bg-white p-3 rounded-xl border border-neutral-200">
+                                        <View>
+                                          <Text className="font-bold text-[11px] text-neutral-400 font-inter uppercase">
+                                            {attr.label}
+                                          </Text>
+                                          <Text className="font-semibold text-[13px] text-neutral-600 font-inter">
+                                            Âm thanh chuẩn
+                                          </Text>
+                                        </View>
+                                        <Pressable 
+                                          onPress={() => playAudio(item.topicItemId, textToSpeak)}
+                                          className={cn(
+                                            "px-3.5 py-2 rounded-xl flex-row items-center gap-1.5 border transition-all",
+                                            isSpeaking 
+                                              ? "bg-info-500 border-info-600" 
+                                              : "bg-info-50 border-info-200 active:bg-info-100"
+                                          )}
+                                        >
+                                          <Volume2Icon size={16} color={isSpeaking ? '#FFFFFF' : '#0284C7'} />
+                                          <Text className={cn(
+                                            "font-bold text-[12px] font-nunito",
+                                            isSpeaking ? "text-white" : "text-info-700"
+                                          )}>
+                                            {isSpeaking ? "Đang phát..." : "Nghe phát âm"}
+                                          </Text>
+                                        </Pressable>
+                                      </View>
+                                    );
+                                  }
+
+                                  // 3. Dữ liệu dạng TEXT hoặc các kiểu khác (Fallback an toàn)
+                                  return (
+                                    <View key={attr.attributeId} className="bg-white p-3 rounded-xl border border-neutral-100">
+                                      <Text className="font-bold text-[11px] text-neutral-400 font-inter uppercase mb-0.5">
+                                        {attr.label}
+                                      </Text>
+                                      <Text className="font-bold text-[15px] text-mascot-navy font-inter">
+                                        {String(rawVal)}
+                                      </Text>
+                                    </View>
+                                  );
+                                })}
+                              </View>
+                            </View>
+                          );
+                        } else {
+                          // Nhóm lặp (Multiple Instances Group, ví dụ câu ví dụ, hội thoại)
+                          const instances = resolveGroupInstances(item, group.name);
+                          if (instances.length === 0) return null;
+
+                          return (
+                            <View key={group.groupId} className="bg-neutral-50/80 rounded-2xl p-4 border border-neutral-100">
+                              <View className="flex-row items-center justify-between mb-3">
+                                <Text className="font-extrabold text-[14px] text-mascot-navy font-nunito">
+                                  {group.label}
+                                </Text>
+                                <View className="bg-primary-50 px-2 py-0.5 rounded-md border border-primary-200">
+                                  <Text className="font-extrabold text-[11px] text-primary-700 font-nunito">
+                                    {instances.length} bản ghi
+                                  </Text>
+                                </View>
+                              </View>
+
+                              <View className="gap-2.5">
+                                {instances.map((inst, instIndex) => (
+                                  <View key={instIndex} className="bg-white p-3.5 rounded-xl border border-neutral-200">
+                                    <View className="flex-row items-center gap-1.5 mb-1.5">
+                                      <View className="w-5 h-5 rounded-full bg-primary-100 items-center justify-center">
+                                        <Text className="font-extrabold text-[10px] text-primary-700 font-nunito">
+                                          {instIndex + 1}
+                                        </Text>
+                                      </View>
+                                      <Text className="font-bold text-[12px] text-neutral-400 font-inter">
+                                        Bản ghi #{instIndex + 1}
+                                      </Text>
+                                    </View>
+
+                                    {Object.entries(inst).map(([key, val]) => {
+                                      const attrDef = group.attributes.find(a => a.name === key);
+                                      const label = attrDef?.label || key;
+
+                                      return (
+                                        <View key={key} className="mt-1">
+                                          <Text className="font-semibold text-[11px] text-neutral-400 font-inter">
+                                            {label}:
+                                          </Text>
+                                          <Text className="font-medium text-[14px] text-neutral-700 font-inter">
+                                            {String(val)}
+                                          </Text>
+                                        </View>
+                                      );
+                                    })}
+                                  </View>
+                                ))}
+                              </View>
+                            </View>
+                          );
+                        }
+                      })}
+                    </View>
+                  </ScrollView>
+
+                  {/* Modal Action Buttons */}
+                  <View className="mt-4 pt-3 border-t border-neutral-100 gap-2.5">
+                    {/* NÚT TRA TỪ ĐIỂN (CHỈ HIỆN KHI TEMPLATE CÓ dictionaryLookupAttr) */}
+                    {canLookupDict && (
+                      <Pressable 
+                        onPress={() => {
+                          setSelectedItemForDetail(null);
+                          router.push(`/dictionary/${encodeURIComponent(String(dictWord).toLowerCase().trim())}` as any);
+                        }}
+                        className="h-12 bg-info-50 rounded-xl border border-info-200 active:bg-info-100 flex-row items-center justify-center gap-2"
+                      >
+                        <BookOpenIcon size={16} className="text-info-700" />
+                        <Text className="font-extrabold text-[14px] text-info-700 font-nunito">
+                          Tra từ điển: "{String(dictWord)}"
+                        </Text>
+                      </Pressable>
+                    )}
+
+                    <View className="flex-row gap-2">
+                      <Pressable 
+                        onPress={() => setSelectedItemForDetail(null)}
+                        className="flex-1 h-12 bg-neutral-100 rounded-xl items-center justify-center active:bg-neutral-200"
+                      >
+                        <Text className="font-bold text-[14px] text-neutral-600 font-nunito">Đóng</Text>
+                      </Pressable>
+
+                      <Pressable 
+                        onPress={() => {
+                          handleSaveItem(item.topicItemId);
+                        }}
+                        className={cn(
+                          "flex-1 h-12 rounded-xl items-center justify-center border-b-[3px] active:translate-y-[2px] active:border-b-[1px] transition-all",
+                          isSaved 
+                            ? "bg-neutral-200 border-neutral-300" 
+                            : "bg-primary-500 border-primary-700 active:bg-primary-600"
+                        )}
+                      >
+                        <Text className={cn(
+                          "font-extrabold text-[14px] font-nunito uppercase",
+                          isSaved ? "text-neutral-600" : "text-white"
+                        )}>
+                          {isSaved ? "Đã lưu ✓" : "+ Lưu vào Deck"}
+                        </Text>
+                      </Pressable>
+                    </View>
+                  </View>
+                </View>
+              );
+            })()}
+          </Pressable>
+        </Pressable>
+      </Modal>
+
+      {/* 7. MODAL CHỌN BỘ THẺ ĐÍCH */}
       <Modal
         visible={isDeckModalOpen}
         transparent
@@ -588,14 +787,13 @@ export default function TopicDetailScreen() {
             onPress={e => e.stopPropagation()} 
             className="bg-white rounded-t-[36px] p-6 pb-10 border-t-2 border-neutral-100 shadow-2xl max-h-[80%]"
           >
-            {/* Modal Header */}
             <View className="flex-row items-center justify-between mb-4">
               <View>
                 <Text className="font-extrabold text-[20px] text-mascot-navy font-nunito">
                   Chọn bộ thẻ đích
                 </Text>
                 <Text className="font-medium text-[13px] text-neutral-400 font-inter">
-                  Từ vựng lưu sẽ được tự động thêm vào bộ thẻ này
+                  Mục học lưu sẽ được tự động thêm vào bộ thẻ này
                 </Text>
               </View>
               <Pressable 
@@ -606,7 +804,6 @@ export default function TopicDetailScreen() {
               </Pressable>
             </View>
 
-            {/* Danh sách Deck */}
             <ScrollView className="max-h-[380px] my-2" showsVerticalScrollIndicator={false}>
               <View className="gap-2.5">
                 {MOCK_DECKS.map(deck => {
@@ -650,7 +847,6 @@ export default function TopicDetailScreen() {
               </View>
             </ScrollView>
 
-            {/* Quick action tạo Deck mới */}
             <Pressable 
               onPress={() => {
                 setIsDeckModalOpen(false);

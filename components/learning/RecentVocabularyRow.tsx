@@ -58,7 +58,7 @@ export function RecentVocabularyRow({ words }: RecentVocabularyRowProps) {
           </Text>
         </View>
         <Pressable
-          onPress={() => router.push('/decks' as any)}
+          onPress={() => router.push('/collections' as any)}
           className="flex-row items-center gap-0.5 active:opacity-70"
         >
           <Text className="text-[11.5px] font-bold text-neutral-500 font-inter">
@@ -107,7 +107,7 @@ export function RecentVocabularyRow({ words }: RecentVocabularyRowProps) {
             return (
               <Pressable
                 key={item.id}
-                onPress={() => router.push('/decks' as any)}
+                onPress={() => router.push('/collections' as any)}
                 className="w-36 bg-white rounded-2xl border border-neutral-200/70 overflow-hidden active:scale-[0.98]"
                 style={SOFT_CARD_SHADOW}
               >

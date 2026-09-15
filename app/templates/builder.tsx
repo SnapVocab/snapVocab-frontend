@@ -1,1173 +1,1328 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, ScrollView, Pressable, TextInput, Modal, ActivityIndicator, Switch, Platform } from 'react-native';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import {
+  View,
+  Text,
+  ScrollView,
+  Pressable,
+  ActivityIndicator,
+  Modal,
+  Platform,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, useLocalSearchParams } from 'expo-router';
-import { 
-  ArrowLeftIcon,
-  CheckIcon,
-  XIcon,
-  LayoutIcon,
-  ColumnsIcon,
-  ImageIcon,
-  HeadphonesIcon,
-  MenuIcon,
-  ArrowUpIcon,
-  ArrowDownIcon,
+import {
+  ChevronLeftIcon,
   SettingsIcon,
-  RotateCcwIcon,
-  KeyboardIcon,
-  ListIcon,
-  GridIcon,
-  Grid3X3Icon,
-  LayersIcon,
+  PlusIcon,
+  EyeIcon,
+  GripVerticalIcon,
+  MoreVerticalIcon,
+  XIcon,
+  CheckIcon,
+  Volume2Icon,
+  SparklesIcon,
+  Trash2Icon,
 } from 'lucide-react-native';
+import { templateRepository } from '@/lib/repositories/template.repository';
+import { TemplateDTO, TemplateElementDTO, TemplateFieldDTO, SemanticRole } from '@/lib/topic-eav';
+import { FieldSettingsSheet } from '@/components/learning/FieldSettingsSheet';
+import { SectionSettingsSheet } from '@/components/learning/SectionSettingsSheet';
+import { DynamicCardRenderer } from '@/components/study/DynamicCardRenderer';
 import { cn } from '@/lib/utils';
-import { Snapy } from '@/components/Snapy';
 
 // ==========================================
-// TYPES & MOCK DATA
+// TOKENS & SHADOW STYLES
 // ==========================================
-type FieldType = 'WORD' | 'MEANING' | 'PART_OF_SPEECH' | 'EXAMPLE' | 'PERSONAL_NOTE' | 'IPA' | 'AUDIO' | 'IMAGE';
-type BaseLayout = 'SINGLE_COLUMN' | 'TWO_COLUMN' | 'IMAGE_TOP' | 'AUDIO_CENTER' | 'SKETCH_HERO_LEFT' | 'GRID_2X2' | 'HERO_TOP_SPLIT_BOTTOM';
-type InteractionType = 'FLIP' | 'TYPE_IN' | 'TAP_TO_REVEAL';
+const SOFT_CARD_SHADOW = Platform.select({
+  web: {
+    boxShadow: '0 3px 12px rgba(15, 23, 42, 0.05)',
+  },
+  default: {
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+}) as any;
 
-export type GridZoneId =
-  | 'LEFT_HERO'
-  | 'RIGHT_TOP'
-  | 'RIGHT_MID_LEFT'
-  | 'RIGHT_MID_RIGHT'
-  | 'RIGHT_BOT_LEFT'
-  | 'RIGHT_BOT_RIGHT'
-  | 'GRID_TOP_LEFT'
-  | 'GRID_TOP_RIGHT'
-  | 'GRID_BOT_LEFT'
-  | 'GRID_BOT_RIGHT'
-  | 'HERO_TOP'
-  | 'BOT_LEFT'
-  | 'BOT_RIGHT';
-
-interface FieldConfig {
-  autoPlay?: boolean;
-  maskPattern?: '___' | '•••';
-  showAll?: boolean;
+// ==========================================
+// DATA TYPES CHO DYNAMIC BUILDER
+// ==========================================
+export interface BuilderField extends TemplateFieldDTO {
+  column: 1 | 2;
+  sampleValue?: string;
+  required?: boolean;
 }
 
-interface TemplateField {
-  id: FieldType;
-  label: string;
-  sample: string;
-  enabled: boolean;
-  isPrimary: boolean;
-  zone?: GridZoneId;
-  config?: FieldConfig;
+export interface BuilderSection {
+  id: string;
+  side: 'FRONT' | 'BACK';
+  name: string;
+  columns: 1 | 2;
+  repeatable: boolean;
+  fields: BuilderField[];
 }
 
-const ALL_FIELDS_DEF: Omit<TemplateField, 'enabled' | 'isPrimary'>[] = [
-  { id: 'WORD', label: 'Từ vựng', sample: 'abandon' },
-  { id: 'MEANING', label: 'Nghĩa', sample: 'từ bỏ' },
-  { id: 'PART_OF_SPEECH', label: 'Từ loại', sample: 'verb' },
-  { id: 'EXAMPLE', label: 'Ví dụ', sample: 'He abandoned the plan.' },
-  { id: 'PERSONAL_NOTE', label: 'Ghi chú cá nhân', sample: 'Remember this word.' },
-  { id: 'IPA', label: 'Phiên âm', sample: '/əˈbændən/' },
-  { id: 'AUDIO', label: 'Âm thanh', sample: '▶' },
-  { id: 'IMAGE', label: 'Hình ảnh', sample: '🖼️ [image]' },
+interface FieldTypeOption {
+  typeKey: string;
+  name: string;
+  description: string;
+  role: SemanticRole;
+  audioAction: boolean;
+  defaultLabel: string;
+  sampleValue: string;
+  icon: string;
+}
+
+const FIELD_TYPES: FieldTypeOption[] = [
+  {
+    typeKey: 'TARGET_WORD',
+    name: 'Từ vựng chính',
+    description: 'Từ vựng tiếng Anh cần ghi nhớ',
+    role: 'TARGET_WORD',
+    audioAction: false,
+    defaultLabel: 'Từ vựng',
+    sampleValue: 'boarding pass',
+    icon: '🔤',
+  },
+  {
+    typeKey: 'AUDIO',
+    name: 'Phát âm / Audio',
+    description: 'Phiên âm IPA kèm nút nghe phát âm',
+    role: 'AUDIO',
+    audioAction: true,
+    defaultLabel: 'Phiên âm',
+    sampleValue: '/ˈbɔːrdɪŋ pæs/',
+    icon: '🔊',
+  },
+  {
+    typeKey: 'NATIVE_TRANSLATION',
+    name: 'Bản dịch / Nghĩa',
+    description: 'Nghĩa tiếng Việt chuẩn xác',
+    role: 'NATIVE_TRANSLATION',
+    audioAction: false,
+    defaultLabel: 'Bản dịch / Nghĩa',
+    sampleValue: 'Thẻ lên tàu bay',
+    icon: '🇻🇳',
+  },
+  {
+    typeKey: 'DEFINITION',
+    name: 'Định nghĩa chi tiết',
+    description: 'Giải thích ngữ nghĩa bằng tiếng Anh hoặc Việt',
+    role: 'DEFINITION',
+    audioAction: false,
+    defaultLabel: 'Định nghĩa',
+    sampleValue: 'A document provided by an airline during check-in',
+    icon: '📖',
+  },
+  {
+    typeKey: 'EXAMPLE_SENTENCE',
+    name: 'Câu ví dụ',
+    description: 'Ngữ cảnh sử dụng từ trong câu thực tế',
+    role: 'EXAMPLE_SENTENCE',
+    audioAction: false,
+    defaultLabel: 'Câu ví dụ',
+    sampleValue: 'Please present your boarding pass at gate 12.',
+    icon: '💬',
+  },
+  {
+    typeKey: 'IMAGE',
+    name: 'Hình ảnh minh họa',
+    description: 'Ảnh minh họa giúp tăng trực quan ghi nhớ',
+    role: 'IMAGE',
+    audioAction: false,
+    defaultLabel: 'Hình ảnh',
+    sampleValue: 'https://images.unsplash.com/photo-1544620347-c4fd4a3d5957',
+    icon: '🖼️',
+  },
 ];
 
-// Helper to get default zone for a layout
-const getDefaultZoneForLayout = (layout: BaseLayout, fieldId: FieldType): GridZoneId | undefined => {
-  if (layout === 'SKETCH_HERO_LEFT') {
-    switch (fieldId) {
-      case 'IMAGE': return 'LEFT_HERO';
-      case 'WORD': return 'RIGHT_TOP';
-      case 'IPA': return 'RIGHT_TOP';
-      case 'PART_OF_SPEECH': return 'RIGHT_MID_LEFT';
-      case 'MEANING': return 'RIGHT_MID_RIGHT';
-      case 'EXAMPLE': return 'RIGHT_BOT_LEFT';
-      case 'PERSONAL_NOTE': return 'RIGHT_BOT_RIGHT';
-      case 'AUDIO': return 'RIGHT_BOT_RIGHT';
-    }
-  } else if (layout === 'GRID_2X2') {
-    switch (fieldId) {
-      case 'WORD': return 'GRID_TOP_LEFT';
-      case 'IPA': return 'GRID_TOP_LEFT';
-      case 'MEANING': return 'GRID_TOP_RIGHT';
-      case 'EXAMPLE': return 'GRID_BOT_LEFT';
-      case 'IMAGE': return 'GRID_BOT_RIGHT';
-      default: return 'GRID_BOT_LEFT';
-    }
-  } else if (layout === 'HERO_TOP_SPLIT_BOTTOM') {
-    switch (fieldId) {
-      case 'WORD': return 'HERO_TOP';
-      case 'IMAGE': return 'HERO_TOP';
-      case 'MEANING': return 'BOT_LEFT';
-      case 'EXAMPLE': return 'BOT_RIGHT';
-      default: return 'BOT_LEFT';
+// Dữ liệu mẫu khởi tạo ban đầu khi chưa có draft
+const DEFAULT_INITIAL_SECTIONS: BuilderSection[] = [
+  {
+    id: 'sec_front_1',
+    side: 'FRONT',
+    name: 'Thông tin chung',
+    columns: 2,
+    repeatable: false,
+    fields: [
+      {
+        id: 1,
+        schemaAttributeId: 1,
+        attributeName: 'word',
+        fieldLabel: 'Từ vựng',
+        semanticRole: 'TARGET_WORD',
+        required: true,
+        hideIfEmpty: false,
+        audioAction: false,
+        fontSize: 18,
+        alignment: 'LEFT',
+        color: '#171A2F',
+        column: 1,
+        sampleValue: 'boarding pass',
+      },
+      {
+        id: 2,
+        schemaAttributeId: 2,
+        attributeName: 'phonetic',
+        fieldLabel: 'Phiên âm',
+        semanticRole: 'AUDIO',
+        required: false,
+        hideIfEmpty: false,
+        audioAction: true,
+        fontSize: 15,
+        alignment: 'LEFT',
+        color: '#1CB0F6',
+        column: 2,
+        sampleValue: '/ˈbɔːrdɪŋ pæs/',
+      },
+    ],
+  },
+  {
+    id: 'sec_back_1',
+    side: 'BACK',
+    name: 'Nghĩa & Ví dụ',
+    columns: 1,
+    repeatable: true,
+    fields: [
+      {
+        id: 4,
+        schemaAttributeId: 4,
+        attributeName: 'translation',
+        fieldLabel: 'Bản dịch / Nghĩa',
+        semanticRole: 'NATIVE_TRANSLATION',
+        required: true,
+        hideIfEmpty: false,
+        audioAction: false,
+        fontSize: 18,
+        alignment: 'LEFT',
+        color: '#58CC02',
+        column: 1,
+        sampleValue: 'Thẻ lên tàu bay',
+      },
+      {
+        id: 5,
+        schemaAttributeId: 5,
+        attributeName: 'sentence',
+        fieldLabel: 'Câu ví dụ (Sentence)',
+        semanticRole: 'EXAMPLE_SENTENCE',
+        required: false,
+        hideIfEmpty: true,
+        audioAction: false,
+        fontSize: 15,
+        alignment: 'LEFT',
+        color: '#757793',
+        column: 1,
+        sampleValue: 'Please show your boarding pass and passport at the gate.',
+      },
+    ],
+  },
+];
+
+// ==========================================
+// LOCAL STORAGE PERSISTENCE HELPER
+// ==========================================
+const DRAFT_KEY_PREFIX = 'snapvocab_template_builder_draft_';
+
+function getStorageKey(topicId?: number, templateId?: number) {
+  if (topicId) return `${DRAFT_KEY_PREFIX}topic_${topicId}`;
+  return `${DRAFT_KEY_PREFIX}template_${templateId || 1}`;
+}
+
+function loadLocalDraft(key: string): BuilderSection[] | null {
+  if (typeof window !== 'undefined' && window.localStorage) {
+    try {
+      const raw = window.localStorage.getItem(key);
+      if (raw) return JSON.parse(raw);
+    } catch (e) {
+      console.warn('[TemplateBuilder] Failed to load draft:', e);
     }
   }
-  return undefined;
-};
+  return null;
+}
+
+function saveLocalDraft(key: string, sections: BuilderSection[]) {
+  if (typeof window !== 'undefined' && window.localStorage) {
+    try {
+      window.localStorage.setItem(key, JSON.stringify(sections));
+    } catch (e) {
+      console.warn('[TemplateBuilder] Failed to save draft:', e);
+    }
+  }
+}
+
+// Chuyển mảng Section động thành TemplateDTO chuẩn cho DynamicCardRenderer & Repository
+function buildTemplateFromSections(sections: BuilderSection[], templateId: number): TemplateDTO {
+  const elements: TemplateElementDTO[] = [];
+  let position = 0;
+
+  // Front elements
+  const frontSections = sections.filter((s) => s.side === 'FRONT');
+  frontSections.forEach((sec, secIdx) => {
+    if (secIdx > 0) {
+      elements.push({ position: position++, type: 'SECTION_BREAK' });
+    }
+    sec.fields.forEach((f) => {
+      elements.push({
+        id: f.id,
+        position: position++,
+        type: 'FIELD',
+        field: { ...f },
+      });
+    });
+  });
+
+  // Section break phân cách Front và Back
+  elements.push({ position: position++, type: 'SECTION_BREAK' });
+
+  // Back elements
+  const backSections = sections.filter((s) => s.side === 'BACK');
+  backSections.forEach((sec, secIdx) => {
+    if (secIdx > 0) {
+      elements.push({ position: position++, type: 'SECTION_BREAK' });
+    }
+    sec.fields.forEach((f) => {
+      elements.push({
+        id: f.id,
+        position: position++,
+        type: 'FIELD',
+        field: { ...f },
+      });
+    });
+  });
+
+  return {
+    id: templateId,
+    schemaId: 1,
+    name: 'Bố cục tùy chỉnh Flashcard',
+    isDefault: false,
+    elements,
+  };
+}
 
 export default function TemplateBuilderScreen() {
   const params = useLocalSearchParams();
-  const mode = params.mode as 'CREATE' | 'EDIT' | 'CREATE_FROM_SYSTEM';
-  const sourceMode = params.sourceMode as string; // 'PICK_FOR_DECK' or undefined
-  const deckId = params.deckId as string;
+  const templateId = Number(params.templateId) || 1;
+  const topicId = params.topicId ? Number(params.topicId) : undefined;
+  const collectionId = params.collectionId ? Number(params.collectionId) : undefined;
+  const topicName = (params.topicName as string) || 'Chủ đề từ vựng';
 
-  // Wizard State
-  const [currentStep, setCurrentStep] = useState<1 | 2 | 3 | 4>(1);
-  const [showExitConfirm, setShowExitConfirm] = useState(false);
-  const [isSaving, setIsSaving] = useState(false);
-  
-  // Modals & Bottom Sheets
-  const [showApplyDeckConfirm, setShowApplyDeckConfirm] = useState(false);
-  const [activeConfigField, setActiveConfigField] = useState<TemplateField | null>(null);
-  
-  // ==========================================
-  // DRAFT STATE
-  // ==========================================
-  const [name, setName] = useState('');
-  const [description, setDescription] = useState('');
-  const [baseLayout, setBaseLayout] = useState<BaseLayout>('SKETCH_HERO_LEFT');
-  
-  const [frontFields, setFrontFields] = useState<TemplateField[]>(
-    ALL_FIELDS_DEF.map(f => ({
-      ...f,
-      enabled: ['WORD', 'IPA', 'IMAGE'].includes(f.id),
-      isPrimary: f.id === 'WORD',
-      zone: getDefaultZoneForLayout('SKETCH_HERO_LEFT', f.id)
-    }))
-  );
-  
-  const [backFields, setBackFields] = useState<TemplateField[]>(
-    ALL_FIELDS_DEF.map(f => ({
-      ...f,
-      enabled: ['MEANING', 'PART_OF_SPEECH', 'EXAMPLE', 'AUDIO', 'PERSONAL_NOTE'].includes(f.id),
-      isPrimary: f.id === 'MEANING',
-      zone: getDefaultZoneForLayout('SKETCH_HERO_LEFT', f.id)
-    }))
-  );
-  
-  const [interactionType, setInteractionType] = useState<InteractionType>('FLIP');
-  const [strictMode, setStrictMode] = useState(false);
-  
-  const [validationError, setValidationError] = useState<string | null>(null);
+  // State động Section & Field
+  const [sections, setSections] = useState<BuilderSection[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
 
-  // ==========================================
-  // HANDLERS: Navigation
-  // ==========================================
-  const handleBack = () => {
-    if (currentStep > 1) {
-      setCurrentStep(prev => (prev - 1) as any);
-    } else {
-      // Check if dirtied (simplified check for MVP: always warn if they typed a name or changed fields)
-      if (name.length > 0 || frontFields.some(f => f.enabled) || backFields.some(f => f.enabled)) {
-        setShowExitConfirm(true);
+  // Tab Mặt trước / Mặt sau
+  const [activeSide, setActiveSide] = useState<'FRONT' | 'BACK'>('FRONT');
+
+  // Preview Modal
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+  const [previewSide, setPreviewSide] = useState<'FRONT' | 'BACK'>('FRONT');
+
+  // Bottom Sheets chỉnh sửa Field / Section
+  const [editingField, setEditingField] = useState<BuilderField | null>(null);
+  const [editingFieldSectionId, setEditingFieldSectionId] = useState<string | null>(null);
+  const [isFieldSheetOpen, setIsFieldSheetOpen] = useState(false);
+
+  const [activeSectionId, setActiveSectionId] = useState<string | null>(null);
+  const [isSectionSheetOpen, setIsSectionSheetOpen] = useState(false);
+
+  // Modal Thêm trường mới (UI chọn loại trường)
+  const [isAddFieldModalOpen, setIsAddFieldModalOpen] = useState(false);
+  const [addFieldTargetSectionId, setAddFieldTargetSectionId] = useState<string | null>(null);
+  const [selectedColumnForNewField, setSelectedColumnForNewField] = useState<1 | 2>(1);
+
+  // Toast feedback thông báo
+  const [toastMessage, setToastMessage] = useState<{ text: string; type: 'success' | 'info' | 'error' } | null>(null);
+
+  const showToast = useCallback((text: string, type: 'success' | 'info' | 'error' = 'success') => {
+    setToastMessage({ text, type });
+    setTimeout(() => setToastMessage(null), 2500);
+  }, []);
+
+  // Khởi tạo và khôi phục draft Local-first
+  useEffect(() => {
+    const draftKey = getStorageKey(topicId, templateId);
+    const savedDraft = loadLocalDraft(draftKey);
+
+    // Mô phỏng skeleton loading UX mượt mà 350ms
+    const timer = setTimeout(() => {
+      if (savedDraft && savedDraft.length > 0) {
+        setSections(savedDraft);
+        showToast('Đã khôi phục bản nháp chưa lưu', 'info');
       } else {
-        router.back();
+        setSections(DEFAULT_INITIAL_SECTIONS);
       }
+      setLoading(false);
+    }, 350);
+
+    return () => clearTimeout(timer);
+  }, [templateId, topicId, showToast]);
+
+  // Tự động lưu draft vào LocalStorage khi sections thay đổi
+  useEffect(() => {
+    if (!loading && sections.length > 0) {
+      const draftKey = getStorageKey(topicId, templateId);
+      saveLocalDraft(draftKey, sections);
     }
+  }, [sections, loading, templateId, topicId]);
+
+  // Danh sách các Section thuộc Tab đang chọn
+  const currentSections = useMemo(
+    () => sections.filter((s) => s.side === activeSide),
+    [sections, activeSide]
+  );
+
+  // Đối tượng Section đang mở Settings
+  const activeSection = useMemo(
+    () => sections.find((s) => s.id === activeSectionId) || null,
+    [sections, activeSectionId]
+  );
+
+  // ==========================================
+  // THAO TÁC STATE VỚI SECTION (DYNAMIC ACTIONS)
+  // ==========================================
+
+  // Thêm Section mới
+  const handleAddSection = () => {
+    const newSectionId = `sec_${Date.now()}`;
+    const newSectionNumber = currentSections.length + 1;
+    const newSection: BuilderSection = {
+      id: newSectionId,
+      side: activeSide,
+      name: `Phần hiển thị ${newSectionNumber}`,
+      columns: 1,
+      repeatable: false,
+      fields: [],
+    };
+    setSections((prev) => [...prev, newSection]);
+    showToast(`Đã thêm "${newSection.name}"`);
   };
 
-  const handleNext = () => {
-    setValidationError(null);
-    
-    // Step 1 Validation
-    if (currentStep === 1 && name.trim() === '') {
-      setValidationError('Nhập tên cho template');
-      return;
-    }
-    
-    // Step 2 Validation
-    if (currentStep === 2 && !frontFields.some(f => f.enabled)) {
-      setValidationError('Mặt trước cần ít nhất 1 field');
-      return;
-    }
-    
-    // Step 3 Validation
-    if (currentStep === 3 && !backFields.some(f => f.enabled)) {
-      setValidationError('Mặt sau cần ít nhất 1 field');
-      return;
-    }
+  // Cập nhật Section (Đổi tên, Đổi số cột, Bật lặp lại)
+  const handleSaveSectionSettings = (data: {
+    sectionName: string;
+    repeatable: boolean;
+    columnsCount: 1 | 2;
+  }) => {
+    if (!activeSectionId) return;
+    setSections((prev) =>
+      prev.map((sec) => {
+        if (sec.id === activeSectionId) {
+          // Nếu chuyển từ 2 cột về 1 cột, gom toàn bộ field về cột 1
+          const updatedFields =
+            data.columnsCount === 1
+              ? sec.fields.map((f) => ({ ...f, column: 1 as const }))
+              : sec.fields;
 
-    if (currentStep < 4) {
-      setCurrentStep(prev => (prev + 1) as any);
-    }
+          return {
+            ...sec,
+            name: data.sectionName.trim() || sec.name,
+            repeatable: data.repeatable,
+            columns: data.columnsCount,
+            fields: updatedFields,
+          };
+        }
+        return sec;
+      })
+    );
+    setIsSectionSheetOpen(false);
+    showToast('Đã cập nhật cài đặt phần hiển thị');
   };
 
-  const handleSave = () => {
-    // Step 4 Validation
-    if (interactionType === 'TYPE_IN') {
-      const hasWordInBack = backFields.find(f => f.id === 'WORD')?.enabled;
-      if (!hasWordInBack) {
-        setValidationError('Kiểu gõ đáp án cần field Từ vựng ở mặt sau');
-        return;
-      }
-    }
-
-    setIsSaving(true);
-    
-    // Simulate API Call
-    setTimeout(() => {
-      setIsSaving(false);
-      
-      if (sourceMode === 'PICK_FOR_DECK' && deckId) {
-        setShowApplyDeckConfirm(true);
-      } else {
-        // Success, return to management
-        router.back();
-      }
-    }, 1500);
-  };
-  
-  const applyToDeck = () => {
-    setIsSaving(true);
-    setTimeout(() => {
-      setIsSaving(false);
-      setShowApplyDeckConfirm(false);
-      router.back(); // Go back to Builder
-      setTimeout(() => router.back(), 100); // And go back to Deck
-    }, 1000);
-  };
-
-  const fixTypeInError = () => {
-    // Quick Add WORD to BACK
-    setBackFields(prev => prev.map(f => f.id === 'WORD' ? { ...f, enabled: true } : f));
-    setCurrentStep(3); // Go to Step 3
-    setValidationError(null);
+  // Xóa Section
+  const handleDeleteSection = () => {
+    if (!activeSectionId) return;
+    setSections((prev) => prev.filter((sec) => sec.id !== activeSectionId));
+    setIsSectionSheetOpen(false);
+    showToast('Đã xóa phần hiển thị', 'info');
   };
 
   // ==========================================
-  // HANDLERS: Fields Manipulation
+  // THAO TÁC STATE VỚI FIELD (DYNAMIC ACTIONS)
   // ==========================================
-  const toggleField = (side: 'front' | 'back', fieldId: FieldType) => {
-    const setter = side === 'front' ? setFrontFields : setBackFields;
-    setter(prev => {
-      const newList = prev.map(f => f.id === fieldId ? { ...f, enabled: !f.enabled } : f);
-      // Auto-assign primary if it's the only one
-      const enabledFields = newList.filter(f => f.enabled);
-      if (enabledFields.length === 1) {
-        return newList.map(f => f.id === enabledFields[0].id ? { ...f, isPrimary: true } : { ...f, isPrimary: false });
-      }
-      return newList;
-    });
+
+  // Mở modal thêm trường vào Section cụ thể
+  const handleOpenAddFieldModal = (sectionId: string) => {
+    const sec = sections.find((s) => s.id === sectionId);
+    setAddFieldTargetSectionId(sectionId);
+    setSelectedColumnForNewField(1);
+    setIsAddFieldModalOpen(true);
   };
 
-  const setPrimaryField = (side: 'front' | 'back', fieldId: FieldType) => {
-    const setter = side === 'front' ? setFrontFields : setBackFields;
-    setter(prev => prev.map(f => ({ ...f, isPrimary: f.id === fieldId })));
-  };
+  // Tạo trường mới từ loại đã chọn và thêm vào state
+  const handleCreateNewField = (option: FieldTypeOption) => {
+    if (!addFieldTargetSectionId) return;
 
-  const moveField = (side: 'front' | 'back', index: number, direction: 'up' | 'down') => {
-    const setter = side === 'front' ? setFrontFields : setBackFields;
-    setter(prev => {
-      const arr = [...prev];
-      const targetIndex = direction === 'up' ? index - 1 : index + 1;
-      if (targetIndex >= 0 && targetIndex < arr.length) {
-        // Swap
-        [arr[index], arr[targetIndex]] = [arr[targetIndex], arr[index]];
-      }
-      return arr;
-    });
-  };
-
-  const setFieldZone = (side: 'front' | 'back', fieldId: FieldType, zone: GridZoneId) => {
-    const setter = side === 'front' ? setFrontFields : setBackFields;
-    setter(prev => prev.map(f => f.id === fieldId ? { ...f, zone } : f));
-  };
-
-  const handleSelectBaseLayout = (newLayout: BaseLayout) => {
-    setBaseLayout(newLayout);
-
-    if (newLayout === 'SKETCH_HERO_LEFT') {
-      setFrontFields(ALL_FIELDS_DEF.map(f => ({
-        ...f,
-        enabled: ['WORD', 'IPA', 'IMAGE'].includes(f.id),
-        isPrimary: f.id === 'WORD',
-        zone: getDefaultZoneForLayout(newLayout, f.id)
-      })));
-      setBackFields(ALL_FIELDS_DEF.map(f => ({
-        ...f,
-        enabled: ['MEANING', 'PART_OF_SPEECH', 'EXAMPLE', 'AUDIO', 'PERSONAL_NOTE'].includes(f.id),
-        isPrimary: f.id === 'MEANING',
-        zone: getDefaultZoneForLayout(newLayout, f.id)
-      })));
-    } else if (newLayout === 'GRID_2X2') {
-      setFrontFields(ALL_FIELDS_DEF.map(f => ({
-        ...f,
-        enabled: ['WORD', 'IPA', 'IMAGE'].includes(f.id),
-        isPrimary: f.id === 'WORD',
-        zone: getDefaultZoneForLayout(newLayout, f.id)
-      })));
-      setBackFields(ALL_FIELDS_DEF.map(f => ({
-        ...f,
-        enabled: ['MEANING', 'PART_OF_SPEECH', 'EXAMPLE', 'AUDIO'].includes(f.id),
-        isPrimary: f.id === 'MEANING',
-        zone: getDefaultZoneForLayout(newLayout, f.id)
-      })));
-    } else if (newLayout === 'HERO_TOP_SPLIT_BOTTOM') {
-      setFrontFields(ALL_FIELDS_DEF.map(f => ({
-        ...f,
-        enabled: ['WORD', 'IMAGE', 'IPA'].includes(f.id),
-        isPrimary: f.id === 'WORD',
-        zone: getDefaultZoneForLayout(newLayout, f.id)
-      })));
-      setBackFields(ALL_FIELDS_DEF.map(f => ({
-        ...f,
-        enabled: ['MEANING', 'EXAMPLE', 'AUDIO'].includes(f.id),
-        isPrimary: f.id === 'MEANING',
-        zone: getDefaultZoneForLayout(newLayout, f.id)
-      })));
-    } else {
-      setFrontFields(ALL_FIELDS_DEF.map(f => ({
-        ...f,
-        enabled: f.id === 'WORD',
-        isPrimary: f.id === 'WORD',
-        zone: undefined
-      })));
-      setBackFields(ALL_FIELDS_DEF.map(f => ({
-        ...f,
-        enabled: f.id === 'MEANING',
-        isPrimary: f.id === 'MEANING',
-        zone: undefined
-      })));
-    }
-  };
-
-  const getAvailableZones = (layout: BaseLayout): { id: GridZoneId; label: string }[] => {
-    if (layout === 'SKETCH_HERO_LEFT') {
-      return [
-        { id: 'LEFT_HERO', label: 'Cột Trái (Hero)' },
-        { id: 'RIGHT_TOP', label: 'Phải - Trên' },
-        { id: 'RIGHT_MID_LEFT', label: 'Phải - Giữa Trái' },
-        { id: 'RIGHT_MID_RIGHT', label: 'Phải - Giữa Phải' },
-        { id: 'RIGHT_BOT_LEFT', label: 'Phải - Dưới Trái' },
-        { id: 'RIGHT_BOT_RIGHT', label: 'Phải - Dưới Phải' },
-      ];
-    }
-    if (layout === 'GRID_2X2') {
-      return [
-        { id: 'GRID_TOP_LEFT', label: 'Trên - Trái' },
-        { id: 'GRID_TOP_RIGHT', label: 'Trên - Phải' },
-        { id: 'GRID_BOT_LEFT', label: 'Dưới - Trái' },
-        { id: 'GRID_BOT_RIGHT', label: 'Dưới - Phải' },
-      ];
-    }
-    if (layout === 'HERO_TOP_SPLIT_BOTTOM') {
-      return [
-        { id: 'HERO_TOP', label: 'Tầng Trên (Hero)' },
-        { id: 'BOT_LEFT', label: 'Dưới - Trái' },
-        { id: 'BOT_RIGHT', label: 'Dưới - Phải' },
-      ];
-    }
-    return [];
-  };
-
-  // ==========================================
-  // RENDER HELPERS
-  // ==========================================
-  const renderMiniPreview = (fields: TemplateField[]) => {
-    const enabledFields = fields.filter(f => f.enabled);
-    if (enabledFields.length === 0) {
-      return (
-        <View className="h-32 bg-[#F7F8FA] border border-neutral-200 border-dashed rounded-2xl items-center justify-center mb-6">
-          <Text className="font-medium text-[13px] text-neutral-400 font-inter">Trống</Text>
-        </View>
-      );
-    }
-
-    const renderCellFields = (zoneId: GridZoneId) => {
-      const cellFields = enabledFields.filter(f => (f.zone || getDefaultZoneForLayout(baseLayout, f.id)) === zoneId);
-      if (cellFields.length === 0) {
-        return <Text className="text-[10px] text-neutral-300 italic font-inter">Trống</Text>;
-      }
-      return cellFields.map(f => (
-        <Text 
-          key={f.id} 
-          className={cn(
-            "font-inter text-center leading-tight mb-0.5",
-            f.isPrimary ? "font-extrabold text-[12px] text-primary-600" : "font-medium text-[10px] text-mascot-navy"
-          )}
-          numberOfLines={1}
-        >
-          {f.sample}
-        </Text>
-      ));
+    const newFieldId = Date.now();
+    const newField: BuilderField = {
+      id: newFieldId,
+      schemaAttributeId: newFieldId,
+      attributeName: option.typeKey.toLowerCase(),
+      fieldLabel: option.defaultLabel,
+      semanticRole: option.role,
+      required: false,
+      hideIfEmpty: false,
+      audioAction: option.audioAction,
+      fontSize: 16,
+      alignment: 'LEFT',
+      color: '#171A2F',
+      column: selectedColumnForNewField,
+      sampleValue: option.sampleValue,
     };
 
-    // SKETCH_HERO_LEFT Preview Layout
-    if (baseLayout === 'SKETCH_HERO_LEFT') {
-      return (
-        <View className="bg-white border-2 border-primary-200 rounded-2xl overflow-hidden mb-6 shadow-sm shadow-black/5 min-h-[160px]">
-          <View className="absolute top-1.5 right-2 z-10 bg-primary-100 px-1.5 py-0.5 rounded">
-            <Text className="font-bold text-[9px] text-primary-700 font-inter uppercase">LƯỚI ĐA VÙNG (SKETCH)</Text>
-          </View>
-          <View className="flex-row flex-1">
-            {/* Left Hero Column */}
-            <View className="w-[35%] border-r-2 border-primary-100 bg-primary-50/20 p-2 items-center justify-center">
-              <Text className="font-bold text-[9px] text-primary-400 font-inter uppercase mb-1">CỘT TRÁI HERO</Text>
-              {renderCellFields('LEFT_HERO')}
-            </View>
-            {/* Right Panel */}
-            <View className="flex-1">
-              {/* Top Right Cell */}
-              <View className="h-12 border-b-2 border-primary-100 p-1.5 items-center justify-center bg-white">
-                {renderCellFields('RIGHT_TOP')}
-              </View>
-              {/* Middle Right Row */}
-              <View className="h-12 border-b-2 border-primary-100 flex-row bg-white">
-                <View className="flex-1 border-r-2 border-primary-100 p-1 items-center justify-center">
-                  {renderCellFields('RIGHT_MID_LEFT')}
-                </View>
-                <View className="flex-1 p-1 items-center justify-center">
-                  {renderCellFields('RIGHT_MID_RIGHT')}
-                </View>
-              </View>
-              {/* Bottom Right Row */}
-              <View className="h-12 flex-row bg-white">
-                <View className="flex-1 border-r-2 border-primary-100 p-1 items-center justify-center">
-                  {renderCellFields('RIGHT_BOT_LEFT')}
-                </View>
-                <View className="flex-1 p-1 items-center justify-center">
-                  {renderCellFields('RIGHT_BOT_RIGHT')}
-                </View>
-              </View>
-            </View>
-          </View>
-        </View>
-      );
-    }
-
-    // GRID_2X2 Preview Layout
-    if (baseLayout === 'GRID_2X2') {
-      return (
-        <View className="bg-white border-2 border-primary-200 rounded-2xl overflow-hidden mb-6 shadow-sm shadow-black/5 min-h-[140px]">
-          <View className="absolute top-1.5 right-2 z-10 bg-primary-100 px-1.5 py-0.5 rounded">
-            <Text className="font-bold text-[9px] text-primary-700 font-inter uppercase">LƯỚI 2X2</Text>
-          </View>
-          <View className="flex-1">
-            <View className="flex-1 flex-row border-b-2 border-primary-100">
-              <View className="flex-1 border-r-2 border-primary-100 p-2 items-center justify-center">
-                {renderCellFields('GRID_TOP_LEFT')}
-              </View>
-              <View className="flex-1 p-2 items-center justify-center">
-                {renderCellFields('GRID_TOP_RIGHT')}
-              </View>
-            </View>
-            <View className="flex-1 flex-row">
-              <View className="flex-1 border-r-2 border-primary-100 p-2 items-center justify-center">
-                {renderCellFields('GRID_BOT_LEFT')}
-              </View>
-              <View className="flex-1 p-2 items-center justify-center">
-                {renderCellFields('GRID_BOT_RIGHT')}
-              </View>
-            </View>
-          </View>
-        </View>
-      );
-    }
-
-    // HERO_TOP_SPLIT_BOTTOM Preview Layout
-    if (baseLayout === 'HERO_TOP_SPLIT_BOTTOM') {
-      return (
-        <View className="bg-white border-2 border-primary-200 rounded-2xl overflow-hidden mb-6 shadow-sm shadow-black/5 min-h-[140px]">
-          <View className="absolute top-1.5 right-2 z-10 bg-primary-100 px-1.5 py-0.5 rounded">
-            <Text className="font-bold text-[9px] text-primary-700 font-inter uppercase">HERO TRÊN + 2 DƯỚI</Text>
-          </View>
-          <View className="flex-1">
-            <View className="h-16 border-b-2 border-primary-100 p-2 items-center justify-center bg-primary-50/20">
-              {renderCellFields('HERO_TOP')}
-            </View>
-            <View className="flex-1 flex-row">
-              <View className="flex-1 border-r-2 border-primary-100 p-2 items-center justify-center">
-                {renderCellFields('BOT_LEFT')}
-              </View>
-              <View className="flex-1 p-2 items-center justify-center">
-                {renderCellFields('BOT_RIGHT')}
-              </View>
-            </View>
-          </View>
-        </View>
-      );
-    }
-
-    // Standard Vertical Preview
-    return (
-      <View className="bg-[#F7F8FA] border border-neutral-200 rounded-2xl p-4 items-center justify-center min-h-[140px] mb-6 shadow-sm shadow-black/5">
-        <View className="absolute top-2 right-3">
-          <Text className="font-bold text-[10px] text-neutral-400 font-inter uppercase">MINI PREVIEW</Text>
-        </View>
-        {enabledFields.map(f => (
-          <Text 
-            key={f.id}
-            className={cn(
-              "font-inter text-mascot-navy text-center mb-2",
-              f.isPrimary ? "font-extrabold text-[24px] font-nunito" : "font-medium text-[15px]"
-            )}
-          >
-            {f.id === 'EXAMPLE' && f.config?.maskPattern ? f.sample.replace('abandon', f.config.maskPattern) : f.sample}
-          </Text>
-        ))}
-      </View>
+    setSections((prev) =>
+      prev.map((sec) => {
+        if (sec.id === addFieldTargetSectionId) {
+          return {
+            ...sec,
+            fields: [...sec.fields, newField],
+          };
+        }
+        return sec;
+      })
     );
+
+    setIsAddFieldModalOpen(false);
+    showToast(`Đã thêm trường "${option.name}"`);
+
+    // Mở ngay FieldSettingsSheet để người dùng tùy chỉnh font, màu, nhãn nếu muốn
+    setEditingField(newField);
+    setEditingFieldSectionId(addFieldTargetSectionId);
+    setIsFieldSheetOpen(true);
   };
 
-  const renderFieldRow = (side: 'front' | 'back', field: TemplateField, index: number, total: number) => {
-    const hasConfig = ['AUDIO', 'EXAMPLE', 'MEANING', 'IPA', 'PART_OF_SPEECH', 'PERSONAL_NOTE'].includes(field.id);
-    const isGridMode = ['SKETCH_HERO_LEFT', 'GRID_2X2', 'HERO_TOP_SPLIT_BOTTOM'].includes(baseLayout);
-    const availableZones = getAvailableZones(baseLayout);
-    const currentZone = field.zone || getDefaultZoneForLayout(baseLayout, field.id) || availableZones[0]?.id;
+  // Lưu chỉnh sửa cài đặt Field (phản ánh ngay lập tức nhãn, font, màu, căn lề, required, audio)
+  const handleSaveFieldSettings = (updated: TemplateFieldDTO) => {
+    if (!editingFieldSectionId || !editingField) return;
 
-    const cycleZone = () => {
-      if (availableZones.length === 0) return;
-      const currentIndex = availableZones.findIndex(z => z.id === currentZone);
-      const nextIndex = (currentIndex + 1) % availableZones.length;
-      setFieldZone(side, field.id, availableZones[nextIndex].id);
+    setSections((prev) =>
+      prev.map((sec) => {
+        if (sec.id === editingFieldSectionId) {
+          return {
+            ...sec,
+            fields: sec.fields.map((f) => {
+              if (f.id === editingField.id || f.schemaAttributeId === editingField.schemaAttributeId) {
+                return {
+                  ...f,
+                  ...updated,
+                  column: f.column, // giữ nguyên cột đã bố trí
+                };
+              }
+              return f;
+            }),
+          };
+        }
+        return sec;
+      })
+    );
+
+    setIsFieldSheetOpen(false);
+    setEditingField(null);
+    setEditingFieldSectionId(null);
+    showToast('Đã lưu thay đổi trường');
+  };
+
+  // Xóa Field
+  const handleDeleteField = (fieldId: number | undefined) => {
+    if (!editingFieldSectionId) return;
+
+    setSections((prev) =>
+      prev.map((sec) => {
+        if (sec.id === editingFieldSectionId) {
+          return {
+            ...sec,
+            fields: sec.fields.filter(
+              (f) => f.id !== fieldId && f.schemaAttributeId !== fieldId
+            ),
+          };
+        }
+        return sec;
+      })
+    );
+
+    setIsFieldSheetOpen(false);
+    setEditingField(null);
+    setEditingFieldSectionId(null);
+    showToast('Đã xóa trường', 'info');
+  };
+
+  // Thao tác nghe thử âm thanh (Mock audio action)
+  const handlePlayMockAudio = (field: BuilderField) => {
+    showToast(`🔊 Đang phát: ${field.sampleValue || field.fieldLabel}`, 'info');
+  };
+
+  // ==========================================
+  // LƯU BỐ CỤC THẺ HỌC & ĐIỀU HƯỚNG CHUẨN UX
+  // ==========================================
+  const handleSaveTemplate = async () => {
+    setSaving(true);
+    try {
+      // 1. Lưu bản nháp vào Local Storage
+      const draftKey = getStorageKey(topicId, templateId);
+      saveLocalDraft(draftKey, sections);
+
+      // 2. Chuyển đổi sections thành TemplateDTO và lưu qua templateRepository
+      const generatedTemplate = buildTemplateFromSections(sections, templateId);
+      await templateRepository.updateTemplate(templateId, generatedTemplate);
+
+      showToast('Đã lưu bố cục thẻ học thành công!', 'success');
+
+      // 3. Điều hướng thẳng về Topic Detail hoặc Collection Detail, KHÔNG quay lại form tạo
+      setTimeout(() => {
+        if (topicId) {
+          router.replace(`/topics/${topicId}` as any);
+        } else if (collectionId) {
+          router.replace(`/collections/${collectionId}` as any);
+        } else if (router.canGoBack()) {
+          router.back();
+        } else {
+          router.replace('/collections' as any);
+        }
+      }, 500);
+    } catch (err) {
+      console.error('Failed to save template layout:', err);
+      showToast('Có lỗi xảy ra khi lưu bố cục', 'error');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  // Tạo live TemplateDTO và itemValues từ state builder hiện tại phục vụ Live Preview
+  const livePreviewData = useMemo(() => {
+    const liveTemplate = buildTemplateFromSections(sections, templateId);
+    const mockValues: Record<string | number, any> = {};
+
+    sections.forEach((sec) => {
+      sec.fields.forEach((f) => {
+        mockValues[f.schemaAttributeId] = f.sampleValue || f.fieldLabel || 'Nội dung mẫu';
+      });
+    });
+
+    const activeSec = sections.find((s) => s.side === previewSide);
+    const activeCols = activeSec ? activeSec.columns : 1;
+
+    return {
+      template: liveTemplate,
+      values: mockValues,
+      columnsCount: activeCols,
     };
+  }, [sections, templateId, previewSide]);
 
-    const currentZoneLabel = availableZones.find(z => z.id === currentZone)?.label || 'Chọn vùng';
-    const showUp = index > 0;
-    const showDown = index < total - 1;
-
+  // ==========================================
+  // RENDER LOADING SKELETON
+  // ==========================================
+  if (loading) {
     return (
-      <View 
-        key={field.id} 
-        style={{
-          padding: 12,
-          marginBottom: 8,
-          borderRadius: 12,
-          borderWidth: 1,
-          backgroundColor: field.enabled ? '#FFFFFF' : '#FAFAFA',
-          borderColor: field.enabled ? '#E0E7FF' : '#F5F5F5',
-          opacity: field.enabled ? 1 : 0.6,
-        }}
-      >
-        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-          {/* Drag Handle */}
-          <View style={{ marginRight: 12, alignItems: 'center', justifyContent: 'center', width: 24 }}>
-            {field.enabled ? (
-              <View style={{ gap: 4 }}>
-                <Pressable onPress={() => moveField(side, index, 'up')} disabled={!showUp} style={{ opacity: showUp ? 1 : 0.2 }}>
-                  <ArrowUpIcon size={16} color="#9CA3AF" />
-                </Pressable>
-                <Pressable onPress={() => moveField(side, index, 'down')} disabled={!showDown} style={{ opacity: showDown ? 1 : 0.2 }}>
-                  <ArrowDownIcon size={16} color="#9CA3AF" />
-                </Pressable>
-              </View>
-            ) : (
-              <MenuIcon size={18} color="#D1D5DB" />
-            )}
+      <SafeAreaView className="flex-1 bg-white" edges={['top']}>
+        {/* Header Skeleton */}
+        <View className="px-4 py-3 border-b border-neutral-100 flex-row items-center justify-between">
+          <View className="w-10 h-10 rounded-2xl bg-neutral-100 animate-pulse" />
+          <View className="items-center gap-1.5">
+            <View className="w-36 h-5 rounded-md bg-neutral-200 animate-pulse" />
+            <View className="w-24 h-3.5 rounded-md bg-neutral-100 animate-pulse" />
           </View>
-          
-          {/* Toggle */}
-          <Switch 
-            value={field.enabled}
-            onValueChange={() => toggleField(side, field.id)}
-            trackColor={{ false: '#E5E7EB', true: '#58CC02' }}
-            thumbColor={'#FFFFFF'}
-            style={{ transform: [{ scaleX: 0.8 }, { scaleY: 0.8 }] }}
-          />
+          <View className="w-10 h-10 rounded-2xl bg-neutral-100 animate-pulse" />
+        </View>
 
-          {/* Info */}
-          <View style={{ flex: 1, marginLeft: 8, justifyContent: 'center' }}>
-            <Text style={{ fontWeight: '700', fontSize: 14, color: field.enabled ? '#1B2541' : '#9CA3AF' }}>
-              {field.label}
-            </Text>
-            <Text style={{ fontWeight: '500', fontSize: 11, color: '#9CA3AF', marginTop: 2 }} numberOfLines={1}>
-              {field.sample}
-            </Text>
+        {/* Tabs Skeleton */}
+        <View className="px-4 py-3 border-b border-neutral-100 flex-row justify-between">
+          <View className="flex-row gap-6">
+            <View className="w-24 h-7 rounded-md bg-neutral-200 animate-pulse" />
+            <View className="w-20 h-7 rounded-md bg-neutral-100 animate-pulse" />
           </View>
-
-          {/* Primary Radio */}
-          {field.enabled && (
-            <Pressable 
-              onPress={() => setPrimaryField(side, field.id)}
-              style={{ padding: 8, marginRight: 8, alignItems: 'center', justifyContent: 'center' }}
-            >
-              <View style={{
-                width: 20, height: 20, borderRadius: 10, borderWidth: 2,
-                borderColor: field.isPrimary ? '#3B82F6' : '#D1D5DB',
-                alignItems: 'center', justifyContent: 'center',
-              }}>
-                {field.isPrimary && <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: '#3B82F6' }} />}
-              </View>
-            </Pressable>
-          )}
-
-          {/* Config Button */}
-          {field.enabled && hasConfig && (
-            <Pressable onPress={() => setActiveConfigField(field)} style={{ padding: 8 }}>
-              <SettingsIcon size={18} color="#9CA3AF" />
-            </Pressable>
-          )}
+          <View className="w-20 h-7 rounded-xl bg-neutral-100 animate-pulse" />
         </View>
 
-        {/* Zone Selector Badge (When Grid Mode is Active) */}
-        {field.enabled && isGridMode && (
-          <View style={{ marginTop: 8, paddingTop: 8, borderTopWidth: 1, borderTopColor: '#F3F4F6', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-              <GridIcon size={14} color="#3B82F6" style={{ marginRight: 6 }} />
-              <Text style={{ fontSize: 12, fontWeight: '600', color: '#6B7280' }}>Vùng hiển thị:</Text>
-            </View>
-
-            <Pressable 
-              onPress={cycleZone}
-              style={{
-                backgroundColor: '#EFF6FF', borderWidth: 1, borderColor: '#BFDBFE',
-                borderRadius: 8, paddingHorizontal: 10, paddingVertical: 4, flexDirection: 'row', alignItems: 'center',
-              }}
-            >
-              <Text style={{ fontSize: 12, fontWeight: '700', color: '#1D4ED8', marginRight: 4 }}>
-                {currentZoneLabel}
-              </Text>
-              <Text style={{ fontSize: 10, color: '#3B82F6' }}>🔄</Text>
-            </Pressable>
+        {/* Body Canvas Skeleton */}
+        <View className="p-4 gap-4">
+          <View className="flex-row justify-between items-center">
+            <View className="w-32 h-5 rounded-md bg-neutral-200 animate-pulse" />
+            <View className="w-8 h-8 rounded-lg bg-neutral-100 animate-pulse" />
           </View>
-        )}
-      </View>
+          <View className="h-44 rounded-2xl bg-neutral-100 border border-neutral-200 animate-pulse p-4 flex-row gap-3">
+            <View className="flex-1 rounded-xl bg-neutral-200/70" />
+            <View className="flex-1 rounded-xl bg-neutral-200/70" />
+          </View>
+        </View>
+      </SafeAreaView>
     );
-  };
+  }
 
-  const renderLayoutIcon = (id: string, isSelected: boolean, isHighlight?: boolean) => {
-    const color = isSelected ? '#3B82F6' : isHighlight ? '#2563EB' : '#9CA3AF';
-    const size = 28;
-    switch (id) {
-      case 'SKETCH_HERO_LEFT': return <Grid3X3Icon size={size} color={color} />;
-      case 'GRID_2X2': return <GridIcon size={size} color={color} />;
-      case 'HERO_TOP_SPLIT_BOTTOM': return <LayersIcon size={size} color={color} />;
-      case 'SINGLE_COLUMN': return <LayoutIcon size={size} color={color} />;
-      case 'TWO_COLUMN': return <ColumnsIcon size={size} color={color} />;
-      case 'IMAGE_TOP': return <ImageIcon size={size} color={color} />;
-      case 'AUDIO_CENTER': return <HeadphonesIcon size={size} color={color} />;
-      default: return <LayoutIcon size={size} color={color} />;
-    }
-  };
-
-  // ==========================================
-  // RENDER STEPS
-  // ==========================================
-  const renderStep1 = () => (
-    <View className="flex-1">
-      <Text className="font-extrabold text-[20px] text-mascot-navy font-nunito mb-6">Thông tin & Layout</Text>
-      
-      <View className="mb-6">
-        <Text className="font-bold text-[14px] text-neutral-600 font-inter mb-2">Tên template</Text>
-        <TextInput 
-          value={name}
-          onChangeText={setName}
-          maxLength={50}
-          placeholder="Ví dụ: My Vocabulary Card"
-          className="w-full h-14 bg-white border border-neutral-200 rounded-2xl px-4 font-bold text-[15px] text-mascot-navy font-inter focus:border-primary-500"
-        />
-        <View className="flex-row justify-between mt-1.5 px-1">
-          {validationError && currentStep === 1 ? (
-            <Text className="font-bold text-[12px] text-error-500 font-inter">{validationError}</Text>
-          ) : (
-            <Text />
-          )}
-          <Text className="font-medium text-[12px] text-neutral-400 font-inter">{name.length}/50</Text>
-        </View>
-      </View>
-      
-      <View className="mb-8">
-        <Text className="font-bold text-[14px] text-neutral-600 font-inter mb-2">Mô tả ngắn (Tùy chọn)</Text>
-        <TextInput 
-          value={description}
-          onChangeText={setDescription}
-          multiline
-          placeholder="Mô tả về cách sử dụng mẫu này..."
-          className="w-full h-24 bg-white border border-neutral-200 rounded-2xl p-4 font-medium text-[14px] text-mascot-navy font-inter focus:border-primary-500"
-          textAlignVertical="top"
-        />
-      </View>
-
-      <Text className="font-extrabold text-[16px] text-mascot-navy font-nunito mb-4">Base layout</Text>
-      <View className="flex-row flex-wrap justify-between gap-y-4">
-        {[
-          { id: 'SKETCH_HERO_LEFT', label: 'Lưới Đa Vùng (Phác thảo)', highlight: true },
-          { id: 'GRID_2X2', label: 'Lưới 2x2 (4 Ô)' },
-          { id: 'HERO_TOP_SPLIT_BOTTOM', label: 'Hero Trên + 2 Dưới' },
-          { id: 'SINGLE_COLUMN', label: '1 cột đơn' },
-          { id: 'TWO_COLUMN', label: '2 cột đơn' },
-          { id: 'IMAGE_TOP', label: 'Ảnh trên' },
-          { id: 'AUDIO_CENTER', label: 'Audio giữa' },
-        ].map(layout => {
-          const isSelected = baseLayout === layout.id;
-          return (
-            <Pressable 
-              key={layout.id}
-              onPress={() => handleSelectBaseLayout(layout.id as BaseLayout)}
-              className={cn(
-                "w-[48%] bg-white rounded-2xl border-2 p-3.5 items-center justify-center min-h-[110px] shadow-sm",
-                isSelected ? "border-primary-500 shadow-primary-500/20 bg-primary-50/20" : "border-neutral-100 shadow-black/5",
-                layout.highlight && !isSelected && "border-primary-200 bg-primary-50/10"
-              )}
-            >
-              <View className="mb-2">
-                {renderLayoutIcon(layout.id, isSelected, layout.highlight)}
-              </View>
-              <Text className={cn(
-                "font-bold text-[13px] font-inter text-center leading-tight",
-                isSelected ? "text-primary-700" : "text-neutral-600"
-              )}>{layout.label}</Text>
-              {isSelected && (
-                <View className="absolute top-2 right-2 bg-primary-500 rounded-full p-0.5">
-                  <CheckIcon size={12} color="white" />
-                </View>
-              )}
-            </Pressable>
-          );
-        })}
-      </View>
-    </View>
-  );
-
-  const renderStep2 = () => {
-    const isGridMode = ['SKETCH_HERO_LEFT', 'GRID_2X2', 'HERO_TOP_SPLIT_BOTTOM'].includes(baseLayout);
-    const availableZones = getAvailableZones(baseLayout);
-
-    return (
-      <View className="flex-1">
-        <Text className="font-extrabold text-[20px] text-mascot-navy font-nunito mb-4">Mặt trước</Text>
-        
-        {renderMiniPreview(frontFields)}
-
-        <View className="flex-row items-center justify-between mb-4 mt-2">
-          <Text className="font-extrabold text-[16px] text-mascot-navy font-nunito">Trường dữ liệu theo ô Lưới</Text>
-          <Text className="font-bold text-[12px] text-neutral-400 font-inter uppercase tracking-wide">Trường chính</Text>
-        </View>
-
-        {validationError && currentStep === 2 && (
-          <Text className="font-bold text-[13px] text-error-500 font-inter mb-4 bg-error-50 p-3 rounded-xl border border-error-100">{validationError}</Text>
-        )}
-
-        {isGridMode ? (
-          availableZones.map(zone => {
-            const zoneFields = frontFields.filter(f => (f.zone || getDefaultZoneForLayout(baseLayout, f.id)) === zone.id);
-            return (
-              <View key={zone.id} className="mb-4 bg-white p-3.5 rounded-2xl border border-primary-100 shadow-sm">
-                <View className="flex-row items-center justify-between mb-3 pb-2 border-b border-neutral-100">
-                  <View className="flex-row items-center">
-                    <GridIcon size={16} color="#3B82F6" style={{ marginRight: 8 }} />
-                    <Text className="font-extrabold text-[14px] text-mascot-navy font-nunito">{zone.label}</Text>
-                  </View>
-                  <View className="bg-primary-50 px-2.5 py-0.5 rounded-full">
-                    <Text className="font-bold text-[11px] text-primary-700 font-inter">
-                      {zoneFields.filter(f => f.enabled).length} trường active
-                    </Text>
-                  </View>
-                </View>
-                {frontFields.map((f, i) => {
-                  const fZone = f.zone || getDefaultZoneForLayout(baseLayout, f.id);
-                  if (fZone !== zone.id) return null;
-                  return renderFieldRow('front', f, i, frontFields.length);
-                })}
-              </View>
-            );
-          })
-        ) : (
-          frontFields.map((f, i) => renderFieldRow('front', f, i, frontFields.length))
-        )}
-      </View>
-    );
-  };
-
-  const renderStep3 = () => {
-    const isGridMode = ['SKETCH_HERO_LEFT', 'GRID_2X2', 'HERO_TOP_SPLIT_BOTTOM'].includes(baseLayout);
-    const availableZones = getAvailableZones(baseLayout);
-
-    return (
-      <View className="flex-1">
-        <Text className="font-extrabold text-[20px] text-mascot-navy font-nunito mb-4">Mặt sau</Text>
-        
-        {renderMiniPreview(backFields)}
-
-        <View className="flex-row items-center justify-between mb-4 mt-2">
-          <Text className="font-extrabold text-[16px] text-mascot-navy font-nunito">Trường dữ liệu theo ô Lưới</Text>
-          <Text className="font-bold text-[12px] text-neutral-400 font-inter uppercase tracking-wide">Trường chính</Text>
-        </View>
-
-        {validationError && currentStep === 3 && (
-          <Text className="font-bold text-[13px] text-error-500 font-inter mb-4 bg-error-50 p-3 rounded-xl border border-error-100">{validationError}</Text>
-        )}
-
-        {isGridMode ? (
-          availableZones.map(zone => {
-            const zoneFields = backFields.filter(f => (f.zone || getDefaultZoneForLayout(baseLayout, f.id)) === zone.id);
-            return (
-              <View key={zone.id} className="mb-4 bg-white p-3.5 rounded-2xl border border-primary-100 shadow-sm">
-                <View className="flex-row items-center justify-between mb-3 pb-2 border-b border-neutral-100">
-                  <View className="flex-row items-center">
-                    <GridIcon size={16} color="#3B82F6" style={{ marginRight: 8 }} />
-                    <Text className="font-extrabold text-[14px] text-mascot-navy font-nunito">{zone.label}</Text>
-                  </View>
-                  <View className="bg-primary-50 px-2.5 py-0.5 rounded-full">
-                    <Text className="font-bold text-[11px] text-primary-700 font-inter">
-                      {zoneFields.filter(f => f.enabled).length} trường active
-                    </Text>
-                  </View>
-                </View>
-                {backFields.map((f, i) => {
-                  const fZone = f.zone || getDefaultZoneForLayout(baseLayout, f.id);
-                  if (fZone !== zone.id) return null;
-                  return renderFieldRow('back', f, i, backFields.length);
-                })}
-              </View>
-            );
-          })
-        ) : (
-          backFields.map((f, i) => renderFieldRow('back', f, i, backFields.length))
-        )}
-      </View>
-    );
-  };
-
-  const renderStep4 = () => (
-    <View className="flex-1">
-      <Text className="font-extrabold text-[20px] text-mascot-navy font-nunito mb-6">Kiểu tương tác</Text>
-
-      {validationError && currentStep === 4 && (
-        <View className="bg-error-50 border border-error-200 rounded-xl p-4 mb-6">
-          <Text className="font-bold text-[14px] text-error-600 font-inter mb-3">{validationError}</Text>
-          <Pressable 
-            onPress={fixTypeInError}
-            className="bg-white border border-error-200 rounded-lg py-2 px-4 self-start active:bg-neutral-50"
-          >
-            <Text className="font-bold text-[13px] text-error-600 font-inter">Thêm Từ vựng vào mặt sau</Text>
-          </Pressable>
-        </View>
-      )}
-
-      {[
-        { id: 'FLIP', label: 'Chạm để lật (Flip)', desc: 'Chạm màn hình để lật xem đáp án mặt sau.', icon: RotateCcwIcon },
-        { id: 'TYPE_IN', label: 'Gõ đáp án (Type-in)', desc: 'Gõ đáp án, hệ thống sẽ tự động so khớp.', icon: KeyboardIcon },
-        { id: 'TAP_TO_REVEAL', label: 'Lộ đáp án (Tap-to-reveal)', desc: 'Chạm vào từng phần ẩn để lộ dần đáp án.', icon: ListIcon },
-      ].map(type => {
-        const isSelected = interactionType === type.id;
-        const Icon = type.icon;
-        
-        return (
-          <Pressable 
-            key={type.id}
-            onPress={() => setInteractionType(type.id as InteractionType)}
-            className={cn(
-              "w-full bg-white rounded-2xl border-2 p-4 mb-4 flex-row shadow-sm",
-              isSelected ? "border-primary-500 shadow-primary-500/20 bg-primary-50/10" : "border-neutral-100 shadow-black/5"
-            )}
-          >
-            <View className={cn(
-              "w-6 h-6 rounded-full border-2 items-center justify-center mr-4 mt-1",
-              isSelected ? "border-primary-500" : "border-neutral-300"
-            )}>
-              {isSelected && <View className="w-3 h-3 rounded-full bg-primary-500" />}
-            </View>
-            <View className="flex-1">
-              <View className="flex-row items-center mb-1">
-                <Icon size={18} className={isSelected ? "text-primary-600 mr-2" : "text-neutral-400 mr-2"} />
-                <Text className={cn("font-extrabold text-[16px] font-nunito", isSelected ? "text-primary-700" : "text-mascot-navy")}>
-                  {type.label}
-                </Text>
-              </View>
-              <Text className="font-medium text-[13px] text-neutral-500 font-inter leading-relaxed">
-                {type.desc}
-              </Text>
-              
-              {/* Type-in Strict Mode Config */}
-              {type.id === 'TYPE_IN' && isSelected && (
-                <View className="mt-4 pt-4 border-t border-primary-200/50 flex-row items-center justify-between">
-                  <View>
-                    <Text className="font-bold text-[14px] text-mascot-navy font-inter">Strict mode</Text>
-                    <Text className="font-medium text-[12px] text-neutral-500 font-inter">Phân biệt chữ hoa/thường</Text>
-                  </View>
-                  <Switch 
-                    value={strictMode}
-                    onValueChange={setStrictMode}
-                    trackColor={{ false: '#E5E7EB', true: '#58CC02' }}
-                    thumbColor={'#FFFFFF'}
-                  />
-                </View>
-              )}
-            </View>
-          </Pressable>
-        );
-      })}
-    </View>
-  );
-
-  // ==========================================
-  // MAIN RENDER
-  // ==========================================
   return (
-    <SafeAreaView className="flex-1 bg-[#F7F8FA]" edges={['top']}>
-      <View className="flex-1 max-w-md mx-auto w-full bg-[#F7F8FA] relative">
-      
-      {/* HEADER */}
-      <View className="px-4 py-3 border-b border-neutral-100 bg-white z-10 shadow-sm shadow-black/5">
-        <View className="flex-row items-center justify-between mb-4">
-          <Pressable onPress={handleBack} className="w-10 h-10 items-center justify-center -ml-2 active:bg-neutral-100 rounded-full">
-            <ArrowLeftIcon size={24} className="text-mascot-navy" />
-          </Pressable>
-          <Text className="font-extrabold text-[18px] text-mascot-navy font-nunito">
-            {mode === 'EDIT' ? 'Sửa template' : 'Tạo template'}
+    <SafeAreaView className="flex-1 bg-neutral-50/60" edges={['top']}>
+      {/* ========================================================
+          1. TOP BAR CHUNKY
+          ======================================================== */}
+      <View className="flex-row items-center justify-between px-4 py-3 bg-white border-b border-neutral-100 z-10">
+        <Pressable
+          onPress={() => {
+            if (topicId) {
+              router.replace(`/topics/${topicId}` as any);
+            } else if (collectionId) {
+              router.replace(`/collections/${collectionId}` as any);
+            } else if (router.canGoBack()) {
+              router.back();
+            } else {
+              router.replace('/collections' as any);
+            }
+          }}
+          className="w-12 h-12 items-center justify-center rounded-2xl active:bg-neutral-100 -ml-2"
+        >
+          <ChevronLeftIcon size={28} color="#1E2A44" />
+        </Pressable>
+
+        <View className="flex-1 items-center px-2">
+          <Text className="font-extrabold text-[17.5px] text-mascot-navy font-nunito" numberOfLines={1}>
+            Bố cục thẻ từ vựng
           </Text>
-          <View className="w-10 h-10" />
+          <Text className="font-medium text-[13px] text-neutral-400 font-inter mt-0.5" numberOfLines={1}>
+            Chủ đề: {topicName}
+          </Text>
         </View>
 
-        {/* STEP INDICATOR */}
-        <View className="flex-row items-center justify-between px-6 pb-2">
-          {[1, 2, 3, 4].map((step, idx) => (
-            <React.Fragment key={step}>
-              <View className="items-center">
-                <View className={cn(
-                  "w-8 h-8 rounded-full items-center justify-center border-2",
-                  currentStep === step 
-                    ? "bg-primary-500 border-primary-500" 
-                    : currentStep > step 
-                      ? "bg-primary-100 border-primary-500" 
-                      : "bg-white border-neutral-200"
-                )}>
-                  {currentStep > step ? (
-                    <CheckIcon size={16} className="text-primary-500" />
-                  ) : (
-                    <Text className={cn(
-                      "font-extrabold text-[14px] font-nunito tabular-nums",
-                      currentStep === step ? "text-white" : "text-neutral-400"
-                    )}>{step}</Text>
-                  )}
-                </View>
-              </View>
-              {idx < 3 && (
-                <View className={cn(
-                  "flex-1 h-1 rounded-full",
-                  currentStep > step ? "bg-primary-500" : "bg-neutral-200"
-                )} />
-              )}
-            </React.Fragment>
-          ))}
-        </View>
+        <View className="w-10" />
       </View>
 
-      {/* EDIT WARNING BANNER */}
-      {mode === 'EDIT' && currentStep === 1 && (
-        <View className="bg-info-50 border-b border-info-100 p-3 px-4 flex-row items-start">
-          <Text className="text-[16px] mr-2">ⓘ</Text>
-          <View className="flex-1">
-            <Text className="font-bold text-[13px] text-info-700 font-inter mb-0.5">3 Deck đang dùng template này.</Text>
-            <Text className="font-medium text-[12px] text-info-600 font-inter leading-tight">Thay đổi áp dụng từ phiên học tiếp theo, không ảnh hưởng tiến độ SRS.</Text>
-          </View>
-        </View>
-      )}
+      {/* ========================================================
+          2. THANH TAB UNDERLINED & NÚT XEM TRƯỚC COMPACT
+          ======================================================== */}
+      <View className="px-4 bg-white flex-row items-center justify-between border-b border-neutral-200/70">
+        <View className="flex-row items-center gap-7">
+          <Pressable
+            onPress={() => setActiveSide('FRONT')}
+            className={cn(
+              'py-3 border-b-[3px] transition-all',
+              activeSide === 'FRONT' ? 'border-primary-500' : 'border-transparent'
+            )}
+          >
+            <Text
+              className={cn(
+                'font-extrabold text-[14.5px] font-nunito tracking-wide',
+                activeSide === 'FRONT' ? 'text-primary-600' : 'text-neutral-400'
+              )}
+            >
+              MẶT TRƯỚC
+            </Text>
+          </Pressable>
 
-      {/* SCROLLABLE CONTENT */}
-      <ScrollView 
-        contentContainerStyle={{ padding: 20, paddingBottom: 120 }}
+          <Pressable
+            onPress={() => setActiveSide('BACK')}
+            className={cn(
+              'py-3 border-b-[3px] transition-all',
+              activeSide === 'BACK' ? 'border-primary-500' : 'border-transparent'
+            )}
+          >
+            <Text
+              className={cn(
+                'font-extrabold text-[14.5px] font-nunito tracking-wide',
+                activeSide === 'BACK' ? 'text-primary-600' : 'text-neutral-400'
+              )}
+            >
+              MẶT SAU
+            </Text>
+          </Pressable>
+        </View>
+
+        {/* Nút Xem trước trực tiếp */}
+        <Pressable
+          onPress={() => {
+            setPreviewSide(activeSide);
+            setIsPreviewOpen(true);
+          }}
+          className="flex-row items-center gap-1.5 py-1.5 px-3 rounded-xl bg-neutral-100 active:bg-neutral-200"
+        >
+          <EyeIcon size={15} color="#58CC02" />
+          <Text className="font-bold text-[13px] text-neutral-700 font-nunito">
+            Xem trước
+          </Text>
+        </Pressable>
+      </View>
+
+      {/* ========================================================
+          3. MAIN CANVAS BUILDER (DANH SÁCH SECTION ĐỘNG)
+          ======================================================== */}
+      <ScrollView
+        contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 16, paddingBottom: 120 }}
         showsVerticalScrollIndicator={false}
-        keyboardShouldPersistTaps="handled"
       >
-        {currentStep === 1 && renderStep1()}
-        {currentStep === 2 && renderStep2()}
-        {currentStep === 3 && renderStep3()}
-        {currentStep === 4 && renderStep4()}
+        {currentSections.length === 0 ? (
+          /* Trạng thái trống khi chưa có section nào */
+          <View className="bg-white rounded-2xl p-8 items-center justify-center border border-neutral-200 mb-4">
+            <Text className="text-[16px] font-extrabold text-mascot-navy font-nunito mb-1">
+              Chưa có phần hiển thị nào
+            </Text>
+            <Text className="text-[13.5px] font-medium text-neutral-400 font-inter text-center mb-4">
+              Hãy thêm phần mới để bắt đầu bố trí các trường thông tin cho {activeSide === 'FRONT' ? 'mặt trước' : 'mặt sau'} nhé!
+            </Text>
+            <Pressable
+              onPress={handleAddSection}
+              className="px-4 py-2.5 bg-primary-500 rounded-xl border-b-[3px] border-primary-700 flex-row items-center gap-1.5"
+            >
+              <PlusIcon size={16} color="#ffffff" strokeWidth={2.5} />
+              <Text className="text-[13px] font-extrabold text-white font-nunito uppercase">
+                Thêm phần mới
+              </Text>
+            </Pressable>
+          </View>
+        ) : (
+          /* Danh sách các Section động trên Canvas */
+          currentSections.map((sec) => {
+            const col1Fields = sec.fields.filter((f) => f.column === 1);
+            const col2Fields = sec.fields.filter((f) => f.column === 2);
+
+            return (
+              <View key={sec.id} className="mb-5">
+                {/* Header Section */}
+                <View className="flex-row items-center justify-between mb-2.5 px-1">
+                  <View className="flex-row items-center gap-2 flex-1 pr-2">
+                    <GripVerticalIcon size={20} color="#9597AD" />
+                    <View className="flex-1">
+                      <Text className="font-extrabold text-[16.5px] text-mascot-navy font-nunito" numberOfLines={1}>
+                        {sec.name}
+                      </Text>
+                      <Text className="text-[12.5px] font-medium text-neutral-400 font-inter mt-0.5">
+                        {sec.columns === 2 ? '2 cột · 50% / 50%' : '1 cột · 100%'}
+                        {sec.repeatable ? ' · Lặp lại (1-n)' : ''}
+                      </Text>
+                    </View>
+                  </View>
+
+                  {/* Nút mở cài đặt Section */}
+                  <Pressable
+                    onPress={() => {
+                      setActiveSectionId(sec.id);
+                      setIsSectionSheetOpen(true);
+                    }}
+                    className="w-9 h-9 rounded-xl bg-white border border-neutral-200/80 items-center justify-center active:bg-neutral-100"
+                  >
+                    <SettingsIcon size={17} color="#757793" />
+                  </Pressable>
+                </View>
+
+                {/* Canvas thẻ Flashcard duy nhất */}
+                <View
+                  className="bg-white rounded-2xl p-4 border border-neutral-200/80 border-b-[3px] border-b-neutral-300/80"
+                  style={SOFT_CARD_SHADOW}
+                >
+                  {sec.columns === 1 ? (
+                    /* 1 CỘT (100% CHIỀU RỘNG) */
+                    <View className="gap-2.5">
+                      {col1Fields.length === 0 ? (
+                        <View className="py-6 items-center justify-center border border-dashed border-neutral-200 rounded-xl">
+                          <Text className="text-[13px] font-medium text-neutral-400 font-inter">
+                            Chưa có trường nào trong phần này
+                          </Text>
+                        </View>
+                      ) : (
+                        col1Fields.map((field) => (
+                          <Pressable
+                            key={field.id}
+                            onPress={() => {
+                              setEditingField(field);
+                              setEditingFieldSectionId(sec.id);
+                              setIsFieldSheetOpen(true);
+                            }}
+                            className="bg-neutral-50/80 rounded-xl p-3.5 border border-neutral-200 active:bg-neutral-100 flex-row items-center justify-between transition-all"
+                          >
+                            <View className="flex-row items-center gap-2.5 flex-1 pr-2">
+                              <GripVerticalIcon size={18} color="#9597AD" />
+                              <View className="flex-1 min-w-0">
+                                <View className="flex-row items-center gap-2 flex-wrap">
+                                  <Text
+                                    style={{
+                                      fontSize: field.fontSize || 16,
+                                      color: field.color || '#171A2F',
+                                      textAlign: (field.alignment?.toLowerCase() as any) || 'left',
+                                    }}
+                                    className="font-extrabold font-nunito"
+                                  >
+                                    {field.fieldLabel || field.attributeName || 'Trường mới'}
+                                  </Text>
+
+                                  {field.required && (
+                                    <View className="bg-danger-50 px-1.5 py-0.5 rounded border border-danger-200">
+                                      <Text className="text-[11px] font-bold text-danger-600 font-inter">
+                                        Bắt buộc
+                                      </Text>
+                                    </View>
+                                  )}
+
+                                  {field.hideIfEmpty && (
+                                    <View className="bg-neutral-100 px-1.5 py-0.5 rounded">
+                                      <Text className="text-[11px] font-medium text-neutral-500 font-inter">
+                                        Ẩn khi trống
+                                      </Text>
+                                    </View>
+                                  )}
+                                </View>
+
+                                {field.sampleValue && (
+                                  <Text className="text-[13px] text-neutral-400 font-inter mt-0.5" numberOfLines={1}>
+                                    Ví dụ: {field.sampleValue}
+                                  </Text>
+                                )}
+                              </View>
+                            </View>
+
+                            <View className="flex-row items-center gap-2">
+                              {(field.audioAction || field.semanticRole === 'AUDIO') && (
+                                <Pressable
+                                  onPress={(e) => {
+                                    e.stopPropagation();
+                                    handlePlayMockAudio(field);
+                                  }}
+                                  className="w-8 h-8 rounded-lg bg-info-50 border border-info-200 items-center justify-center active:bg-info-100"
+                                >
+                                  <Volume2Icon size={15} color="#1CB0F6" />
+                                </Pressable>
+                              )}
+                              <MoreVerticalIcon size={18} color="#9597AD" />
+                            </View>
+                          </Pressable>
+                        ))
+                      )}
+                    </View>
+                  ) : (
+                    /* 2 CỘT (50% / 50%) */
+                    <View className="flex-row items-start gap-2.5">
+                      {/* CỘT 1 */}
+                      <View className="flex-1 min-w-0">
+                        <Text className="text-[11px] font-bold text-neutral-400 uppercase tracking-wider font-inter mb-1.5 px-0.5">
+                          CỘT 1 (50%)
+                        </Text>
+                        <View className="gap-2">
+                          {col1Fields.length === 0 ? (
+                            <View className="py-4 items-center justify-center border border-dashed border-neutral-200 rounded-xl">
+                              <Text className="text-[11.5px] font-medium text-neutral-400 font-inter">
+                                Trống
+                              </Text>
+                            </View>
+                          ) : (
+                            col1Fields.map((field) => (
+                              <Pressable
+                                key={field.id}
+                                onPress={() => {
+                                  setEditingField(field);
+                                  setEditingFieldSectionId(sec.id);
+                                  setIsFieldSheetOpen(true);
+                                }}
+                                className="bg-neutral-50/80 rounded-xl p-3 border border-neutral-200 active:bg-neutral-100 transition-all"
+                              >
+                                <View className="flex-row items-center justify-between mb-1">
+                                  <Text
+                                    style={{
+                                      fontSize: Math.min(15, field.fontSize || 14),
+                                      color: field.color || '#171A2F',
+                                    }}
+                                    className="font-extrabold font-nunito flex-1 pr-1"
+                                    numberOfLines={1}
+                                  >
+                                    {field.fieldLabel || 'Trường 1'}
+                                  </Text>
+                                  <MoreVerticalIcon size={15} color="#9597AD" />
+                                </View>
+                                <View className="flex-row items-center gap-1.5 mt-0.5">
+                                  {field.required ? (
+                                    <Text className="text-[11px] font-bold text-danger-500 font-inter">
+                                      Bắt buộc
+                                    </Text>
+                                  ) : (
+                                    <Text className="text-[11px] font-medium text-neutral-400 font-inter">
+                                      Tùy chọn
+                                    </Text>
+                                  )}
+                                  {field.audioAction && (
+                                    <Pressable
+                                      onPress={(e) => {
+                                        e.stopPropagation();
+                                        handlePlayMockAudio(field);
+                                      }}
+                                    >
+                                      <Volume2Icon size={12} color="#1CB0F6" />
+                                    </Pressable>
+                                  )}
+                                </View>
+                              </Pressable>
+                            ))
+                          )}
+                        </View>
+                      </View>
+
+                      {/* CỘT 2 */}
+                      <View className="flex-1 min-w-0">
+                        <Text className="text-[11px] font-bold text-neutral-400 uppercase tracking-wider font-inter mb-1.5 px-0.5">
+                          CỘT 2 (50%)
+                        </Text>
+                        <View className="gap-2">
+                          {col2Fields.length === 0 ? (
+                            <View className="py-4 items-center justify-center border border-dashed border-neutral-200 rounded-xl">
+                              <Text className="text-[11.5px] font-medium text-neutral-400 font-inter">
+                                Trống
+                              </Text>
+                            </View>
+                          ) : (
+                            col2Fields.map((field) => (
+                              <Pressable
+                                key={field.id}
+                                onPress={() => {
+                                  setEditingField(field);
+                                  setEditingFieldSectionId(sec.id);
+                                  setIsFieldSheetOpen(true);
+                                }}
+                                className="bg-neutral-50/80 rounded-xl p-3 border border-neutral-200 active:bg-neutral-100 transition-all"
+                              >
+                                <View className="flex-row items-center justify-between mb-1">
+                                  <Text
+                                    style={{
+                                      fontSize: Math.min(15, field.fontSize || 14),
+                                      color: field.color || '#171A2F',
+                                    }}
+                                    className="font-extrabold font-nunito flex-1 pr-1"
+                                    numberOfLines={1}
+                                  >
+                                    {field.fieldLabel || 'Trường 2'}
+                                  </Text>
+                                  <MoreVerticalIcon size={15} color="#9597AD" />
+                                </View>
+                                <View className="flex-row items-center gap-1.5 mt-0.5">
+                                  {field.required ? (
+                                    <Text className="text-[11px] font-bold text-danger-500 font-inter">
+                                      Bắt buộc
+                                    </Text>
+                                  ) : (
+                                    <Text className="text-[11px] font-medium text-neutral-400 font-inter">
+                                      Tùy chọn
+                                    </Text>
+                                  )}
+                                  {field.audioAction && (
+                                    <Pressable
+                                      onPress={(e) => {
+                                        e.stopPropagation();
+                                        handlePlayMockAudio(field);
+                                      }}
+                                    >
+                                      <Volume2Icon size={12} color="#1CB0F6" />
+                                    </Pressable>
+                                  )}
+                                </View>
+                              </Pressable>
+                            ))
+                          )}
+                        </View>
+                      </View>
+                    </View>
+                  )}
+
+                  {/* Nút Thêm trường vào Section */}
+                  <Pressable
+                    onPress={() => handleOpenAddFieldModal(sec.id)}
+                    className="w-full py-2.5 items-center justify-center flex-row gap-1.5 active:opacity-70 mt-3 border-t border-neutral-100"
+                  >
+                    <PlusIcon size={15} color="#58CC02" strokeWidth={2.5} />
+                    <Text className="font-bold text-[13.5px] text-primary-600 font-nunito">
+                      Thêm trường vào phần này
+                    </Text>
+                  </Pressable>
+                </View>
+              </View>
+            );
+          })
+        )}
+
+        {/* NÚT THÊM PHẦN MỚI */}
+        <Pressable
+          onPress={handleAddSection}
+          className="w-full py-3.5 rounded-2xl border-2 border-dashed border-neutral-300 bg-white/60 items-center justify-center flex-row gap-2 active:bg-white transition-all mt-2"
+        >
+          <PlusIcon size={16} color="#757793" strokeWidth={2.5} />
+          <Text className="font-bold text-[14px] text-neutral-500 font-nunito">
+            Thêm phần mới ({activeSide === 'FRONT' ? 'Mặt trước' : 'Mặt sau'})
+          </Text>
+        </Pressable>
       </ScrollView>
 
-      {/* BOTTOM ACTIONS */}
-      <View className="absolute bottom-0 left-0 right-0 bg-white border-t border-neutral-100 p-4 pb-8 shadow-[0_-10px_20px_rgba(0,0,0,0.05)]">
-        <View className="max-w-md mx-auto w-full">
-          <View className="flex-row gap-3">
-            {currentStep === 4 && (
-              <Pressable 
-                onPress={() => {
-                  const config = JSON.stringify({
-                    name,
-                    baseLayout,
-                    frontFields,
-                    backFields,
-                    interactionType,
-                    strictMode,
-                  });
-                  router.push({ pathname: '/templates/preview' as any, params: { source: 'FROM_BUILDER', templateConfig: config } });
-                }}
-                className="flex-1 h-14 bg-white border-2 border-primary-500 rounded-2xl items-center justify-center active:bg-primary-50"
-              >
-                <Text className="font-extrabold text-[15px] text-primary-600 font-nunito tracking-wide">XEM TRƯỚC</Text>
-              </Pressable>
-            )}
+      {/* ========================================================
+          4. STICKY BOTTOM BAR: NÚT LƯU BỐ CỤC THẺ HỌC
+          ======================================================== */}
+      <View className="absolute bottom-0 left-0 right-0 p-4 bg-white border-t border-neutral-100 shadow-xl z-20">
+        <Pressable
+          onPress={handleSaveTemplate}
+          disabled={saving}
+          className="w-full h-13 bg-primary-500 border-b-[4px] border-primary-700 active:bg-primary-600 active:translate-y-[2px] active:border-b-[2px] rounded-2xl items-center justify-center flex-row shadow-sm"
+        >
+          {saving ? (
+            <View className="flex-row items-center gap-2">
+              <ActivityIndicator size="small" color="#ffffff" />
+              <Text className="font-extrabold text-[15px] text-white uppercase font-nunito tracking-[0.04em]">
+                ĐANG LƯU BỐ CỤC...
+              </Text>
+            </View>
+          ) : (
+            <Text className="font-extrabold text-[15px] text-white uppercase font-nunito tracking-[0.04em]">
+              LƯU BỐ CỤC THẺ HỌC
+            </Text>
+          )}
+        </Pressable>
+      </View>
 
-            <Pressable 
-              onPress={currentStep === 4 ? handleSave : handleNext}
-              disabled={isSaving}
-              className={cn(
-                "h-14 rounded-2xl border-b-[4px] items-center justify-center active:translate-y-[2px] active:border-b-[2px]",
-                currentStep === 4 ? "flex-1 bg-primary-500 border-primary-700 active:bg-primary-600" : "w-full bg-mascot-navy border-mascot-700 active:bg-mascot-800"
-              )}
-            >
-              {isSaving ? (
-                <ActivityIndicator color="white" />
-              ) : (
-                <Text className="font-extrabold text-[16px] text-white font-nunito uppercase tracking-wide">
-                  {currentStep === 4 ? 'LƯU TEMPLATE' : 'TIẾP TỤC'}
+      {/* ========================================================
+          5. TOAST FEEDBACK NOTIFICATION
+          ======================================================== */}
+      {toastMessage && (
+        <View className="absolute top-16 left-5 right-5 z-50 items-center">
+          <View
+            className={cn(
+              'px-4 py-2.5 rounded-2xl flex-row items-center gap-2 shadow-lg border',
+              toastMessage.type === 'success' && 'bg-primary-500 border-primary-600',
+              toastMessage.type === 'info' && 'bg-mascot-navy border-neutral-700',
+              toastMessage.type === 'error' && 'bg-danger-500 border-danger-600'
+            )}
+          >
+            <CheckIcon size={16} color="#ffffff" strokeWidth={3} />
+            <Text className="text-[13.5px] font-bold text-white font-nunito">
+              {toastMessage.text}
+            </Text>
+          </View>
+        </View>
+      )}
+
+      {/* ========================================================
+          6. MODAL CHỌN LOẠI TRƯỜNG KHI THÊM TRƯỜNG MỚI
+          ======================================================== */}
+      <Modal
+        visible={isAddFieldModalOpen}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setIsAddFieldModalOpen(false)}
+      >
+        <Pressable
+          onPress={() => setIsAddFieldModalOpen(false)}
+          className="flex-1 bg-black/40 justify-end"
+        >
+          <View className="bg-white rounded-t-[28px] p-5 pb-8 max-w-lg mx-auto w-full shadow-2xl">
+            {/* Header */}
+            <View className="flex-row items-center justify-between pb-3 mb-3 border-b border-neutral-100">
+              <View>
+                <Text className="font-extrabold text-[17px] text-mascot-navy font-nunito">
+                  Chọn loại trường cần thêm
                 </Text>
-              )}
-            </Pressable>
-          </View>
-        </View>
-      </View>
-
-      {/* ==========================================
-          MODALS & SHEETS
-          ========================================== */}
-      
-      {/* EXIT CONFIRMATION */}
-      <Modal visible={showExitConfirm} transparent animationType="fade">
-        <View className="flex-1 bg-black/40 items-center justify-center p-6">
-          <View className="bg-white rounded-[32px] p-6 w-full max-w-[340px] shadow-xl">
-            <Text className="font-extrabold text-[20px] text-mascot-navy font-nunito mb-2 text-center">
-              Hủy thay đổi?
-            </Text>
-            <Text className="font-medium text-[14px] text-neutral-500 font-inter text-center mb-6 leading-relaxed">
-              Bạn có dữ liệu chưa lưu. Mọi thay đổi sẽ bị mất nếu bạn thoát bây giờ.
-            </Text>
-            
-            <View className="gap-3">
-              <Pressable 
-                onPress={() => setShowExitConfirm(false)}
-                className="w-full h-14 bg-primary-500 rounded-2xl border-b-[4px] border-primary-700 items-center justify-center active:bg-primary-600"
+                <Text className="text-[12.5px] font-medium text-neutral-400 font-inter">
+                  Chọn trường dữ liệu mẫu để bố trí vào thẻ học
+                </Text>
+              </View>
+              <Pressable
+                onPress={() => setIsAddFieldModalOpen(false)}
+                className="w-8 h-8 rounded-full bg-neutral-100 items-center justify-center"
               >
-                <Text className="font-extrabold text-[15px] text-white font-nunito uppercase tracking-wide">Tiếp tục sửa</Text>
-              </Pressable>
-              <Pressable 
-                onPress={() => {
-                  setShowExitConfirm(false);
-                  router.back();
-                }}
-                className="w-full h-12 bg-neutral-100 rounded-xl items-center justify-center active:bg-error-50 border border-transparent active:border-error-200"
-              >
-                <Text className="font-bold text-[15px] text-error-500 font-inter">Bỏ thay đổi</Text>
+                <XIcon size={16} color="#757793" />
               </Pressable>
             </View>
+
+            {/* Chọn Cột nếu Section hiện tại có 2 Cột */}
+            {(() => {
+              const sec = sections.find((s) => s.id === addFieldTargetSectionId);
+              if (sec && sec.columns === 2) {
+                return (
+                  <View className="mb-3.5 bg-neutral-50 p-2 rounded-xl border border-neutral-200/80">
+                    <Text className="text-[12px] font-bold text-neutral-500 font-inter mb-1.5 px-1">
+                      Bố trí vào cột:
+                    </Text>
+                    <View className="flex-row gap-2">
+                      <Pressable
+                        onPress={() => setSelectedColumnForNewField(1)}
+                        className={cn(
+                          'flex-1 py-2 rounded-lg items-center border',
+                          selectedColumnForNewField === 1
+                            ? 'bg-primary-500 border-primary-600'
+                            : 'bg-white border-neutral-200'
+                        )}
+                      >
+                        <Text
+                          className={cn(
+                            'text-[13px] font-extrabold font-nunito',
+                            selectedColumnForNewField === 1 ? 'text-white' : 'text-neutral-600'
+                          )}
+                        >
+                          Cột 1 (Bên trái)
+                        </Text>
+                      </Pressable>
+
+                      <Pressable
+                        onPress={() => setSelectedColumnForNewField(2)}
+                        className={cn(
+                          'flex-1 py-2 rounded-lg items-center border',
+                          selectedColumnForNewField === 2
+                            ? 'bg-primary-500 border-primary-600'
+                            : 'bg-white border-neutral-200'
+                        )}
+                      >
+                        <Text
+                          className={cn(
+                            'text-[13px] font-extrabold font-nunito',
+                            selectedColumnForNewField === 2 ? 'text-white' : 'text-neutral-600'
+                          )}
+                        >
+                          Cột 2 (Bên phải)
+                        </Text>
+                      </Pressable>
+                    </View>
+                  </View>
+                );
+              }
+              return null;
+            })()}
+
+            {/* Danh sách các loại trường */}
+            <ScrollView className="max-h-72" showsVerticalScrollIndicator={false}>
+              <View className="gap-2">
+                {FIELD_TYPES.map((type) => (
+                  <Pressable
+                    key={type.typeKey}
+                    onPress={() => handleCreateNewField(type)}
+                    className="p-3 rounded-xl bg-neutral-50 border border-neutral-200 active:bg-primary-50 active:border-primary-300 flex-row items-center gap-3 transition-all"
+                  >
+                    <View className="w-10 h-10 rounded-xl bg-white border border-neutral-200 items-center justify-center">
+                      <Text className="text-[18px]">{type.icon}</Text>
+                    </View>
+                    <View className="flex-1">
+                      <Text className="font-extrabold text-[14.5px] text-mascot-navy font-nunito">
+                        {type.name}
+                      </Text>
+                      <Text className="text-[12px] font-medium text-neutral-400 font-inter">
+                        {type.description}
+                      </Text>
+                    </View>
+                    <PlusIcon size={16} color="#58CC02" strokeWidth={2.5} />
+                  </Pressable>
+                ))}
+              </View>
+            </ScrollView>
           </View>
-        </View>
+        </Pressable>
       </Modal>
 
-      {/* APPLY TO DECK CONFIRMATION (PICK_FOR_DECK source) */}
-      <Modal visible={showApplyDeckConfirm} transparent animationType="fade">
-        <View className="flex-1 bg-black/40 items-center justify-center p-6">
-          <View className="bg-white rounded-[32px] p-6 w-full max-w-[340px] shadow-xl">
-            <View className="w-16 h-16 bg-success-50 rounded-full items-center justify-center mb-4 border border-success-100 self-center">
-              <CheckIcon size={32} className="text-success-500" />
-            </View>
-            <Text className="font-extrabold text-[20px] text-mascot-navy font-nunito mb-2 text-center">
-              Đã lưu Template
-            </Text>
-            <Text className="font-medium text-[14px] text-neutral-500 font-inter text-center mb-6 leading-relaxed">
-              Áp dụng luôn mẫu này cho Deck đang chọn không?
-            </Text>
-            
-            <View className="gap-3">
-              <Pressable 
-                onPress={applyToDeck}
-                disabled={isSaving}
-                className="w-full h-14 bg-success-500 rounded-2xl border-b-[4px] border-success-700 items-center justify-center active:bg-success-600"
+      {/* ========================================================
+          7. FIELD SETTINGS BOTTOM SHEET
+          ======================================================== */}
+      <FieldSettingsSheet
+        visible={isFieldSheetOpen}
+        field={editingField}
+        onClose={() => {
+          setIsFieldSheetOpen(false);
+          setEditingField(null);
+          setEditingFieldSectionId(null);
+        }}
+        onSave={handleSaveFieldSettings}
+        onDelete={handleDeleteField}
+      />
+
+      {/* ========================================================
+          8. SECTION SETTINGS BOTTOM SHEET
+          ======================================================== */}
+      <SectionSettingsSheet
+        visible={isSectionSheetOpen}
+        sectionName={activeSection?.name || ''}
+        repeatable={activeSection?.repeatable || false}
+        columnsCount={activeSection?.columns || 1}
+        onClose={() => setIsSectionSheetOpen(false)}
+        onSave={handleSaveSectionSettings}
+        onDelete={handleDeleteSection}
+      />
+
+      {/* ========================================================
+          9. LIVE PREVIEW MODAL (RENDER TRỰC TIẾP TỪ STATE BUILDER)
+          ======================================================== */}
+      <Modal
+        visible={isPreviewOpen}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setIsPreviewOpen(false)}
+      >
+        <View className="flex-1 bg-black/50 items-center justify-center p-4">
+          <View className="bg-white w-full max-w-[360px] rounded-[32px] p-5 border-2 border-neutral-200 border-b-[4px] items-center shadow-2xl">
+            <View className="flex-row items-center justify-between w-full mb-3">
+              <View className="flex-row items-center gap-2">
+                <EyeIcon size={20} color="#58CC02" />
+                <Text className="font-extrabold text-[17.5px] text-mascot-navy font-nunito">
+                  Xem trước trực tiếp
+                </Text>
+              </View>
+              <Pressable
+                onPress={() => setIsPreviewOpen(false)}
+                className="w-9 h-9 rounded-full bg-neutral-100 items-center justify-center active:bg-neutral-200"
               >
-                {isSaving ? <ActivityIndicator color="white" /> : <Text className="font-extrabold text-[15px] text-white font-nunito uppercase tracking-wide">Áp dụng ngay</Text>}
+                <XIcon size={18} color="#757793" />
               </Pressable>
-              <Pressable 
-                onPress={() => {
-                  setShowApplyDeckConfirm(false);
-                  router.back();
-                }}
-                disabled={isSaving}
-                className="w-full h-12 bg-neutral-100 rounded-xl items-center justify-center active:bg-neutral-200"
+            </View>
+
+            <Text className="text-[12px] font-medium text-neutral-400 font-inter mb-3 text-center">
+              Mô phỏng chính xác giao diện Flashcard khi học
+            </Text>
+
+            {/* BỘ CHUYỂN MẶT TRƯỚC / SAU TRONG PREVIEW */}
+            <View className="flex-row p-1 bg-neutral-100 rounded-2xl mb-4 w-full border border-neutral-200">
+              <Pressable
+                onPress={() => setPreviewSide('FRONT')}
+                className={cn(
+                  'flex-1 h-9 rounded-xl items-center justify-center transition-all',
+                  previewSide === 'FRONT'
+                    ? 'bg-white border-2 border-neutral-200 border-b-[3px]'
+                    : ''
+                )}
               >
-                <Text className="font-bold text-[15px] text-neutral-600 font-inter">Để sau</Text>
+                <Text
+                  className={cn(
+                    'font-extrabold text-[13.5px] font-nunito',
+                    previewSide === 'FRONT' ? 'text-mascot-navy' : 'text-neutral-500'
+                  )}
+                >
+                  Mặt trước
+                </Text>
+              </Pressable>
+              <Pressable
+                onPress={() => setPreviewSide('BACK')}
+                className={cn(
+                  'flex-1 h-9 rounded-xl items-center justify-center transition-all',
+                  previewSide === 'BACK'
+                    ? 'bg-white border-2 border-neutral-200 border-b-[3px]'
+                    : ''
+                )}
+              >
+                <Text
+                  className={cn(
+                    'font-extrabold text-[13.5px] font-nunito',
+                    previewSide === 'BACK' ? 'text-mascot-navy' : 'text-neutral-500'
+                  )}
+                >
+                  Mặt sau
+                </Text>
               </Pressable>
             </View>
-          </View>
-        </View>
-      </Modal>
 
-      {/* FIELD CONFIG BOTTOM SHEET */}
-      <Modal visible={!!activeConfigField} transparent animationType="slide">
-        <View className="flex-1 bg-black/40 justify-end">
-          <Pressable className="absolute inset-0" onPress={() => setActiveConfigField(null)} />
-          <View className="bg-white rounded-t-[32px] p-6 pb-12 shadow-xl max-w-md mx-auto w-full">
-            <View className="w-12 h-1.5 bg-neutral-200 rounded-full mb-6 self-center" />
-            
-            <View className="flex-row items-center justify-between mb-6">
-              <Text className="font-extrabold text-[20px] text-mascot-navy font-nunito">Cấu hình {activeConfigField?.label}</Text>
-              <Pressable onPress={() => setActiveConfigField(null)} className="p-2 -mr-2 bg-neutral-100 rounded-full active:bg-neutral-200">
-                <XIcon size={20} className="text-neutral-500" />
-              </Pressable>
+            {/* THẺ FLASHCARD SIMULATOR TỪ CHÍNH STATE DYNAMIC BUILDER */}
+            <View className="w-full bg-white rounded-2xl py-5 px-4 border-2 border-neutral-200 border-b-[4px] min-h-[190px] items-center justify-center mb-5">
+              <DynamicCardRenderer
+                template={livePreviewData.template}
+                itemValues={livePreviewData.values}
+                side={previewSide}
+                columnsCount={livePreviewData.columnsCount}
+                onPlayAudio={(val) => showToast(`🔊 Phát: ${val}`, 'info')}
+              />
             </View>
-            
-            {/* EXAMPLE Config */}
-            {activeConfigField?.id === 'EXAMPLE' && (
-              <View className="bg-neutral-50 p-4 rounded-2xl border border-neutral-100">
-                <View className="flex-row items-center justify-between">
-                  <View>
-                    <Text className="font-bold text-[15px] text-mascot-navy font-inter mb-1">Ẩn từ chính trong câu</Text>
-                    <Text className="font-medium text-[12px] text-neutral-500 font-inter">Thay thế từ vựng bằng ký hiệu che</Text>
-                  </View>
-                  <Switch 
-                    value={activeConfigField.config?.maskPattern !== undefined}
-                    onValueChange={(val) => {
-                      // Fake state update for prototype
-                    }}
-                    trackColor={{ false: '#E5E7EB', true: '#58CC02' }}
-                    thumbColor={'#FFFFFF'}
-                  />
-                </View>
-                
-                {/* Options would appear here if Switch is on */}
-              </View>
-            )}
 
-            {/* AUDIO Config */}
-            {activeConfigField?.id === 'AUDIO' && (
-              <View className="bg-neutral-50 p-4 rounded-2xl border border-neutral-100">
-                <View className="flex-row items-center justify-between">
-                  <View>
-                    <Text className="font-bold text-[15px] text-mascot-navy font-inter mb-1">Tự động phát</Text>
-                    <Text className="font-medium text-[12px] text-neutral-500 font-inter">Phát audio ngay khi mở thẻ</Text>
-                  </View>
-                  <Switch 
-                    value={true}
-                    onValueChange={() => {}}
-                    trackColor={{ false: '#E5E7EB', true: '#58CC02' }}
-                    thumbColor={'#FFFFFF'}
-                  />
-                </View>
-              </View>
-            )}
-
-            {/* Generic Config for Others */}
-            {['MEANING', 'IPA', 'PART_OF_SPEECH', 'PERSONAL_NOTE'].includes(activeConfigField?.id || '') && (
-              <View className="bg-neutral-50 p-4 rounded-2xl border border-neutral-100">
-                <View className="flex-row items-center justify-between">
-                  <View>
-                    <Text className="font-bold text-[15px] text-mascot-navy font-inter mb-1">Hiện tất cả giá trị</Text>
-                    <Text className="font-medium text-[12px] text-neutral-500 font-inter">Nếu có nhiều nghĩa/giá trị</Text>
-                  </View>
-                  <Switch 
-                    value={false}
-                    onValueChange={() => {}}
-                    trackColor={{ false: '#E5E7EB', true: '#58CC02' }}
-                    thumbColor={'#FFFFFF'}
-                  />
-                </View>
-              </View>
-            )}
-
-            <Pressable 
-              onPress={() => setActiveConfigField(null)}
-              className="w-full h-14 bg-primary-500 rounded-2xl border-b-[4px] border-primary-700 items-center justify-center mt-6 active:bg-primary-600"
+            <Pressable
+              onPress={() => setIsPreviewOpen(false)}
+              className="w-full h-11 bg-neutral-100 border-2 border-neutral-200 border-b-[3px] rounded-xl items-center justify-center active:translate-y-[1px] active:border-b-[2px]"
             >
-              <Text className="font-extrabold text-[16px] text-white font-nunito tracking-wide uppercase">Xong</Text>
+              <Text className="font-extrabold text-[13.5px] text-neutral-700 font-nunito uppercase tracking-[0.04em]">
+                ĐÓNG XEM TRƯỚC
+              </Text>
             </Pressable>
           </View>
         </View>
       </Modal>
-
-      </View>
     </SafeAreaView>
   );
 }

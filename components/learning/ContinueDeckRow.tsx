@@ -36,7 +36,7 @@ export function ContinueDeckRow({ activeSession, hubState }: ContinueDeckRowProp
         <Text className="text-[12px] font-extrabold text-neutral-400 uppercase tracking-wider font-nunito">
           TIẾP TỤC BỘ THẺ
         </Text>
-        <Pressable onPress={() => router.push('/decks' as any)}>
+        <Pressable onPress={() => router.push('/collections' as any)}>
           <Text className="text-[11.5px] font-bold text-neutral-500 font-inter">
             Xem tất cả →
           </Text>
@@ -54,18 +54,20 @@ export function ContinueDeckRow({ activeSession, hubState }: ContinueDeckRowProp
             <Text className="text-[20px]">💼</Text>
           </View>
 
-          <View className="flex-1 min-w-0">
-            <View className="flex-row items-center gap-1.5 mb-0.5">
-              <Text className="text-[10px] font-extrabold text-primary-700 uppercase tracking-wider font-nunito bg-primary-50 px-1.5 py-0.5 rounded border border-primary-100">
-                {activeSession.level}
-              </Text>
-              <Text className="text-[14px] font-extrabold text-neutral-800 font-nunito truncate" numberOfLines={1}>
-                {activeSession.topicName}
+          <View className="flex-1 min-w-0 pr-2.5">
+            <Text className="text-[15px] font-extrabold text-neutral-800 font-nunito leading-tight mb-0.5" numberOfLines={1}>
+              {activeSession.topicName}
+            </Text>
+            <View className="flex-row items-center gap-1.5 mt-0.5">
+              <View className="bg-primary-50 px-1.5 py-0.2 rounded border border-primary-200 shrink-0">
+                <Text className="text-[9.5px] font-extrabold text-primary-700 font-nunito">
+                  {activeSession.level.split('·')[0].trim()}
+                </Text>
+              </View>
+              <Text className="text-[11.5px] font-medium text-neutral-500 font-inter" numberOfLines={1}>
+                Bài {activeSession.lessonNumber} · {activeSession.progress}/{activeSession.total} từ · {percent}%
               </Text>
             </View>
-            <Text className="text-[11.5px] font-medium text-neutral-500 font-inter" numberOfLines={1}>
-              Bài {activeSession.lessonNumber}: {activeSession.progress}/{activeSession.total} từ · {percent}%
-            </Text>
           </View>
         </View>
 

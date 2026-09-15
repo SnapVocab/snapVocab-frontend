@@ -16,6 +16,7 @@ import { cn } from '@/lib/utils';
 import { ShopItemCard, ShopItemType } from '@/components/shop/ShopItemCard';
 import { PurchaseSuccessModal } from '@/components/shop/PurchaseSuccessModal';
 import { OutOfCoinModal } from '@/components/shop/OutOfCoinModal';
+import { AvatarFrameShowcaseModal } from '@/components/shop/AvatarFrameShowcaseModal';
 import { useEconomyState } from '@/lib/economyState';
 
 // ==========================================
@@ -110,40 +111,123 @@ const RAW_SHOP_ITEMS: Omit<ShopItemType, 'isOwned' | 'quantityOwned'>[] = [
     bgColorClass: 'bg-orange-50'
   },
 
-  // --- 2. AVATAR FRAMES (COSMETICS) ---
+  // --- 2. OFFICIAL AVATAR FRAMES (SHOP ITEM SERIES) ---
   {
-    id: 'i1',
-    name: 'Khung Học Giả',
-    description: 'Khung đại diện viền ngọc xanh tôn vinh tinh thần học hỏi.',
+    id: 'frame_bronze_learner',
+    name: 'Khung Đồng Mở Lối',
+    description: 'Every journey starts somewhere. Vòng gỗ khắc tinh xảo, lá non và cuốn sách mở.',
     category: 'frame',
     categoryLabel: 'Khung Avatar',
-    price: 500,
+    price: 350,
     isConsumable: false,
-    imageSource: require('../../assets/images/shop/badge1_clean.png'),
-    bgColorClass: 'bg-info-50'
+    imageSource: require('../../assets/images/frames/frame_bronze_learner.webp'),
+    bgColorClass: 'bg-amber-50',
+    badgeLabel: 'BẮT ĐẦU'
   },
   {
-    id: 'i2',
-    name: 'Khung Cú Đêm',
-    description: 'Khung huyền bí dành riêng cho những bạn chăm học buổi tối.',
+    id: 'frame_silver_scholar',
+    name: 'Học Giả Bạc',
+    description: 'Curiosity never stops. Khung bạch kim đính sapphire lam ngọc và cuộn thư cổ.',
     category: 'frame',
     categoryLabel: 'Khung Avatar',
-    price: 650,
+    price: 600,
     isConsumable: false,
-    imageSource: require('../../assets/images/shop/badge2_clean.png'),
-    bgColorClass: 'bg-indigo-50'
+    imageSource: require('../../assets/images/frames/frame_silver_scholar.webp'),
+    bgColorClass: 'bg-sky-50'
   },
   {
-    id: 'item_frame_goldencrown',
-    name: 'Khung Rồng Vàng',
-    description: 'Khung vương miện hoàng kim cao cấp lấp lánh trên bảng xếp hạng.',
+    id: 'frame_golden_wordsmith',
+    name: 'Bậc Thầy Hoàng Kim',
+    description: 'Words build a brighter you. Vương miện hoàng gia, cánh thiên thần và dải lụa nhung đỏ.',
     category: 'frame',
     categoryLabel: 'Khung Avatar',
-    price: 900,
+    price: 950,
     isConsumable: false,
-    imageSource: require('../../assets/images/shop/badge11_clean.png'),
+    imageSource: require('../../assets/images/frames/frame_golden_wordsmith.webp'),
     bgColorClass: 'bg-yellow-50',
-    badgeLabel: 'HIẾM'
+    badgeLabel: 'SỬ THI'
+  },
+  {
+    id: 'frame_fire_streak',
+    name: 'Ngọn Lửa Bất Diệt',
+    description: 'Keep the streak alive! Ngọn lửa nhiệt huyết giữ vững chuỗi học tập cùng Snapy nháy mắt.',
+    category: 'frame',
+    categoryLabel: 'Khung Avatar',
+    price: 850,
+    isConsumable: false,
+    imageSource: require('../../assets/images/frames/frame_fire_streak.webp'),
+    bgColorClass: 'bg-orange-50',
+    badgeLabel: 'HOT STREAK'
+  },
+  {
+    id: 'frame_nature_explorer',
+    name: 'Nhà Khám Phá Tự Nhiên',
+    description: 'Discover words everywhere. Dây leo sinh động ôm ấp cành cây non và hoa lài trắng.',
+    category: 'frame',
+    categoryLabel: 'Khung Avatar',
+    price: 550,
+    isConsumable: false,
+    imageSource: require('../../assets/images/frames/frame_nature_explorer.webp'),
+    bgColorClass: 'bg-emerald-50'
+  },
+  {
+    id: 'frame_night_owl',
+    name: 'Cú Đêm Chăm Học',
+    description: 'Good words, late nights. Bầu trời đêm huyền ảo, trăng dát vàng và bé Snapy ngủ say.',
+    category: 'frame',
+    categoryLabel: 'Khung Avatar',
+    price: 880,
+    isConsumable: false,
+    imageSource: require('../../assets/images/frames/frame_night_owl.webp'),
+    bgColorClass: 'bg-purple-50',
+    badgeLabel: 'DẠ QUANG'
+  },
+  {
+    id: 'frame_ocean_voyager',
+    name: 'Nhà Du Hành Đại Dương',
+    description: 'Explore a wider world. Lớp sóng biển cuộn trào bọt trắng cùng thuyền buồm vượt đại dương.',
+    category: 'frame',
+    categoryLabel: 'Khung Avatar',
+    price: 800,
+    isConsumable: false,
+    imageSource: require('../../assets/images/frames/frame_ocean_voyager.webp'),
+    bgColorClass: 'bg-cyan-50'
+  },
+  {
+    id: 'frame_space_dreamer',
+    name: 'Giấc Mơ Vũ Trụ',
+    description: 'Higher words, brighter future. Dải ngân hà tím huyền ảo, phi thuyền tên lửa và vành đai sao Thổ.',
+    category: 'frame',
+    categoryLabel: 'Khung Avatar',
+    price: 1100,
+    isConsumable: false,
+    imageSource: require('../../assets/images/frames/frame_space_dreamer.webp'),
+    bgColorClass: 'bg-fuchsia-50',
+    badgeLabel: 'KHÁM PHÁ'
+  },
+  {
+    id: 'frame_cherry_blossom',
+    name: 'Hoa Anh Đào Mùa Xuân',
+    description: 'Small progress, big change. Cành sakura mùa xuân thanh thoát, cánh hoa hồng phấn bay lượn.',
+    category: 'frame',
+    categoryLabel: 'Khung Avatar',
+    price: 700,
+    isConsumable: false,
+    imageSource: require('../../assets/images/frames/frame_cherry_blossom.webp'),
+    bgColorClass: 'bg-pink-50',
+    badgeLabel: 'GIỚI HẠN'
+  },
+  {
+    id: 'frame_legendary',
+    name: 'Huyền Thoại Bất Hủ',
+    description: 'A lifetime of learning. Đôi cánh hoàng kim vương giả bao bọc tinh thể kim cương lam ngọc.',
+    category: 'frame',
+    categoryLabel: 'Khung Avatar',
+    price: 1500,
+    isConsumable: false,
+    imageSource: require('../../assets/images/frames/frame_legendary.webp'),
+    bgColorClass: 'bg-amber-100',
+    badgeLabel: 'HUYỀN THOẠI'
   },
 
   // --- 3. SPECIAL & THEMES ---
@@ -192,6 +276,7 @@ export default function ShopScreen() {
   const [isPurchasing, setIsPurchasing] = useState(false);
   const [purchaseSuccess, setPurchaseSuccess] = useState(false);
   const [outOfCoinItem, setOutOfCoinItem] = useState<ShopItemType | null>(null);
+  const [showFrameShowcase, setShowFrameShowcase] = useState(false);
 
   // Synchronize item status with shared inventory
   const enrichedItems: ShopItemType[] = RAW_SHOP_ITEMS.map(rawItem => {
@@ -414,6 +499,37 @@ export default function ShopScreen() {
           </View>
         )}
 
+        {/* AVATAR FRAMES SHOWCASE BANNER */}
+        {(activeCategory === 'all' || activeCategory === 'frame') && (
+          <Pressable
+            onPress={() => setShowFrameShowcase(true)}
+            className="mb-5 rounded-[26px] p-4 border-2 border-b-4 border-purple-500 bg-purple-900 overflow-hidden relative shadow-md active:scale-[0.99] transition-all"
+          >
+            <View className="flex-row items-center justify-between">
+              <View className="flex-1 pr-3">
+                <View className="flex-row items-center gap-1.5 mb-1">
+                  <View className="bg-amber-400 px-2 py-0.5 rounded-full">
+                    <Text className="text-[10px] font-extrabold text-mascot-navy">MỚI</Text>
+                  </View>
+                  <Text className="text-amber-300 font-bold text-[12px] font-nunito uppercase tracking-wide">
+                    Avatar Frames Series
+                  </Text>
+                </View>
+                <Text className="text-white font-extrabold text-[17px] font-nunito leading-tight mb-1">
+                  Phòng Thử 10 Khung Hoạt Ảnh
+                </Text>
+                <Text className="text-purple-200 font-medium text-[12px] font-inter">
+                  Xem thử các hiệu ứng động lồng trực tiếp với bé Snapy & avatar của bạn!
+                </Text>
+              </View>
+              <View className="bg-white/10 px-3.5 py-2.5 rounded-2xl border border-white/20 items-center justify-center">
+                <SparklesIcon size={22} color="#FDE047" />
+                <Text className="text-white font-extrabold text-[11px] font-nunito mt-1">THỬ NGAY</Text>
+              </View>
+            </View>
+          </Pressable>
+        )}
+
         {/* SECTION HEADER */}
         <View className="flex-row items-center justify-between mb-3.5 px-1">
           <Text className="font-extrabold text-[18px] text-mascot-navy font-nunito">
@@ -459,6 +575,16 @@ export default function ShopScreen() {
         item={outOfCoinItem}
         userCoins={economy.coins}
         onClose={() => setOutOfCoinItem(null)}
+      />
+
+      {/* 4.3. Interactive Avatar Frame Showcase Modal */}
+      <AvatarFrameShowcaseModal
+        visible={showFrameShowcase}
+        onClose={() => setShowFrameShowcase(false)}
+        equippedFrameId={economy.inventory.find(i => i.category === 'frame' && i.state === 'equipped')?.frameId || null}
+        onEquip={(fId) => {
+          economyStore.equipFrame(fId);
+        }}
       />
     </View>
   );

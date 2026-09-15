@@ -37,33 +37,31 @@ export function LearningHeader({
 
   return (
     <View className="px-5 pt-3 pb-3">
-      {/* Hàng tiêu đề chính & XP Badge */}
-      <View className="flex-row items-center justify-between mb-2">
-        <View className="flex-1 pr-2">
-          <Text className="text-[24px] font-extrabold text-neutral-800 font-nunito tracking-tight">
-            Học tập
-          </Text>
-          <Text className="text-[13px] font-medium text-neutral-500 font-inter mt-0.5" numberOfLines={1}>
-            {getEncouragement()}
-          </Text>
-        </View>
-
-        {/* XP Badge với token reward chuẩn, không viền đen */}
-        <View className="flex-row items-center gap-1.5 bg-reward-50 border border-reward-200 px-2.5 py-1.5 rounded-xl shrink-0">
-          <XPOrb3D size="xs" />
-          <Text className="font-extrabold text-[12px] text-reward-700 font-nunito">
-            +{xpReward} XP
-          </Text>
-        </View>
+      {/* Hàng tiêu đề chính (chừa khoảng trống an toàn bên phải cho nút floating/dev tools) */}
+      <View className="mb-2 pr-16">
+        <Text className="text-[24px] font-extrabold text-neutral-800 font-nunito tracking-tight">
+          Học tập
+        </Text>
+        <Text className="text-[13px] font-medium text-neutral-500 font-inter mt-0.5 leading-snug">
+          {getEncouragement()}
+        </Text>
       </View>
 
       {/* Thanh tiến độ mục tiêu ngày */}
       {hubState !== 'newUser' && (
         <View className="mt-1">
           <View className="flex-row items-center justify-between mb-1.5">
-            <Text className="text-[11px] font-extrabold text-neutral-400 uppercase tracking-wider font-nunito">
-              MỤC TIÊU HÔM NAY
-            </Text>
+            <View className="flex-row items-center gap-2">
+              <Text className="text-[11px] font-extrabold text-neutral-400 uppercase tracking-wider font-nunito">
+                MỤC TIÊU HÔM NAY
+              </Text>
+              <View className="flex-row items-center gap-1 bg-reward-50 border border-reward-200 px-2 py-0.5 rounded-md">
+                <XPOrb3D size="xs" />
+                <Text className="font-extrabold text-[11px] text-reward-700 font-nunito tabular-nums">
+                  +{xpReward} XP
+                </Text>
+              </View>
+            </View>
             <Text className="text-[12px] font-bold text-neutral-600 font-nunito tabular-nums">
               {learned}/{target} từ · {progressPercent}%
             </Text>

@@ -628,30 +628,28 @@ export default function HomeDashboard() {
               <View className="divide-y divide-neutral-100">
                 {data.missions.map(m => (
                   <View key={m.id} className="py-3 flex-row items-center justify-between first:pt-0 last:pb-0">
-                    <View className="flex-row items-center gap-3 flex-1 pr-3">
+                    <View className="flex-row items-center gap-3 flex-1 min-w-0 pr-3">
                       {m.completed ? (
                         <CheckCircle2Icon size={22} fill="#58CC02" className="text-white shrink-0" />
                       ) : (
                         <CircleIcon size={22} className="text-neutral-300 shrink-0" />
                       )}
                       
-                      <View className="flex-1">
-                        <View className="flex-row items-center justify-between mb-1">
-                          <Text className={cn("font-bold text-[14px] font-inter", m.completed ? "text-neutral-400 line-through" : "text-mascot-navy")}>
-                            {m.title}
-                          </Text>
-                          {!m.completed && (
-                            <Text className="text-[12px] font-extrabold text-neutral-400 font-nunito tabular-nums">
+                      <View className="flex-1 min-w-0">
+                        <Text className={cn("font-bold text-[14px] font-inter leading-snug", m.completed ? "text-neutral-400 line-through" : "text-mascot-navy")}>
+                          {m.title}
+                        </Text>
+                        {!m.completed && (
+                          <View className="flex-row items-center gap-2 mt-1.5">
+                            <View className="flex-1 h-2 bg-neutral-100 rounded-full overflow-hidden">
+                              <View 
+                                className="h-full bg-primary-500 rounded-full" 
+                                style={{ width: `${Math.min(100, Math.round((m.progress / m.total) * 100))}%` }}
+                              />
+                            </View>
+                            <Text className="text-[11px] font-extrabold text-neutral-400 font-nunito tabular-nums shrink-0">
                               {m.progress}/{m.total}
                             </Text>
-                          )}
-                        </View>
-                        {!m.completed && (
-                          <View className="h-2 bg-neutral-100 rounded-full overflow-hidden mt-0.5">
-                            <View 
-                              className="h-full bg-primary-500 rounded-full" 
-                              style={{ width: `${(m.progress / m.total) * 100}%` }}
-                            />
                           </View>
                         )}
                       </View>
@@ -701,30 +699,46 @@ export default function HomeDashboard() {
               className="px-5" 
               contentContainerStyle={{ gap: 10, paddingRight: 36 }}
             >
-              {data.recentWords.map((word, i) => (
-                <Pressable 
-                  key={i} 
-                  onPress={() => router.push(`/dictionary` as any)}
-                  className="bg-white rounded-2xl px-4 py-3.5 border border-neutral-200/80 active:bg-neutral-50 shadow-xs min-w-[140px]"
-                >
-                  <View className="flex-row items-center justify-between mb-1">
-                    <Text className="font-extrabold text-[16px] text-mascot-navy font-nunito">
-                      {word.word}
-                    </Text>
-                    <View className="bg-primary-50 px-1.5 py-0.5 rounded border border-primary-200">
-                      <Text className="text-[10px] font-extrabold text-primary-700 font-nunito">
-                        {word.mastery}
+              {data.recentWords.map((word, i) => {
+                const getMasteryBadge = (mastery: string) => {
+                  switch (mastery) {
+                    case 'Thuần thục':
+                      return { bg: 'bg-emerald-50', border: 'border-emerald-200', text: 'text-emerald-700' };
+                    case 'Đang nhớ':
+                      return { bg: 'bg-amber-50', border: 'border-amber-200', text: 'text-amber-700' };
+                    case 'Mới học':
+                      return { bg: 'bg-sky-50', border: 'border-sky-200', text: 'text-sky-700' };
+                    default:
+                      return { bg: 'bg-primary-50', border: 'border-primary-200', text: 'text-primary-700' };
+                  }
+                };
+                const badge = getMasteryBadge(word.mastery);
+
+                return (
+                  <Pressable 
+                    key={i} 
+                    onPress={() => router.push(`/dictionary` as any)}
+                    className="bg-white rounded-2xl px-4 py-3.5 border border-neutral-200/80 active:bg-neutral-50 shadow-xs min-w-[155px] shrink-0"
+                  >
+                    <View className="flex-row items-center justify-between gap-3 mb-1">
+                      <Text className="font-extrabold text-[16px] text-mascot-navy font-nunito" numberOfLines={1}>
+                        {word.word}
                       </Text>
+                      <View className={cn("px-2 py-0.5 rounded border shrink-0", badge.bg, badge.border)}>
+                        <Text className={cn("text-[10px] font-extrabold font-nunito", badge.text)}>
+                          {word.mastery}
+                        </Text>
+                      </View>
                     </View>
-                  </View>
-                  <Text className="font-medium text-[12px] text-neutral-400 font-inter mb-0.5">
-                    {word.ipa}
-                  </Text>
-                  <Text className="font-semibold text-[13px] text-neutral-600 font-inter" numberOfLines={1}>
-                    {word.translation}
-                  </Text>
-                </Pressable>
-              ))}
+                    <Text className="font-medium text-[12px] text-neutral-400 font-inter mb-0.5">
+                      {word.ipa}
+                    </Text>
+                    <Text className="font-semibold text-[13px] text-neutral-600 font-inter" numberOfLines={1}>
+                      {word.translation}
+                    </Text>
+                  </Pressable>
+                );
+              })}
             </ScrollView>
           </View>
 

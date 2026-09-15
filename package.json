@@ -3,6 +3,8 @@
   "main": "expo-router/entry",
   "version": "1.0.0",
   "scripts": {
+    "postinstall": "node scripts/patch-nativewind-diagnostics.cjs",
+    "test:nativewind-diagnostics": "node scripts/test-nativewind-diagnostics.cjs",
     "start": "expo start",
     "dev": "expo start -c",
     "android": "expo start -c --android",
