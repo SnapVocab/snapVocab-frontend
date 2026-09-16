@@ -9,7 +9,7 @@
     "dev": "expo start -c",
     "android": "expo start -c --android",
     "ios": "expo start -c --ios",
-    "web": "expo start -c --web",
+    "web": "expo start --web --port 8082",
     "clean": "rm -rf .expo node_modules"
   },
   "dependencies": {
