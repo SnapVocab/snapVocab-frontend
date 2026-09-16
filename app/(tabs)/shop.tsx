@@ -120,7 +120,7 @@ const RAW_SHOP_ITEMS: Omit<ShopItemType, 'isOwned' | 'quantityOwned'>[] = [
     categoryLabel: 'Khung Avatar',
     price: 350,
     isConsumable: false,
-    imageSource: require('../../assets/images/frames/frame_bronze_learner.webp'),
+    imageSource: require('../../assets/images/frames/frame_bronze_learner_anim.webp'),
     bgColorClass: 'bg-amber-50',
     badgeLabel: 'BẮT ĐẦU'
   },
@@ -132,7 +132,7 @@ const RAW_SHOP_ITEMS: Omit<ShopItemType, 'isOwned' | 'quantityOwned'>[] = [
     categoryLabel: 'Khung Avatar',
     price: 600,
     isConsumable: false,
-    imageSource: require('../../assets/images/frames/frame_silver_scholar.webp'),
+    imageSource: require('../../assets/images/frames/frame_silver_scholar_anim.webp'),
     bgColorClass: 'bg-sky-50'
   },
   {
@@ -143,7 +143,7 @@ const RAW_SHOP_ITEMS: Omit<ShopItemType, 'isOwned' | 'quantityOwned'>[] = [
     categoryLabel: 'Khung Avatar',
     price: 950,
     isConsumable: false,
-    imageSource: require('../../assets/images/frames/frame_golden_wordsmith.webp'),
+    imageSource: require('../../assets/images/frames/frame_golden_wordsmith_anim.webp'),
     bgColorClass: 'bg-yellow-50',
     badgeLabel: 'SỬ THI'
   },
@@ -155,7 +155,7 @@ const RAW_SHOP_ITEMS: Omit<ShopItemType, 'isOwned' | 'quantityOwned'>[] = [
     categoryLabel: 'Khung Avatar',
     price: 850,
     isConsumable: false,
-    imageSource: require('../../assets/images/frames/frame_fire_streak.webp'),
+    imageSource: require('../../assets/images/frames/frame_fire_streak_anim.webp'),
     bgColorClass: 'bg-orange-50',
     badgeLabel: 'HOT STREAK'
   },
@@ -167,7 +167,7 @@ const RAW_SHOP_ITEMS: Omit<ShopItemType, 'isOwned' | 'quantityOwned'>[] = [
     categoryLabel: 'Khung Avatar',
     price: 550,
     isConsumable: false,
-    imageSource: require('../../assets/images/frames/frame_nature_explorer.webp'),
+    imageSource: require('../../assets/images/frames/frame_nature_explorer_anim.webp'),
     bgColorClass: 'bg-emerald-50'
   },
   {
@@ -178,7 +178,7 @@ const RAW_SHOP_ITEMS: Omit<ShopItemType, 'isOwned' | 'quantityOwned'>[] = [
     categoryLabel: 'Khung Avatar',
     price: 880,
     isConsumable: false,
-    imageSource: require('../../assets/images/frames/frame_night_owl.webp'),
+    imageSource: require('../../assets/images/frames/frame_night_owl_anim.webp'),
     bgColorClass: 'bg-purple-50',
     badgeLabel: 'DẠ QUANG'
   },
@@ -190,7 +190,7 @@ const RAW_SHOP_ITEMS: Omit<ShopItemType, 'isOwned' | 'quantityOwned'>[] = [
     categoryLabel: 'Khung Avatar',
     price: 800,
     isConsumable: false,
-    imageSource: require('../../assets/images/frames/frame_ocean_voyager.webp'),
+    imageSource: require('../../assets/images/frames/frame_ocean_voyager_anim.webp'),
     bgColorClass: 'bg-cyan-50'
   },
   {
@@ -201,7 +201,7 @@ const RAW_SHOP_ITEMS: Omit<ShopItemType, 'isOwned' | 'quantityOwned'>[] = [
     categoryLabel: 'Khung Avatar',
     price: 1100,
     isConsumable: false,
-    imageSource: require('../../assets/images/frames/frame_space_dreamer.webp'),
+    imageSource: require('../../assets/images/frames/frame_space_dreamer_anim.webp'),
     bgColorClass: 'bg-fuchsia-50',
     badgeLabel: 'KHÁM PHÁ'
   },
@@ -213,7 +213,7 @@ const RAW_SHOP_ITEMS: Omit<ShopItemType, 'isOwned' | 'quantityOwned'>[] = [
     categoryLabel: 'Khung Avatar',
     price: 700,
     isConsumable: false,
-    imageSource: require('../../assets/images/frames/frame_cherry_blossom.webp'),
+    imageSource: require('../../assets/images/frames/frame_cherry_blossom_anim.webp'),
     bgColorClass: 'bg-pink-50',
     badgeLabel: 'GIỚI HẠN'
   },
@@ -225,7 +225,7 @@ const RAW_SHOP_ITEMS: Omit<ShopItemType, 'isOwned' | 'quantityOwned'>[] = [
     categoryLabel: 'Khung Avatar',
     price: 1500,
     isConsumable: false,
-    imageSource: require('../../assets/images/frames/frame_legendary.webp'),
+    imageSource: require('../../assets/images/frames/frame_legendary_anim.webp'),
     bgColorClass: 'bg-amber-100',
     badgeLabel: 'HUYỀN THOẠI'
   },

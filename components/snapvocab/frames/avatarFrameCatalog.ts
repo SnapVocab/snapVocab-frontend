@@ -34,7 +34,7 @@ export const AVATAR_FRAME_CATALOG: Record<string, AvatarFrameDefinition> = {
     accentColor: '#D48F38',
     bgBadgeClass: 'bg-amber-50 text-amber-700 border-amber-200',
     pngSource: require('../../../assets/images/frames/frame_bronze_learner.png'),
-    webpSource: require('../../../assets/images/frames/frame_bronze_learner.webp'),
+    webpSource: require('../../../assets/images/frames/frame_bronze_learner_anim.webp'),
   },
   frame_silver_scholar: {
     id: 'frame_silver_scholar',
@@ -51,7 +51,7 @@ export const AVATAR_FRAME_CATALOG: Record<string, AvatarFrameDefinition> = {
     accentColor: '#38BDF8',
     bgBadgeClass: 'bg-sky-50 text-sky-700 border-sky-200',
     pngSource: require('../../../assets/images/frames/frame_silver_scholar.png'),
-    webpSource: require('../../../assets/images/frames/frame_silver_scholar.webp'),
+    webpSource: require('../../../assets/images/frames/frame_silver_scholar_anim.webp'),
   },
   frame_golden_wordsmith: {
     id: 'frame_golden_wordsmith',
@@ -68,7 +68,7 @@ export const AVATAR_FRAME_CATALOG: Record<string, AvatarFrameDefinition> = {
     accentColor: '#EAB308',
     bgBadgeClass: 'bg-yellow-50 text-yellow-800 border-yellow-300',
     pngSource: require('../../../assets/images/frames/frame_golden_wordsmith.png'),
-    webpSource: require('../../../assets/images/frames/frame_golden_wordsmith.webp'),
+    webpSource: require('../../../assets/images/frames/frame_golden_wordsmith_anim.webp'),
   },
   frame_fire_streak: {
     id: 'frame_fire_streak',
@@ -85,7 +85,7 @@ export const AVATAR_FRAME_CATALOG: Record<string, AvatarFrameDefinition> = {
     accentColor: '#F97316',
     bgBadgeClass: 'bg-orange-50 text-orange-700 border-orange-300',
     pngSource: require('../../../assets/images/frames/frame_fire_streak.png'),
-    webpSource: require('../../../assets/images/frames/frame_fire_streak.webp'),
+    webpSource: require('../../../assets/images/frames/frame_fire_streak_anim.webp'),
   },
   frame_nature_explorer: {
     id: 'frame_nature_explorer',
@@ -102,7 +102,7 @@ export const AVATAR_FRAME_CATALOG: Record<string, AvatarFrameDefinition> = {
     accentColor: '#58CC02',
     bgBadgeClass: 'bg-emerald-50 text-emerald-700 border-emerald-200',
     pngSource: require('../../../assets/images/frames/frame_nature_explorer.png'),
-    webpSource: require('../../../assets/images/frames/frame_nature_explorer.webp'),
+    webpSource: require('../../../assets/images/frames/frame_nature_explorer_anim.webp'),
   },
   frame_night_owl: {
     id: 'frame_night_owl',
@@ -119,7 +119,7 @@ export const AVATAR_FRAME_CATALOG: Record<string, AvatarFrameDefinition> = {
     accentColor: '#9333EA',
     bgBadgeClass: 'bg-purple-50 text-purple-700 border-purple-200',
     pngSource: require('../../../assets/images/frames/frame_night_owl.png'),
-    webpSource: require('../../../assets/images/frames/frame_night_owl.webp'),
+    webpSource: require('../../../assets/images/frames/frame_night_owl_anim.webp'),
   },
   frame_ocean_voyager: {
     id: 'frame_ocean_voyager',
@@ -132,11 +132,11 @@ export const AVATAR_FRAME_CATALOG: Record<string, AvatarFrameDefinition> = {
     price: 800,
     currency: 'coins',
     tag: 'PHIÊU LƯU',
-    glowColor: 'rgba(14, 165, 233, 0.6)',
+    glowColor: 'rgba(147, 51, 234, 0.6)',
     accentColor: '#0EA5E9',
     bgBadgeClass: 'bg-cyan-50 text-cyan-700 border-cyan-200',
     pngSource: require('../../../assets/images/frames/frame_ocean_voyager.png'),
-    webpSource: require('../../../assets/images/frames/frame_ocean_voyager.webp'),
+    webpSource: require('../../../assets/images/frames/frame_ocean_voyager_anim.webp'),
   },
   frame_space_dreamer: {
     id: 'frame_space_dreamer',
@@ -153,7 +153,7 @@ export const AVATAR_FRAME_CATALOG: Record<string, AvatarFrameDefinition> = {
     accentColor: '#A855F7',
     bgBadgeClass: 'bg-fuchsia-50 text-fuchsia-700 border-fuchsia-200',
     pngSource: require('../../../assets/images/frames/frame_space_dreamer.png'),
-    webpSource: require('../../../assets/images/frames/frame_space_dreamer.webp'),
+    webpSource: require('../../../assets/images/frames/frame_space_dreamer_anim.webp'),
   },
   frame_cherry_blossom: {
     id: 'frame_cherry_blossom',
@@ -170,7 +170,7 @@ export const AVATAR_FRAME_CATALOG: Record<string, AvatarFrameDefinition> = {
     accentColor: '#F472B6',
     bgBadgeClass: 'bg-pink-50 text-pink-700 border-pink-200',
     pngSource: require('../../../assets/images/frames/frame_cherry_blossom.png'),
-    webpSource: require('../../../assets/images/frames/frame_cherry_blossom.webp'),
+    webpSource: require('../../../assets/images/frames/frame_cherry_blossom_anim.webp'),
   },
   frame_legendary: {
     id: 'frame_legendary',
@@ -187,7 +187,7 @@ export const AVATAR_FRAME_CATALOG: Record<string, AvatarFrameDefinition> = {
     accentColor: '#38BDF8',
     bgBadgeClass: 'bg-amber-100 text-amber-900 border-amber-400',
     pngSource: require('../../../assets/images/frames/frame_legendary.png'),
-    webpSource: require('../../../assets/images/frames/frame_legendary.webp'),
+    webpSource: require('../../../assets/images/frames/frame_legendary_anim.webp'),
   },
 };
 

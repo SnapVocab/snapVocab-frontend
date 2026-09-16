@@ -17,7 +17,8 @@
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#FFB830"
-      }
+      },
+      "package": "com.thanhthbmsteam.mobile"
     },
     "web": {
       "bundler": "metro",
@@ -38,6 +39,13 @@
     ],
     "experiments": {
       "typedRoutes": true
-    }
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "31cdae48-aec6-49b0-9338-d3f3604b5471"
+      }
+    },
+    "owner": "thanhthbms-team"
   }
 }
