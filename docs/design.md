@@ -26,7 +26,7 @@ Sáu nguyên tắc dưới đây quyết định mọi tranh luận về UI. Khi
 | 2 | **Chunky và bấm được** | Mọi thứ tương tác được phải dày, bo tròn, có chiều sâu vật lý. Không có element mảnh, mờ, hay "tinh tế". | Button ≥ 48px cao, border-bottom ≥ 4px, radius ≥ 12px |
 | 3 | **Phản hồi tức thì** | Mọi tương tác trả về tín hiệu thị giác trong ≤ 200ms. Không có trạng thái "im lặng". | Không có `onPress` nào thiếu pressed state |
 | 4 | **Khen cụ thể, sai không phạt** | Mừng thành công lớn tiếng; báo sai thì kèm lý do và đường ra, không kèm sắc đỏ gắt. | Mọi trạng thái sai phải có explanation + CTA (§07.4, §07.5) |
-| 5 | **Gold chỉ dành cho phần thưởng** | `reward-500` không bao giờ xuất hiện ở CTA, link, hay trạng thái hệ thống. | Grep `reward-` chỉ thấy trong XP/Coin/Chest/Badge/Mastered |
+| 5 | **Gold chỉ dành cho phần thưởng** | `reward-500` không bao giờ xuất hiện ở CTA, link, hay trạng thái hệ thống. | Grep `reward-` chỉ thấy trong XP/Coin/Mission reward/Badge/Mastered |
 | 6 | **Tối đa 3 accent một khung** | Trong một screen state, không hiện đồng thời hơn 3 trong 6 accent ở §03. | Review từng screen state, không phải từng component |
 
 ### 1.1. Ba thứ SnapVocab từ chối làm
@@ -43,7 +43,7 @@ Sáu nguyên tắc dưới đây quyết định mọi tranh luận về UI. Khi
 | --- | --- |
 | Tên sản phẩm | **SnapVocab** |
 | Một câu định vị | Học từ vựng tiếng Anh bằng cách chụp lại thế giới quanh bạn |
-| Mascot | **Snapy** — cáo cam. Spec đầy đủ: [design/mascot_snapy.md](./design/mascot_snapy.md) |
+| Mascot | **Snapy** — cáo cam. Spec đầy đủ: [design/mascot_snapy.md](./mascot_snapy.md) |
 | Màu thương hiệu app | `primary-500` `#58CC02` (xanh lá) — dùng cho CTA, tiến độ, trả lời đúng |
 | Màu thương hiệu nhân vật | `mascot-500` `#FF8A00` (cam) — dùng cho Snapy, streak, tag SCAN |
 | Đại từ chỉ Snapy | Tiếng Việt: "Snapy"/"mình". Tiếng Anh: `they/them`. **Không** "cậu ấy/cô ấy" |
@@ -57,7 +57,7 @@ Xanh lá là màu **hành động của app** (bấm, đúng, tiến bộ). Cam 
 
 | Asset | Giá trị | Ghi chú |
 | --- | --- | --- |
-| App icon | Snapy `expr_wink` bust trên gradient `#FFB65C → #FF8A00` | Camera badge phải đọc được ở 48px ([mascot_snapy.md §9](./design/mascot_snapy.md)) |
+| App icon | Snapy `expr_wink` bust trên gradient `#FFB65C → #FF8A00` | Camera badge phải đọc được ở 48px ([mascot_snapy.md §9](./mascot_snapy.md)) |
 | Splash background | `#FF8A00` | Đồng bộ với gradient icon; đã sửa từ `#FF6C00` |
 | Android adaptive icon bg | `#FF8A00` | Cùng giá trị với splash |
 
@@ -70,13 +70,13 @@ Xanh lá là màu **hành động của app** (bấm, đúng, tiến bộ). Cam 
 | Token | Hex | Vai trò **duy nhất** | Không bao giờ dùng cho |
 | --- | --- | --- | --- |
 | `primary-500` | `#58CC02` | CTA chính, trả lời đúng, progress fill, trạng thái Mastered-ring | Phần thưởng, streak, Snapy |
-| `reward-500` | `#FFC42E` | XP, Coin, Chest, Badge, ngôi sao, huy hiệu Mastered | CTA, link, warning hệ thống |
+| `reward-500` | `#FFC42E` | XP, Coin, Mission reward, Badge, ngôi sao, huy hiệu Mastered | CTA, link, warning hệ thống |
 | `mascot-500` | `#FF8A00` | Snapy, streak flame, tag `SCAN` | CTA, trạng thái đúng/sai |
 | `info-500` | `#1CB0F6` | Link, tag `DICT`, hint, nút phụ, nút 🔊 | Trạng thái đúng/sai |
 | `warning-500` | `#F59E0B` | Cảnh báo hệ thống: quota, hết lượt scan, độ tin cậy thấp | Phần thưởng (dùng `reward-500`) |
 | `danger-500` | `#EF4444` | Lỗi hệ thống, hành động phá hủy (xoá deck) | **Trả lời sai** (dùng `error-soft`, §07.4) |
 
-> **Kiểm tra §01.5:** `reward-*` chỉ được phép xuất hiện trong component XP / Coin / Chest / Badge / Mastered. Nếu grep thấy ở chỗ khác thì là bug.
+> **Kiểm tra §01.5:** `reward-*` chỉ được phép xuất hiện trong component XP / Coin / Mission reward / Badge / Mastered. Nếu grep thấy ở chỗ khác thì là bug.
 >
 > **Kiểm tra §01.6:** tối đa 3 trong 6 accent trên một screen state. Ví dụ Home hợp lệ: `primary` (CTA Học ngay) + `reward` (XP bar) + `mascot` (streak). Thêm `info` cho link "Xem tất cả" là **vi phạm** — link ở Home dùng `neutral-600`.
 
@@ -99,18 +99,18 @@ Xanh lá là màu **hành động của app** (bấm, đúng, tiến bộ). Cam 
 
 | Token | Hex | Dùng ở |
 | --- | --- | --- |
-| `reward-50` | `#FFF9E6` | Nền badge/chest chưa mở |
+| `reward-50` | `#FFF9E6` | Nền badge chưa đạt |
 | `reward-100` | `#FFEFB8` | Nền chip XP |
-| `reward-300` | `#FFDA6B` | Glow ngoài của chest, sparkle |
+| `reward-300` | `#FFDA6B` | Glow ngoài của reward vừa nhận, sparkle |
 | `reward-500` | `#FFC42E` | **Base** — icon XP/Coin/Star, fill badge |
 | `reward-600` | `#E5A800` | Hover, viền icon |
 | `reward-700` | `#B37F00` | **Text** trên nền `reward-100` (đủ contrast, §12.1) |
 
-> `reward-500` là màu **lấy từ ngôi sao trong [mascot_snapy.md §4](./design/mascot_snapy.md)**, không phải màu vàng của Owl Green (`#FFC800`). Chọn `#FFC42E` để tách khỏi `mascot-500 #FF8A00` rõ hơn trên màn hình có cả streak và XP.
+> `reward-500` là màu **lấy từ ngôi sao trong [mascot_snapy.md §4](./mascot_snapy.md)**, không phải màu vàng của Owl Green (`#FFC800`). Chọn `#FFC42E` để tách khỏi `mascot-500 #FF8A00` rõ hơn trên màn hình có cả streak và XP.
 
 ### 3.4. Mascot palette — **chỉ dùng cho Snapy**
 
-Bảng này là **bản sao chỉ-đọc** từ [mascot_snapy.md §3](./design/mascot_snapy.md). Không được dùng các token này cho UI chrome, và không được sửa ở đây — sửa ở `mascot_snapy.md` rồi đồng bộ về.
+Bảng này là **bản sao chỉ-đọc** từ [mascot_snapy.md §3](./mascot_snapy.md). Không được dùng các token này cho UI chrome, và không được sửa ở đây — sửa ở `mascot_snapy.md` rồi đồng bộ về.
 
 | Token | Hex | Vai trò |
 | --- | --- | --- |
@@ -261,7 +261,7 @@ Chiều sâu của SnapVocab đến từ **viền dưới màu đậm hơn**, t�
 | `elev-3` | `0 4px 12px rgba(23,26,47,0.15)` + bottom border 3px | Modal, bottom sheet, popup Snapy |
 | `elev-focus` | Ring 3px `ring` @ 35% | Focus ring (§12.3) |
 | `elev-correct` | Glow 16px `primary-500` @ 30% | Trả lời đúng |
-| `elev-reward` | Glow 24px `reward-300` @ 40%, tắt sau 2s | Badge/Chest vừa nhận |
+| `elev-reward` | Glow 24px `reward-300` @ 40%, tắt sau 2s | Badge/Mission reward vừa nhận |
 
 **Cặp màu bottom border:**
 
@@ -300,13 +300,13 @@ Cao **50px** (`md`), padding ngang 24px, `radius-lg` 16px, nhãn `button` (Nunit
 - **Pressed:** `translateY(2px)`, bottom border → 2px, fill → bậc `-600`.
 - **Disabled:** opacity 0.4, không hover/focus effect, bỏ bottom border. **Kèm lý do** — nếu button bị disable thì phải có text giải thích cạnh nó (§13.4).
 - **Loading:** giữ nguyên chiều rộng, thay nhãn bằng spinner, `accessibilityState.busy = true`.
-- `reward` variant chỉ dùng cho nút "Nhận thưởng"/"Mở rương" (§01.5).
+- `reward` variant chỉ dùng cho nút "Nhận thưởng" (§01.5).
 
 ### 6.2. Card
 
 `card` fill, border 2px `border`, `radius-lg` 16px, padding 20px, `elev-2`. Hover/press: `elev-3`, transition 200ms.
 
-Biến thể: **Vocabulary Card** (§07.1), **Flashcard** (§07.2), **Detected Item Card** (§08.5), **Mission Card** (§10.5), **Chest Card** (§10.6), **Stat Card** (số `numeral` căn giữa + nhãn `caption`).
+Biến thể: **Vocabulary Card** (§07.1), **Flashcard** (§07.2), **Detected Item Card** (§08.5), **Mission Card** (§10.5), **Stat Card** (số `numeral` căn giữa + nhãn `caption`).
 
 ### 6.3. Input
 
@@ -363,7 +363,7 @@ Pill `radius-full`, fill `info-500` @ 12%, viền 2px `info-500`, icon đồng h
 
 ### 6.10. Cosmetic Item
 
-Ô vuông 96×96, `radius-lg`, fill `muted`, ảnh item căn giữa 64px. Trạng thái: **Đang dùng** (viền 3px `primary-500` + tick góc trên phải), **Đã sở hữu** (viền 2px `border`), **Chưa mở** (opacity 0.5 + giá Coin ở footer). Khung avatar và huy hiệu đặc biệt từ Rương Vàng gắn tag `reward-500` "Đặc biệt".
+Ô vuông 96×96, `radius-lg`, fill `muted`, ảnh item căn giữa 64px. Trạng thái: **Đang dùng** (viền 3px `primary-500` + tick góc trên phải), **Đã sở hữu** (viền 2px `border`), **Chưa mở** (opacity 0.5 + giá Coin ở footer). Vật phẩm chỉ nhận qua reward nhiệm vụ (`purchasable = false`) gắn tag `reward-500` "Đặc biệt".
 
 ### 6.11. Avatar
 
@@ -483,7 +483,7 @@ Bắt buộc xuất hiện sau **mọi** câu sai, và có thể mở được s
 
 Overlay `rgba(13,14,26,0.72)` phủ toàn màn hình, nội dung căn giữa:
 
-1. Snapy `pose_scanning` + animation `scan_pulse` (1200ms, lặp vô hạn — [mascot_snapy.md §8](./design/mascot_snapy.md)).
+1. Snapy `pose_scanning` + animation `scan_pulse` (1200ms, lặp vô hạn — [mascot_snapy.md §8](./mascot_snapy.md)).
 2. Dòng chính: **"Mắt thần đang nhìn... Đợi chút nhé!"** — `h3`, trắng.
 3. Vị trí hàng đợi nếu có: "Đang xếp thứ 2" — `caption`, `neutral-100`.
 4. Nút **"Huỷ"** variant `ghost` chữ trắng — luôn có, không bao giờ khoá người dùng trong overlay.
@@ -572,14 +572,14 @@ Bốn trạng thái UI **suy ra** từ FSRS, không lưu riêng. Quy tắc dẫn
 | --- | --- | --- | --- | --- | --- |
 | **New** | `state = NEW` | Từ mới | `muted` | `neutral-700` | ○ tròn rỗng |
 | **Learning** | `state = LEARNING` hoặc `RELEARNING` | Đang học | `info-500` @ 14% | `#0B6E9C` | ◐ tròn nửa |
-| **Reviewing** | `state = REVIEW` và `interval < 21 ngày` | Đang ôn | `primary-100` | `primary-800` | ◕ tròn gần đầy |
-| **Mastered** | `state = REVIEW` và `interval ≥ 21 ngày` | Đã thuộc | `reward-100` | `reward-700` | ★ ngôi sao `reward-500` |
+| **Reviewing** | `state = REVIEW` và `stability < 21` | Đang ôn | `primary-100` | `primary-800` | ◕ tròn gần đầy |
+| **Mastered** | `state = REVIEW` và `stability ≥ 21` | Đã thuộc | `reward-100` | `reward-700` | ★ ngôi sao `reward-500` |
 
 ### 9.1. Quy tắc bắt buộc
 
 - **Badge luôn có chữ.** Không có phiên bản chỉ-icon hay chỉ-màu của learning state (§12.2). Ở không gian rất hẹp, giữ chữ và bỏ icon — không làm ngược lại.
 - **Mastered là trạng thái duy nhất dùng màu reward** (§01.5). Đây là ngoại lệ được cấp phép: "đã thuộc" là phần thưởng học tập.
-- **Ngưỡng 21 ngày là config, không hardcode.** Mọi query đếm (`learnedCount`, `masteredCount`), mọi list filter, mọi progress, mọi mission phải đọc cùng một hằng số. Nếu ngưỡng đổi, không được có chỗ nào lệch.
+- **Ngưỡng `stability` 21 (ngày) là một hằng số dùng chung, không hardcode rải rác** (canonical: [specs.md](../../docs/spec/specs.md) FR-04 — `fsrs_records` không lưu interval). Mọi query đếm (`learnedCount`, `masteredCount`), mọi list filter, mọi progress, mọi mission phải đọc cùng một hằng số. Nếu ngưỡng đổi, không được có chỗ nào lệch.
 - `learnedCount` = Learning + Reviewing + Mastered. `dueCount` = số từ có `dueAt <= now`. `masteredCount` = số từ ở state Mastered.
 - **Chuyển state có animation.** Khi một từ lên Mastered lần đầu: badge morph 320ms + một nhịp sparkle `reward-300`. Các chuyển state khác: cross-fade 200ms, không hiệu ứng.
 - **Không dùng learning state làm thước đo con người.** Copy không so sánh người học với người khác qua số từ đã thuộc (§13.2).
@@ -601,8 +601,8 @@ Chip filter dùng đúng cặp màu ở bảng trên khi được chọn (viền
 
 ### 10.2. Coins
 
-- Kiếm từ nhiệm vụ và rương; tiêu cho Booster và Cosmetic.
-- Số Coin không đủ → nút mua vẫn **hiện** nhưng disabled + text "Cần thêm 15 Coin" cạnh nút (§13.4). Không ẩn nút, không mở popup bán hàng.
+- Kiếm từ reward của từng nhiệm vụ ngày; tiêu cho Booster và Cosmetic.
+- Số Coin không đủ → nút mua vẫn **hiện**, tone cảnh báo (không đỏ) và **bấm được** → modal hướng dẫn kiếm Coin qua nhiệm vụ ngày, không bán gì. Canonical: [shop.md](../../docs/decisions/shop.md) §11.1 — thắng bản cũ của mục này (disabled). Không ẩn nút; chỉ ghi "Cần thêm N Coin" khi số dư đã khớp server.
 - **Không có mua Coin bằng tiền thật trong UI hiện tại.** Nếu sau này có, không được đặt ở luồng cứu streak (§10.3).
 
 ### 10.3. Streak
@@ -632,6 +632,8 @@ Chỉ có **bảng xếp hạng cá nhân theo XP tuần**. Không có nhóm h�
 
 ### 10.5. Achievement & Daily Mission
 
+Nghiệp vụ canonical: [daily_mission.md](../../docs/decisions/daily_mission.md) — đúng 5 mission/ngày, claim và reward riêng từng mission; không Bonus, không Chest, không Activity Stamp, không thưởng tuần/tháng.
+
 **Mission Card:** `radius-lg`, `elev-2`, gồm icon nhiệm vụ 40px, tiêu đề `h4`, progress bar mảnh 8px + nhãn `3/5`, và phần thưởng dạng chip XP/Coin bên phải.
 
 | State | Hiển thị |
@@ -640,26 +642,9 @@ Chỉ có **bảng xếp hạng cá nhân theo XP tuần**. Không có nhóm h�
 | Hoàn thành, chưa nhận | Viền 2px `reward-500`, nút `reward` "Nhận" + glow `elev-reward` |
 | Đã nhận | Fill `muted`, tick ✓ `primary-500`, chip thưởng gạch mờ |
 
-- Nhiệm vụ **bắt buộc** và **bonus** phân biệt bằng nhãn chữ ("Bonus"), không chỉ bằng màu.
+- Mission `COMPLETED` chưa nhận hiển thị cảnh báo "Nhận trước 00:00" (hết hạn là mất thưởng).
 - **Achievement Badge:** tròn 64px, fill `reward-500`, icon trắng. Chưa đạt → fill `muted`, icon `neutral-400`, **vẫn hiện** tên và điều kiện đạt (không dùng dấu ? bí ẩn).
 - Lần đầu nhận badge: scale-in 480ms overshoot + `elev-reward` glow tắt sau 2s.
-
-### 10.6. Chest & Activity Stamp
-
-**Activity Stamp:** ô 40×40 `radius-md`. Chưa có → viền 2px dashed `border` + số ngày `caption`. Đã có → fill `primary-100` + tick `primary-600`. Tối đa 1 stamp/ngày, chỉ đóng sau khi nhận Daily Chest, và **không backfill** — ngày đã qua giữ nguyên trạng thái rỗng, không có UI "mua bù".
-
-**Weekly Chest:** 3 thẻ ngang, mỗi thẻ ghi rõ mốc và phần thưởng.
-
-| Rương | Mốc | Thưởng | Màu |
-| --- | --- | --- | --- |
-| Đồng | 3 stamp | 50 Coin | `#B87333` |
-| Bạc | 5 stamp | 100 Coin + XP Booster 1h | `#A8B0BC` |
-| Vàng | 7 stamp | 200 Coin + badge/khung avatar đặc biệt | `reward-500` |
-
-- Chưa đạt mốc: thẻ opacity 0.5 + nhãn "Còn 2 ngày nữa".
-- Đạt mốc, chưa nhận: viền 2px `reward-500` + nút `reward` "Mở rương" + nhịp bounce nhẹ 2 lần rồi dừng.
-- Đã nhận: fill `muted` + "Đã nhận ✓". Mỗi tier nhận 1 lần/tuần, **hết tuần là mất**, **không auto-claim** → phải có badge số trên tab để người dùng biết còn rương chưa mở.
-- Mở rương: confetti 1000ms + Snapy `pose_celebrate` (§11.4).
 
 ---
 
@@ -700,7 +685,7 @@ Chỉ có **bảng xếp hạng cá nhân theo XP tuần**. Không có nhóm h�
 
 ### 11.3. Snapy animation
 
-Định nghĩa đầy đủ ở [mascot_snapy.md §8](./design/mascot_snapy.md). Bảng dưới là hợp đồng sử dụng — **không được sửa thông số ở đây**.
+Định nghĩa đầy đủ ở [mascot_snapy.md §8](./mascot_snapy.md). Bảng dưới là hợp đồng sử dụng — **không được sửa thông số ở đây**.
 
 | Animation | Thời lượng | Kiểu | Dùng khi |
 | --- | --- | --- | --- |
@@ -708,7 +693,7 @@ Chỉ có **bảng xếp hạng cá nhân theo XP tuần**. Không có nhóm h�
 | `wave` | 900ms | spring damping 12 | Onboarding, chào mừng |
 | `bounce_in` | 450ms | spring overshoot 1.15 | Snapy vào màn hình |
 | `scan_pulse` | 1200ms ∞ | — | **Scan Overlay (§8.2)** |
-| `jump_celebrate` | 800ms | spring + squash/stretch | Level-up, mở rương, hoàn thành phiên |
+| `jump_celebrate` | 800ms | spring + squash/stretch | Level-up, nhận thưởng nhiệm vụ, hoàn thành phiên |
 | `ear_droop` | 600ms | — | Mất streak (1 lần, không lặp) |
 | `head_tilt` | 500ms | — | Độ tin cậy thấp, empty state |
 | `confetti` | 1000ms | — | Kèm `jump_celebrate` |
@@ -723,7 +708,7 @@ Confetti (1000ms, hạt màu `primary-500` / `reward-500` / `mascot-500` / `info
 
 1. Hoàn thành phiên học/ôn tập
 2. Level-up
-3. Mở Weekly Chest
+3. Nhận thưởng nhiệm vụ ngày
 4. Mốc streak 7/30/100 ngày
 5. Đạt achievement mới
 
@@ -786,7 +771,7 @@ Mỗi trạng thái phải mang **ít nhất 2 trong 3** tín hiệu: màu, icon
 | Source tag (§8.6) | ✓ | ✓ 📷/🔍/▦ | ✓ SCAN/DICT/TOPIC |
 | Progress (§6.4) | ✓ | — | ✓ `7/12 từ` |
 | Streak (§6.7) | ✓ | ✓ lửa fill/outline | ✓ số ngày |
-| Mission state (§10.5) | ✓ | ✓ tick | ✓ `3/5` + "Bonus" |
+| Mission state (§10.5) | ✓ | ✓ tick | ✓ `3/5` + nhãn trạng thái |
 | Trend leaderboard | ✓ | ✓ ▲▼— | — (icon + màu là đủ 2/3) |
 
 ### 12.3. Focus & keyboard
@@ -797,7 +782,7 @@ Mỗi trạng thái phải mang **ít nhất 2 trong 3** tín hiệu: màu, icon
 
 ### 12.4. Screen reader
 
-- **`alt` mô tả trạng thái, không mô tả nhân vật.** Đúng: "Đang xử lý ảnh". Sai: "Snapy con cáo đang cầm kính lúp". (Quy tắc từ [mascot_snapy.md §11.3](./design/mascot_snapy.md).)
+- **`alt` mô tả trạng thái, không mô tả nhân vật.** Đúng: "Đang xử lý ảnh". Sai: "Snapy con cáo đang cầm kính lúp". (Quy tắc từ [mascot_snapy.md §11.3](./mascot_snapy.md).)
 - Thoại của Snapy phải là **text i18n thật**, không phải chữ nằm trong ảnh — screen reader và dịch thuật đều cần đọc được.
 - Từ vựng: label đọc đủ "bicycle, xe đạp, đang học". Không đọc rời từng badge.
 - Nút 🔊 có `accessibilityLabel` "Phát âm bicycle", không phải "loa".
@@ -864,7 +849,7 @@ UI phải chịu được `fontScale` tới **200%**: mọi container cao theo n
 | Thiếu từ để tạo quiz | "Cần ít nhất 4 từ để làm quiz. Học thêm vài từ nữa nhé!" |
 | Mất streak | "Chuỗi của bạn dừng ở 12 ngày. Hôm nay bắt đầu chuỗi mới nhé!" |
 | Level-up | "Bạn lên Level 7!" |
-| Mở rương | "Rương Bạc: 100 Coin + Tăng tốc 1 giờ" |
+| Nhận thưởng nhiệm vụ | "+20 Coin · +40 XP · Trí Nhớ Siêu Phàm" |
 
 ### 13.4. Quy tắc viết
 
@@ -917,7 +902,7 @@ Dark mode là bề mặt SnapVocab tự định nghĩa — không kit tham khả
 ### 14.3. Snapy ở dark mode
 
 - Snapy **giữ nguyên** palette mascot — không làm tối lông cáo.
-- Bắt buộc thêm **rim light `mascot-rim` `#FFB65C`** viền ngoài silhouette khi Snapy đứng trên `neutral-800`/`neutral-900`, theo [mascot_snapy.md](./design/mascot_snapy.md).
+- Bắt buộc thêm **rim light `mascot-rim` `#FFB65C`** viền ngoài silhouette khi Snapy đứng trên `neutral-800`/`neutral-900`, theo [mascot_snapy.md](./mascot_snapy.md).
 - Nền illustration `mascot-bg` `#FFF8EF` **không dùng ở dark mode** — Snapy đứng trực tiếp trên `background`.
 
 ### 14.4. Ba chỗ dễ vỡ, phải kiểm riêng
@@ -987,7 +972,7 @@ Theo hệ thống mặc định, có override 3 lựa chọn trong Cài đặt: 
 
 **Don't**
 
-1. **Không dùng `reward-*` ngoài XP/Coin/Chest/Badge/Mastered** (§01.5).
+1. **Không dùng `reward-*` ngoài XP/Coin/Mission reward/Badge/Mastered** (§01.5).
 2. **Không dùng màu mascot cho UI chrome**, trừ `mascot-500` ở streak và tag `SCAN` (§03.4).
 3. **Không hardcode hex trong component.** Nếu cần một màu chưa có token, thêm token vào tài liệu này trước.
 4. **Không có element mảnh, mờ, "tinh tế".** Không border 1px cho thứ bấm được, không shadow thay cho bottom border, không text < 14px (§01.2, §04.3).

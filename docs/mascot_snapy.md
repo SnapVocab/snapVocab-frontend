@@ -2,7 +2,7 @@
 
 Tài liệu này định nghĩa **Snapy** — mascot chính thức của SnapVocab — ở mức đủ chi tiết để designer vẽ lại, animator dựng chuyển động và developer tích hợp asset vào app mà không cần hỏi lại.
 
-Tài liệu này là **source of truth cho mọi hình ảnh Snapy**. Các chỗ trong [phan_ra_man_hinh.md](../spec/phan_ra_man_hinh.md) đang ghi chung là "Mascot" (MH-ONBOARD-01, MH-MAIN-01 streak lost, MH-CAMERA-01 loading, MH-CAMERA-02 low confidence) phải dùng đúng biểu cảm ở §5 / pose ở §6 theo bảng mapping §10.
+Tài liệu này là **source of truth cho mọi hình ảnh Snapy**. Các chỗ trong [phan_ra_man_hinh.md](../../docs/spec/phan_ra_man_hinh.md) đang ghi chung là "Mascot" (MH-ONBOARD-01, MH-MAIN-01 streak lost, MH-CAMERA-01 loading, MH-CAMERA-02 low confidence) phải dùng đúng biểu cảm ở §5 / pose ở §6 theo bảng mapping §10.
 
 ---
 
@@ -151,7 +151,7 @@ Normalize theo **head width = 100**. Head height = 95 (đầu hơi bè ngang).
 
 ## 3. Bảng màu nhân vật
 
-Đây là palette **riêng của mascot**, tách khỏi UI palette trong [design.md](../design.md) (UI primary là xanh lá `#58cc02`). Snapy **không** đổi sang xanh lá; cam là màu nhận diện nhân vật, xanh lá vẫn là màu CTA của app.
+Đây là palette **riêng của mascot**, tách khỏi UI palette trong [design.md](./design.md) (UI primary là xanh lá `#58cc02`). Snapy **không** đổi sang xanh lá; cam là màu nhận diện nhân vật, xanh lá vẫn là màu CTA của app.
 
 | Token | Hex | Vai trò trên nhân vật |
 | --- | --- | --- |
@@ -198,7 +198,7 @@ Tất cả biểu cảm dựng ở **bust shot (nửa người, cắt ngang hôn
 | 3 | **Tò mò** | `curious` | Mở to, nhìn lệch lên | Miệng nhỏ khép | Một tay đưa lên gần mõm | 2 dấu `?` xanh `#4DA3FF` lệch trên-phải | Chờ người dùng chọn, câu hỏi onboarding, tìm kiếm rỗng |
 | 4 | **Tập trung** | `focus` | Sau kính tròn viền nâu, mắt hơi nheo | Khép, hơi mím | 2 tay giữ sách VOCAB mở | Không | Đang xử lý, đang học, quiz đang chạy, deep-work |
 | 5 | **Bất ngờ** | `surprised` | Mở to nhất bộ (scale mắt 115%) | Chữ `O` tròn | 2 tay hơi nâng ngang vai | Dấu `!` cam lệch trên-phải | AI nhận diện được vật thể mới, đạt milestone lần đầu |
-| 6 | **Tự hào** | `proud` | Nhắm cong lên (mắt cười) | Cười mở, đầu hơi ngửa | Tay nâng cúp vàng | Không (hoặc tia sáng nhỏ) | Level up, hoàn thành Daily Chest, hết SRS due |
+| 6 | **Tự hào** | `proud` | Nhắm cong lên (mắt cười) | Cười mở, đầu hơi ngửa | Tay nâng cúp vàng | Không (hoặc tia sáng nhỏ) | Level up, nhận thưởng một nhiệm vụ ngày, hết SRS due |
 
 ### 5.1. Biểu cảm bổ sung (không có trong key art, cần cho spec app)
 
@@ -206,7 +206,7 @@ Tất cả biểu cảm dựng ở **bust shot (nửa người, cắt ngang hôn
 | --- | --- | --- | --- | --- |
 | 7 | **Tiếc nuối** | `sad` | Tai cụp về sau, mắt mở nhưng mí trên hạ, miệng khép hơi trễ, một tay chạm nhẹ ngực. **Không nước mắt, không khóc.** | Streak về 0 (MH-MAIN-01 popup 1 lần/ngày) |
 | 8 | **Ngập ngừng** | `unsure` | Một tay gãi sau đầu, mắt lệch sang một bên, miệng méo nhẹ, 1 giọt mồ hôi nhỏ | AI confidence thấp (MH-CAMERA-02): "Hình như đây là..." |
-| 9 | **Ngủ / nghỉ** | `sleepy` | Mắt nhắm 2 vạch, bong bóng `z` nhỏ, ngồi tựa | Không có nhiệm vụ, offline lâu, "chưa có gì để ôn" |
+| 9 | **Ngủ / nghỉ** | `sleepy` | Mắt nhắm 2 vạch, bong bóng `z` nhỏ, ngồi tựa | Offline lâu, "chưa có gì để ôn" (không dùng cho màn Daily Mission: lỗi 503/mạng phải hiện trạng thái lỗi) |
 | 10 | **Động viên** | `encourage` | Mắt mở, mí thả lỏng (không nheo, không nhắm), cười khép ấm, một tay thumbs-up hoặc ngửa lòng bàn tay về phía người dùng. Ánh sáng ấm nhẹ quanh nhân vật, không confetti. | Quiz điểm thấp, người dùng bỏ giữa session, session dài, retry sau lỗi |
 
 ### 5.2. Quy tắc dựng biểu cảm
@@ -228,7 +228,7 @@ Full-body, dùng cho illustration lớn: onboarding slide, empty state, result s
 | 1 | **Chào mừng** | `welcome` | Đứng thẳng, chân hơi mở, một tay giơ ngang vai vẫy, đuôi cong sang phải | Không | MH-ONBOARD-01 welcome slide, first-run Home |
 | 2 | **Đọc sách** | `reading` | Ngồi bệt, 2 tay mở sách VOCAB trên lòng, đầu hơi cúi, đuôi cuộn quanh | Sách VOCAB mở | MH-LEARN-01 (flashcard), MH-DICT-02, loading nhẹ |
 | 3 | **Nhảy lên** | `jump` | Bật khỏi mặt đất, 2 tay giơ cao, 2 chân co, mắt nhắm cười | Bóng mờ elip + 2 vạch tốc độ dưới chân | MH-LEARN-04 quiz pass, streak tăng |
-| 4 | **Ăn mừng** | `celebrate` | Đứng, 2 tay giơ lệch (một cao một ngang), thân xoay 3/4 | Confetti cam/violet/blue rơi quanh | Daily Chest mở (F-GAME-04), Level up (MH-STATS-02) |
+| 4 | **Ăn mừng** | `celebrate` | Đứng, 2 tay giơ lệch (một cao một ngang), thân xoay 3/4 | Confetti cam/violet/blue rơi quanh | Nhận thưởng nhiệm vụ ngày (F-GAME-03), Level up (MH-STATS-02) |
 | 5 | **Suy nghĩ** | `thinking` | Đứng, một tay chống hông, tay kia chạm mõm, mắt nhìn chéo lên | 1 dấu `?` xanh to lệch trên-phải | MH-LEARN-03 (quiz đang chờ chọn), empty search |
 | 6 | **Khám phá** | `explore` | Bước một chân về trước, 2 tay mở bản đồ, mũ phiêu lưu vành rộng | Mũ da cam nhạt + bản đồ giấy cũ | MH-TOPIC-01 collections, MH-CAMERA-01 pre-scan tip |
 
@@ -273,7 +273,7 @@ Deliverable turnaround: 1 file PNG 4096px chứa 5 view + 1 file source (`.blend
 
 ## 8. Motion & animation
 
-Bám nguyên tắc chuyển động trong [design.md §1](../design.md) — ưu tiên **spring/bouncy**, tránh fade tuyến tính.
+Bám nguyên tắc chuyển động trong [design.md §1](./design.md) — ưu tiên **spring/bouncy**, tránh fade tuyến tính.
 
 | Animation | Slug | Thời lượng | Easing | Loop | Dùng khi |
 | --- | --- | --- | --- | --- | --- |
@@ -281,7 +281,7 @@ Bám nguyên tắc chuyển động trong [design.md §1](../design.md) — ưu 
 | Wave | `wave` | 900ms | spring (damping 12) | 2 lần rồi về idle | Chào mừng lần đầu vào app |
 | Bounce in | `bounce_in` | 450ms | spring (overshoot 1.15) | 1 | Popup/modal xuất hiện |
 | Scan pulse | `scan_pulse` | 1200ms | ease in-out | ∞ | Loading AI recognition (MH-CAMERA-01) |
-| Jump celebrate | `jump_celebrate` | 800ms | spring + squash/stretch | 1 | Quiz pass, level up, chest mở |
+| Jump celebrate | `jump_celebrate` | 800ms | spring + squash/stretch | 1 | Quiz pass, level up, nhận thưởng nhiệm vụ |
 | Ear droop | `ear_droop` | 600ms | ease out | 1 | Streak mất — tai cụp, thân hạ 4px |
 | Head tilt | `head_tilt` | 500ms | ease in-out | ∞ (chậm) | Trạng thái chờ/tò mò |
 | Confetti burst | `confetti` | 1000ms | ease out | 1 | Kèm `jump_celebrate`, particle không che mặt |
@@ -348,7 +348,7 @@ Mọi chỗ spec ghi "Mascot" phải resolve về đúng một dòng dưới đ�
 | MH-MAIN-01 first-run / chưa có Deck | phan_ra_man_hinh §6 | `pose_pointing` | `idle` | "Scan hoặc tra cứu để thêm từ đầu tiên!" |
 | MH-MAIN-01 streak = 0 popup | phan_ra_man_hinh L378, L471 | `expr_sad` | `ear_droop` | "Chuỗi của bạn dừng lại rồi. Bắt đầu lại hôm nay nhé?" |
 | MH-MAIN-01 SRS due = 0 | phan_ra_man_hinh §6 khối 4 | `expr_proud` | `bounce_in` | "Bạn đã ôn xong hôm nay! 🎉" |
-| Daily Chest 5/5 mở | daily_mission §2.1, F-GAME-04 | `pose_celebrate` | `jump_celebrate` + `confetti` | "Đủ 5 nhiệm vụ! Mở rương thôi!" |
+| Claim reward 1 nhiệm vụ | daily_mission §8.2, F-GAME-03 | `pose_celebrate` | `jump_celebrate` | "Nhận thưởng rồi! +Coin +XP" |
 | MH-CAMERA-01 loading scan | phan_ra_man_hinh L539 | `pose_scanning` | `scan_pulse` | "Mắt thần đang nhìn... Đợi chút nhé!" |
 | MH-CAMERA-02 confidence thấp | phan_ra_man_hinh L564 | `expr_unsure` | `head_tilt` | "Hình như đây là..." |
 | MH-CAMERA-02 không nhận diện được | MH-SYSTEM-02 No object | `expr_curious` | `head_tilt` | "Mình chưa nhìn rõ. Thử ảnh khác nhé?" |
@@ -360,11 +360,11 @@ Mọi chỗ spec ghi "Mascot" phải resolve về đúng một dòng dưới đ�
 | MH-DICT-01 empty search | MH-SYSTEM-02 Empty search | `expr_curious` | `head_tilt` | "Không tìm thấy từ này. Kiểm tra chính tả nhé?" |
 | MH-TOPIC-01 collections | §6 pose 6 | `pose_explore` | `idle` | "Chọn chủ đề để khám phá!" |
 | Network error toàn app | MH-SYSTEM-02 Network error | `expr_unsure` | tĩnh | "Mất kết nối rồi. Thử lại nhé?" |
-| Không có mission / offline lâu | §5.1 | `expr_sleepy` | `idle` | "Chưa có gì để ôn. Nghỉ một chút nào." |
+| Hết thẻ cần ôn / offline lâu | §5.1 | `expr_sleepy` | `idle` | "Chưa có gì để ôn. Nghỉ một chút nào." |
 | App icon | §9 | `expr_wink` crop | tĩnh | — |
 | Push notification | §9 | `expr_happy` 64px | tĩnh | "Tuyệt quá! Bạn vừa học 20 từ mới!" |
 
-**i18n:** cột "Copy của Snapy" là *nội dung tham chiếu*, không phải string để hardcode. Mỗi dòng phải có key `mascot.{screen}.{state}` (ví dụ `mascot.onboard.welcome`, `mascot.main.streak_lost`, `mascot.camera.scanning`) trong [en.json](SnapVocab/src/translations/en.json) và [vi.json](SnapVocab/src/translations/vi.json). Thêm dòng mới vào bảng này = phải thêm key cùng lúc.
+**i18n:** cột "Copy của Snapy" là *nội dung tham chiếu*, không phải string để hardcode. Mỗi dòng phải có key `mascot.{screen}.{state}` (ví dụ `mascot.onboard.welcome`, `mascot.main.streak_lost`, `mascot.camera.scanning`) trong [en.json](../../SnapVocab/src/translations/en.json) và [vi.json](../../SnapVocab/src/translations/vi.json). Thêm dòng mới vào bảng này = phải thêm key cùng lúc.
 
 Nguyên tắc tần suất: Snapy **tối đa 1 popup có thoại mỗi phiên học** cho nhóm thông báo động viên, và tối đa 1 popup streak-lost mỗi ngày. Illustration tĩnh trong empty state không tính vào hạn mức này.
 
@@ -420,7 +420,7 @@ snapy_app_icon_{size}.png             # 1024 / 512 / 192 / 48
 | App icon | PNG-24 không alpha | 1024×1024 | Nền gradient đầy khung |
 | Model sheet | PNG + source | 4096px chiều dài | Kèm PDF ghi tỷ lệ |
 
-Ngân sách dung lượng: ≤ 2.5MB cho asset bundle (M1/M2), celebration + chest + leaderboard tải remote nên không tính vào 2.5MB.
+Ngân sách dung lượng: ≤ 2.5MB cho asset bundle (M1/M2), celebration + leaderboard tải remote nên không tính vào 2.5MB.
 
 ### 11.3. Accessibility
 
